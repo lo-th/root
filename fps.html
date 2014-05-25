@@ -116,7 +116,7 @@ function init3D() {
 
 	clock = new THREE.Clock();
 
-	renderer = new THREE.WebGLRenderer({antialias:true});
+	renderer = new THREE.WebGLRenderer({antialias:false});
 	renderer.setSize( vsize.x, vsize.y );
 	renderer.domElement.style.cssText = "position:absolute; bottom:0px; left:0px;";
 
@@ -124,8 +124,8 @@ function init3D() {
 	container.appendChild( renderer.domElement );
 
 	renderer.shadowMapEnabled = false;
-	renderer.gammaOutput = true;
-	renderer.gammaInput = true;
+	//renderer.gammaOutput = true;
+	//renderer.gammaInput = true;
 	renderer.autoClear = false;
 
 	scene = new THREE.Scene();
