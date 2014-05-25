@@ -44,8 +44,8 @@ function init(){
 	initMiniMap2D(256,256);
 	init3D();
 	//initOIMO();
-	//animate();
-	setInterval(animate, 1000/60); 
+	animate();
+	setInterval(move, 1000/60); 
 }
 
 var OimoWorker;
@@ -233,11 +233,11 @@ function onWindowResize() {
 //-----------------------------------------------------
 
 function animate() {
-	//requestAnimationFrame( animate, renderer.domElement );
+	requestAnimationFrame( animate, renderer.domElement );
 
 	//var delta = clock.getDelta();
    
-	move();
+	//move();
 	renderer.render( scene, camera );
 	showInfo();
 }
