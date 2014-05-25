@@ -11,7 +11,8 @@
     #info{ pointer-events:none; position:absolute; left:10px; top:15px; width: 140px; height: 120px; }
     #interface{ position: absolute; left:0px; top:90px; width:0px; height:0px; }
 </style>
-<script src="js/Transcode.js"></script>
+<script src="build/three.min.js"></script>
+<script src="build/sea3d.min.js"></script>
 <script src="js/minigui.js"></script>
 </head>
 <!-- _     _   _
@@ -32,15 +33,11 @@
 //  SOURCE INIT
 //-----------------------------------------------------
 
-var Sources, info, menu;
+var info, menu;
 window.onload = init;
 
 function init(){
-	Sources = new Transcode.Loader([ "rs/code/three.dev.png", "rs/code/sea3d.png", "rs/code/oimo.png"], startGame, [0, 0, 1]);
-}
-
-function startGame(){
-	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 	info = document.getElementById("info");
 	menu = document.getElementById("interface");
 	initGui();
@@ -95,7 +92,7 @@ var bulletMat, bulletGeo;
 function initOIMO() {
 	OimoWorker = new Worker('js/worker.oimo.js');
 	OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
-	OimoWorker.postMessage({tell:"INIT", url:Sources.ref['OIMO']});
+	OimoWorker.postMessage({tell:"INIT", url:"../build/oimo.min.js"});
 
 	OimoWorker.onmessage = function(e) {
 	   	var phase = e.data.tell;
