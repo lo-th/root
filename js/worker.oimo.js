@@ -1,5 +1,5 @@
 'use strict';
-importScripts("../build/oimo.min.js");
+//importScripts("../build/oimo.min.js");
 var world;
 var timer;
 var infos = [];
@@ -8,7 +8,7 @@ self.onmessage = function (e) {
 	var p = e.data.tell;
 
 	if(p == "INIT"){
-		//importScripts(e.data.url);
+		importScripts(e.data.url);
 		// Init world
         OIMO.WORLD_SCALE = 1;
         OIMO.INV_SCALE = 1;
