@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>loth FPS</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=11,chrome=1">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>		
+	*{  margin: 0; padding: 0; border: 0; }
+	body { background-color:#000000; overflow:hidden; color:#000000; font-family:Verdana; font-size:10px;}
+    #info{ pointer-events:none; position:absolute; left:10px; top:15px; width: 140px; height: 120px; }
+    #interface{ position: absolute; left:0px; top:90px; width:0px; height:0px; }
+</style>
+<script src="js/Transcode.js"></script>
+<script src="js/minigui.js"></script>
+</head>
+<!-- _     _   _
+    | |___| |_| |__ 
+    | / _ \  _|    |
+    |_\___/\__|_||_| 2014
+-->
+<body>
+<div id="container"></div>
+<div id="miniViewport"></div>
+<div id="info"></div>
+<div id='interface'></div>
+
+<script>
+'use strict';
+
+//-----------------------------------------------------
+//  SOURCE INIT
+//-----------------------------------------------------
+
+var Sources, info, menu;
+window.onload = init;
+
+function init(){
+	Sources = new Transcode.Loader([ "rs/code/three.dev.png", "rs/code/sea3d.png", "rs/code/oimo.png"], startGame, [0, 0, 1]);
+}
+
+function startGame(){
+	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	info = document.getElementById("info");
+	menu = document.getElementById("interface");
+	initGui();
+	initMiniMap2D(256,256);
+	init3D();
+	initOIMO();
+	animate();
+}
+
+var OimoWorker;
+var oimoInfos = "";
+
+
+var worldSize = 0.1; 
+var FAR = 4000*worldSize;
+var container, camera, scene, renderer, content, bulletContent, sky, player, clock;
+
+var vPlayer, vWorld, vTarget, vsize, ease, easeRot;
+
+var level = { x:0, y:0, z:0, ox:800*worldSize, oy:0, oz:600*worldSize, firstDraw:false };
+var cfg = { speed:0.5*worldSize, maxSpeed:10*worldSize, posY:100*worldSize };
+var cam = { horizontal:90, vertical:90, distance:worldSize };
+
+var ToRad = Math.PI/180;
+var fps = [0,0,0,0];
+
+var key = { front:false, back:false, left:false, right:false, jump:false, crouch:false };
+var mouse = { down:false, ox:0, oy:0, h:0, v:0, mx:0, my:0 };
+
+// map2d
+var camera_mini, scene_mini, renderer_mini, player_mini;
+var map2d, miniGl, tmpZone, ctxTest, ctx3, cc;
+var lock={f:false, b:false, l:false, r:false, fl:false, fr:false, bl:false, br:false };
+var px = {space:0, f:0, b:0, l:0, r:0, m:0, fl:0, fr:0, bl:0, br:0};
+
+// bullet
+var projector, raycaster, marker;
+var bullets = [];
+var bulletMoves = [];
+var isOnFire = false;
+
+var isFirstShoot = true;
+var isMiniMapVisible = false;
+
+var gui = [];
+var bulletMat, bulletGeo;
+
+//=======================================
+//  OIMO INIT
+//=======================================
+
+function initOIMO() {
+	OimoWorker = new Worker('js/worker.oimo.js');
+	OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
+	OimoWorker.postMessage({tell:"INIT", url:Sources.ref['OIMO']});
+
+	OimoWorker.onmessage = function(e) {
+	   	var phase = e.data.tell;
+	   	if( phase == "RUN"){
+	   		oimoInfos = "Oimo: " + e.data.infos[0] + " fps";
+	   	}
+	}
+}
+
+//=======================================
+//  THREE INIT
+//=======================================
+
+function init3D() {
+	vsize = new THREE.Vector3( window.innerWidth, window.innerHeight, window.innerWidth/window.innerHeight );
+	vPlayer = new THREE.Vector3();
+	vWorld = new THREE.Vector3(); 
+	vTarget = new THREE.Vector3();
+	ease = new THREE.Vector3();
+	easeRot = new THREE.Vector3();
+
+	clock = new THREE.Clock();
+
+	renderer = new THREE.WebGLRenderer({antialias:true});
+	renderer.setSize( vsize.x, vsize.y );
+	renderer.domElement.style.cssText = "position:absolute; bottom:0px; left:0px;";
+
+	container = document.getElementById( 'container' );
+	container.appendChild( renderer.domElement );
+
+	renderer.shadowMapEnabled = false;
+	renderer.gammaOutput = true;
+	renderer.gammaInput = true;
+	renderer.autoClear = false;
+
+	scene = new THREE.Scene();
+	projector = new THREE.Projector();
+	raycaster = new THREE.Raycaster();
+
+	player = new THREE.Object3D();
+	scene.add(player);
+	camera = new THREE.PerspectiveCamera( 70, vsize.z, worldSize, FAR );
+	
+	content = new THREE.Object3D();
+	scene.add(content);
+
+	bulletContent = new THREE.Object3D();
+	scene.add(bulletContent);
+
+	bulletMat = new THREE.MeshBasicMaterial({ color:0x303030 });
+	bulletGeo = new THREE.SphereGeometry(5*worldSize,6,6);
+
+	// marker
+	var geometry = new THREE.CylinderGeometry( 0, 3*worldSize, 10*worldSize, 3 );
+	geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 5*worldSize, 0 ) );
+	geometry.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI / 2 ) );
+	marker = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) );
+	scene.add(marker);
+
+	// backgroud
+    var backMat = new THREE.MeshBasicMaterial( { map:createHeightGradMaterial([[0.5,0.45,0.35, 0],['#48608c','lightskyblue', 'skyblue','deepskyblue']]), side:THREE.BackSide, depthWrite: false } );
+    sky = new THREE.Mesh(new THREE.IcosahedronGeometry(FAR/2,1),backMat);
+    scene.add( sky );
+
+	window.addEventListener( 'resize', onWindowResize, false );
+	document.addEventListener( 'keydown', onKeyDown, false );
+	document.addEventListener( 'keyup', onKeyUp, false );
+
+	container.addEventListener( 'mousemove', onMouseMove, false );
+	container.addEventListener( 'mousedown', onMouseDown, false );
+	container.addEventListener( 'mouseup', onMouseUp, false );
+	container.addEventListener( 'mouseout', onMouseUp, false );
+
+	container.addEventListener( 'touchstart', onMouseDown, false );
+	container.addEventListener( 'touchend', onMouseUp, false );
+	container.addEventListener( 'touchmove', onMouseMove, false );
+
+	//setInterval(move, 1000/60);
+
+	loadSea3dDirect();
+}
+
+//-----------------------------------
+// SEA3D LOADING
+//-----------------------------------
+
+function loadSea3dDirect(){
+    var loader = new THREE.SEA3D( true );
+    loader.onComplete = function( e ) {
+    	var m, mat, omat;
+    	var i = loader.meshes.length;
+    	while(i--){
+    		m = loader.meshes[i];
+    		scaleGeometry(m.geometry, worldSize);
+    		m.receiveShadow = false;
+    		m.castShadow = false;
+    		if(m.name == 'height'){
+    			scene_mini.add( m );
+    			m.material = new THREE.MeshBasicMaterial( {  map:createHeightGradMaterial([[0,1],['black','white']]), overdraw:true, shading: THREE.FlatShading} );		
+    		}
+    		else{ 
+    			content.add( m );
+    			omat = m.material;
+    			mat = new THREE.MeshBasicMaterial({map:m.material.map,transparent:m.material.transparent, opacity:m.material.opacity });
+    			if(m.name == 'balcon' || m.name == 'windows' || m.name == 'cadres') mat.side = THREE.DoubleSide;
+    			m.material = mat;
+
+    			//m.material.light = false;
+    			//console.log(omat.name, m.castShadow);
+    		}
+    	}
+    }
+   loader.load( 'rs/mesh/house.sea' );
+  //  loader.load( 'rs/mesh/central.sea' );
+}
+
+function scaleGeometry(g, s){
+	var mtx = new THREE.Matrix4().makeScale(s, s, -s);
+	g.applyMatrix(mtx);
+	g.computeFaceNormals();
+    g.computeVertexNormals();
+}
+
+function onWindowResize() {
+	vsize.x = window.innerWidth;
+    vsize.y = window.innerHeight;
+    vsize.z = vsize.x/vsize.y;
+	camera.aspect = vsize.z;
+	camera.updateProjectionMatrix();
+	renderer.setSize( vsize.x, vsize.y );
+}
+
+//-----------------------------------------------------
+//
+//  RENDER LOOP
+//
+//-----------------------------------------------------
+
+function animate() {
+	requestAnimationFrame( animate, renderer.domElement );
+
+	//var delta = clock.getDelta();
+   
+	move();
+	renderer.render( scene, camera );
+	showInfo();
+}
+
+function showInfo(){
+    fps[2] = Date.now();
+    if (fps[2]-1000>fps[1]){ fps[1]=fps[2]; fps[3]=fps[0]; fps[0]=0; } fps[0]++;
+    info.innerHTML = "<h3>FPS LAB</h3><br>Three: " + fps[3] +" fps<br>"+oimoInfos;
+}
+
+function rayTest(sh) {
+	if ( content.children.length > 0 ) {
+		var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
+		projector.unprojectVector( vector, camera );
+		raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
+		var intersects = raycaster.intersectObjects( content.children );
+		if ( intersects.length > 0 ) {
+			marker.position.set( 0, 0, 0 );
+			marker.lookAt(intersects[0].face.normal);
+			marker.position.copy( intersects[0].point );
+			
+			if(sh)shoot();
+	    }
+	}
+}
+
+//-----------------------------------------------------
+//  PLAYER MOVE
+//-----------------------------------------------------
+
+function move() {
+	updateBullets();
+	
+
+	easeRot.y = cam.horizontal*ToRad;
+	var rot = unwrapDegrees(Math.round(cam.horizontal));
+
+	//acceleration
+	if (key.front) ease.z += cfg.speed;
+	if (key.back) ease.z -= cfg.speed;
+	if (key.left) ease.x += cfg.speed;
+	if (key.right) ease.x -= cfg.speed;
+	  
+	//speed limite
+	if (ease.x > cfg.maxSpeed) ease.x = cfg.maxSpeed;
+	if (ease.x < -cfg.maxSpeed) ease.x = -cfg.maxSpeed;
+	if (ease.z > cfg.maxSpeed) ease.z = cfg.maxSpeed;
+	if (ease.z < -cfg.maxSpeed) ease.z = -cfg.maxSpeed;
+
+	//deceleration
+	if (!key.front && !key.back) {
+		if (ease.z > cfg.speed) ease.z -= cfg.speed;
+		else if (ease.z < -cfg.speed) ease.z += cfg.speed;
+		else ease.z = 0;
+	}
+	if (!key.left && !key.right) {
+		if (ease.x > cfg.speed) ease.x -= cfg.speed;
+		else if (ease.x < -cfg.speed) ease.x += cfg.speed;
+		else ease.x = 0;
+	}
+	
+	// stop if no move
+	if (ease.x == 0 && ease.z == 0 && !mouse.down && level.firstDraw && !isOnFire) return;
+
+	// find direction of player
+	easeRot.x = Math.sin(easeRot.y) * ease.x + Math.cos(easeRot.y) * ease.z;
+	easeRot.z = Math.cos(easeRot.y) * ease.x - Math.sin(easeRot.y) * ease.z;
+
+	// new position
+	vTarget.x = vWorld.x-easeRot.x;
+	vTarget.z = vWorld.z+easeRot.z;
+
+	//level.x = roundD(level.ox-easeRot.x);
+	//level.z = roundD(level.oz+easeRot.z);
+
+	level.x = level.ox-easeRot.x;
+	level.z = level.oz+easeRot.z;
+
+	// update 2d map
+	drawMap();
+
+	// test pixel collision
+	var nohitx = false;
+	var nohitz = false;
+
+	if(rot >= 45 && rot <= 135){
+		if(level.z < level.oz) if(!lock.f && !lock.fl && !lock.fr) nohitz = true;
+		if(level.z > level.oz) if(!lock.b && !lock.bl && !lock.br) nohitz = true;
+		if(level.x < level.ox) if(!lock.l && !lock.fl && !lock.bl) nohitx = true;
+		if(level.x > level.ox) if(!lock.r && !lock.fr && !lock.br) nohitx = true;
+	} else if (rot <= -45 && rot >= -135){
+		if(level.z > level.oz) if(!lock.f && !lock.fl && !lock.fr) nohitz = true;
+		if(level.z < level.oz) if(!lock.b && !lock.bl && !lock.br) nohitz = true;
+		if(level.x > level.ox) if(!lock.l && !lock.fl && !lock.bl) nohitx = true;
+		if(level.x < level.ox) if(!lock.r && !lock.fr && !lock.br) nohitx = true;
+	} else if (rot < 45 && rot > -45){
+		if(level.z > level.oz) if(!lock.l && !lock.fl && !lock.bl) nohitz = true;
+		if(level.z < level.oz) if(!lock.r && !lock.fr && !lock.br) nohitz = true;
+		if(level.x < level.ox) if(!lock.f && !lock.fl && !lock.fr) nohitx = true;
+		if(level.x > level.ox) if(!lock.b && !lock.bl && !lock.br) nohitx = true;
+	} else {
+		if(level.z < level.oz) if(!lock.l && !lock.fl && !lock.bl) nohitz = true;
+		if(level.z > level.oz) if(!lock.r && !lock.fr && !lock.br) nohitz = true;
+		if(level.x > level.ox) if(!lock.f && !lock.fl && !lock.fr) nohitx = true;
+		if(level.x < level.ox) if(!lock.b && !lock.bl && !lock.br) nohitx = true;
+	}
+
+	if(nohitx)level.ox = level.x;
+	if(nohitz)level.oz = level.z;
+
+	level.oy=level.y+ cfg.posY;
+
+	//vPlayer.x = level.ox;
+	//vPlayer.z = level.oz; 
+	// update 2d map
+	player_mini.position.x = level.ox;//vPlayer.x;
+    player_mini.position.z = level.oz;//vPlayer.z;
+	player_mini.rotation.y = -easeRot.y;
+    
+    var POS = new THREE.Vector3( level.ox, level.oy, level.oz )
+    vPlayer.lerp(POS, 0.1);
+
+	player.position.copy(vPlayer);
+	sky.position.copy(vPlayer);
+
+	camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
+	camera.lookAt( player.position );
+
+	
+}
+
+function initPlayer() {
+	level.oy = level.y;
+	vPlayer.z = level.oz;
+	vPlayer.x = level.ox;
+	vPlayer.y = level.y + cfg.posY;
+}
+
+//-----------------------------------------------------
+//  BULLET
+//-----------------------------------------------------
+
+function shoot() {
+	var n = bullets.length;
+	var bullet = new THREE.Mesh( bulletGeo, bulletMat );
+	bulletContent.add(bullet);
+	bullet.position.copy(vPlayer);
+	
+	bulletMoves[n]= marker.position.clone();
+	bullets[n]= bullet;
+
+	//var distance = distanceTest(vPlayer, marker.position);
+}
+
+function updateBullets() {
+	var i =  bullets.length;
+	while(i--){
+		if(bullets[i].position.distanceTo(bulletMoves[i])<0.01 )setTimeout(destroyBullet, 1000, i);
+		else bullets[i].position.lerp(bulletMoves[i], 0.1);
+	}
+}
+
+function destroyBullet(n) {
+	bulletContent.remove(bullets[n]);
+	//bullets[n].geometry.dispose();
+	bullets.slice(n, 1);
+	bulletMoves.slice(n,1);
+	isOnFire=false;
+}
+
+//-----------------------------------------------------
+//  MOUSE
+//-----------------------------------------------------
+
+function moveCamera() {
+    camera.position.copy(Orbit(center, cam.horizontal, cam.vertical, cam.distance));
+    camera.lookAt(center);
+}
+
+function onMouseDown( e ) {
+	e.preventDefault();
+	var px, py;
+	if(e.touches){
+		px = e.clientX || e.touches[ 0 ].pageX;
+	    py = e.clientY || e.touches[ 0 ].pageY;
+	} else {
+		px = e.clientX;
+	    py = e.clientY;
+	}
+	mouse.down = true;
+	mouse.mx = ( px / vsize.x ) * 2 - 1;
+	mouse.my = - ( py / vsize.y ) * 2 + 1;
+	mouse.ox = px;
+	mouse.oy = py;
+	mouse.h = cam.horizontal;
+	mouse.v = cam.vertical;
+
+	rayTest(true);
+}
+
+function onMouseUp( e ) {
+	e.preventDefault();
+	mouse.down = false;
+	document.body.style.cursor = 'auto';
+}
+
+function onMouseMove( e ) {
+	e.preventDefault();
+	var px, py;
+	if(e.touches){
+		px = e.clientX || e.touches[ 0 ].pageX;
+	    py = e.clientY || e.touches[ 0 ].pageY;
+	} else {
+		px = e.clientX;
+	    py = e.clientY;
+	}
+	if(mouse.down){
+		document.body.style.cursor = 'move';
+		cam.horizontal =((px - mouse.ox)*0.3) + mouse.h;
+		cam.vertical = (-(py - mouse.oy)*0.3) + mouse.v;
+		//moveCamera();
+	} else {
+		mouse.mx = ( px / vsize.x ) * 2 - 1;
+	    mouse.my = - ( py / vsize.y ) * 2 + 1;
+		rayTest();
+	}
+}
+
+//-----------------------------------------------------
+//  KEYBOARD
+//-----------------------------------------------------
+
+function onKeyDown ( event ) {
+	switch ( event.keyCode ) {
+	    case 38: case 87: case 90: key.front = true; break; // up, W, Z
+		case 40: case 83: key.back = true; break;           // down, S
+		case 37: case 65: case 81: key.left = true; break;  // left, A, Q
+		case 39: case 68: key.right = true; break;          // right, D
+		case 17: case 67: key.crouch = false; break;        // ctrl, c
+		case 32: key.jump = false; break;                   // space
+	}
+}
+
+function onKeyUp ( event ) {
+	switch( event.keyCode ) {
+		case 38: case 87: case 90: key.front = false; break; // up, W, Z
+		case 40: case 83: key.back = false; break;           // down, S
+		case 37: case 65: case 81: key.left = false; break;  // left, A, Q
+		case 39: case 68: key.right = false; break;          // right, D
+		case 17: case 67: key.crouch = false; break;         // ctrl, c
+		case 32: key.jump = false; break;                    // space
+	}
+}
+
+//-----------------------------------------------------
+//  TEXTURE
+//-----------------------------------------------------
+
+function createHeightGradMaterial(color) {
+	var c = document.createElement("canvas");
+	var ct = c.getContext("2d");
+	c.width = 16; c.height = 256;
+	var gradient = ct.createLinearGradient(0,0,0,256);
+	var i = color[0].length;
+	while(i--){ gradient.addColorStop(color[0][i],color[1][i]); }
+	ct.fillStyle = gradient;
+	ct.fillRect(0,0,16,256);
+	var texture = new THREE.Texture(c);
+	texture.needsUpdate = true;
+	return texture;
+}
+
+//-----------------------------------------------------
+//  MAP 2D
+//-----------------------------------------------------
+
+function initMiniMap2D(w, h) {
+
+	renderer_mini = new THREE.WebGLRenderer({ precision: "lowp", antialias: false, alpha:false});
+	renderer_mini.setClearColor( 0x102030, 1 );
+	renderer_mini.setSize( w, h );
+	renderer_mini.domElement.style.cssText = "position:absolute; bottom:0px; left:0px;";
+	//renderer_mini.autoClear = false;
+	renderer_mini.sortObjects = false;
+	renderer_mini.sortElements = false;
+
+	map2d = document.getElementById( 'miniViewport' );
+	map2d.style.cssText = "display:none; position:absolute; bottom:10px; left:10px; pointer-events:none; width:256px; height:256px;";
+	map2d.appendChild( renderer_mini.domElement );
+	
+
+    if(isMiniMapVisible) map2d.display = "block";
+
+
+    var w = 500*worldSize;
+    camera_mini = new THREE.OrthographicCamera( -w , w , w , -w , 1, 4000*worldSize );
+    //camera_mini.scale.set(1,1,-1);
+    //camera_mini = new THREE.PerspectiveCamera( 45, 1, 1, 10000 );
+    player_mini = new THREE.Object3D();
+    camera_mini.position.y = 2000*worldSize;
+    scene_mini = new THREE.Scene();
+    scene_mini.add(player_mini);
+    player_mini.add(camera_mini);
+    camera_mini.lookAt( new THREE.Vector3(0,0,0) );
+
+    player_mini.position.x = level.ox;
+    player_mini.position.z = level.oz;
+
+    // get collision color
+    renderer_mini.render( scene_mini, camera_mini);
+    miniGl = renderer_mini.getContext();
+    var pixels = new Uint8Array(1 * 1 * 4);
+    miniGl.readPixels(128, 128, 1, 1, miniGl.RGBA, miniGl.UNSIGNED_BYTE, pixels);
+    cc = {r:pixels[0], g:pixels[1], b:pixels[2], a:pixels[3]};
+}
+
+function changelens(v) {
+	var camFactor = 1;
+	var w = v*worldSize;
+	camera_mini.left = -w / camFactor;
+    camera_mini.right = w / camFactor;
+    camera_mini.top = w / camFactor;
+    camera_mini.bottom = -w / camFactor;
+    camera_mini.updateProjectionMatrix();
+    renderer_mini.render( scene_mini, camera_mini);
+}
+
+function display2DMap(b){
+	isMiniMapVisible = b;
+	if(b){
+		level.firstDraw = false;
+		map2d.style.display = "block";
+	}else{
+		map2d.style.display = "none";
+		if(ctx3)ctx3.clearRect ( 0 , 0 , 256 , 256 );
+		if(ctxTest)ctxTest.clearRect ( 0 , 0 , 16 , 16 );
+		//if(ctxTest2)ctxTest2.clearRect ( 0 , 0 , 64 , 64 );
+	}
+}
+
+function drawMap(){
+	if(px.space == 0) setMapTestSize(8);
+
+	renderer_mini.render( scene_mini, camera_mini );
+
+	tmpZone = new Uint8Array((px.space*2) * (px.space*2) * 4);
+	miniGl.readPixels(128-px.space, 128-px.space, px.space*2, px.space*2, miniGl.RGBA, miniGl.UNSIGNED_BYTE, tmpZone);
+
+	// collision
+	lock.f = colorTest( px.f );
+	lock.b = colorTest( px.b );
+	lock.l = colorTest( px.l );
+	lock.r = colorTest( px.r );
+	// corner collision
+	lock.fl = colorTest( px.fl );
+	lock.fr = colorTest( px.fr );
+	lock.bl = colorTest( px.bl );
+	lock.br = colorTest( px.br );
+
+	if(ctxTest)drawMapTest();
+
+	// height
+    level.y = Math.round(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*1)-180)*worldSize;
+
+	if(!level.firstDraw && isMiniMapVisible){
+		initPlayer();
+		initTopMap();
+		initTestMap();
+		level.firstDraw = true;
+	}
+}
+
+function colorTest(n){
+	var b = false;
+	if(tmpZone[n] == cc.r && tmpZone[n+1] == cc.g && tmpZone[n+2] == cc.b && tmpZone[n+3] == cc.a) b = true;
+	return b;
+}
+
+function setMapTestSize(n){
+	px.space = n;
+	var fsize =(( px.space *2 )*( px.space *2 ))*4;//256
+	px.b = px.space*4;
+	px.f = fsize-(px.space*4);
+	//px.f = px.space*4;
+	//px.b = fsize-(px.space*4);
+	px.l = fsize*0.5;
+	px.r = fsize*0.5 + (((px.space*4)*2)-4);
+	px.m = fsize*0.5 + (px.space*4);
+
+	/*px.fl = (34*4);
+	px.fr = (45*4);
+	px.bl = (211*4);
+	px.br = (222*4);*/
+	px.bl = (34*4);
+	px.br = (45*4);
+	px.fl = (211*4);
+	px.fr = (222*4);
+}
+
+function initTopMap(){
+    var map3 = document.createElement("canvas");
+    map3.width = 256; map3.height = 256;
+    map3.style.cssText = "position:absolute; bottom:0px; left:0px;";
+    map2d.appendChild( map3 );
+    
+    ctx3 = map3.getContext("2d");
+    ctx3.fillStyle = 'black';
+    ctx3.fillRect(0, 0, 1, 256);
+    ctx3.fillRect(255, 0, 1, 256);
+    ctx3.fillRect(1, 0, 254, 1);
+    ctx3.fillRect(1, 255, 254, 1);
+    ctx3.save();
+	ctx3.translate(128, 128);
+	drawPlayer(ctx3);
+	ctx3.restore();
+}
+
+function initTestMap(){
+	var mapTest = document.createElement("canvas");
+	mapTest.width = 16; mapTest.height = 16;
+	mapTest.style.cssText = "position:absolute; bottom:120px; left:120px;";
+    ctxTest = mapTest.getContext("2d");
+    map2d.appendChild( mapTest );
+}
+
+function drawMapTest() {
+	ctxTest.clearRect ( 0 , 0 , 16 , 16 );
+	var id = ctxTest.createImageData(16,16);
+	var d  = id.data;
+	for (var i= 0; i<d.length;i++){ d[i] = 0;}
+	if(lock.f) dp(d, px.f);
+    if(lock.b) dp(d, px.b);
+    if(lock.l) dp(d, px.l);
+    if(lock.r) dp(d, px.r);
+
+    if(lock.fl) dp(d, px.fl);
+    if(lock.fr) dp(d, px.fr);
+    if(lock.bl) dp(d, px.bl);
+    if(lock.br) dp(d, px.br);
+	ctxTest.putImageData( id, 0, 0);
+}
+
+function dp(d, p) {
+	d[p] = 255;
+	d[p+1] = 255;
+	d[p+3] = 255;
+}
+
+function drawPlayer(ctx) {
+    ctx.fillStyle = "rgba(255,255,200,0.2)";
+    ctx.globalAlpha = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(30, -30);
+	ctx.lineTo(-30, -30);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(200,200,100,1)";
+    ctx.fillRect(-2, -2, 4, 4);
+}
+
+//-----------------------------------------------------
+//  GUI
+//-----------------------------------------------------
+
+function initGui(){
+	gui[1] = new miniGUI.OnOff ({ container:menu, value:false, y:30,name:"Mini Map", onChange: function(value){ display2DMap(value) } });
+	gui[2] = new miniGUI.Slide ({ container:menu, value:1, y:60, name:"Map Scale", onChange: function(value){ changelens(10+value*490) } });
+}
+
+//-----------------------------------------------------
+//  MATH
+//-----------------------------------------------------
+
+/*function distanceTest(p01, p02){
+	return Math.round(Math.sqrt(Math.pow(p01.x-p02.x,2)+Math.pow(p01.y-p02.y,2)+Math.pow(p01.z-p02.z,2)));	
+}
+
+function roundD(nombre, precision){
+    var precision = precision || 2;
+    var tmp = Math.pow(10, precision);
+    return Math.round( nombre*tmp )/tmp;
+}*/
+
+function unwrapDegrees(r){
+	r = r % 360;
+	if (r > 180) r -= 360;
+	if (r < -180) r += 360;
+	return r;
+}
+
+function Orbit(origine, horizontal, vertical, distance) {
+	var p = new THREE.Vector3();
+	var phi = vertical*ToRad;
+	var theta = horizontal*ToRad;
+	p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
+	p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
+	p.y = (distance * Math.cos(phi)) + origine.y;
+	return p;
+}
+
+</script></body></html>
