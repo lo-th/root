@@ -116,7 +116,7 @@ function init3D() {
 
 	clock = new THREE.Clock();
 
-	renderer = new THREE.WebGLRenderer({antialias:false});
+	renderer = new THREE.WebGLRenderer({precision: "lowp", antialias:false});
 	renderer.setSize( vsize.x, vsize.y );
 	renderer.domElement.style.cssText = "position:absolute; bottom:0px; left:0px;";
 
