@@ -27,7 +27,8 @@
     |_\___/\__|_||_| 2014
 -->
 <body>
-<div id="container"><canvas id="glCanvas" class="canvas"></canvas></div>
+<canvas id="glCanvas" class="canvas"></canvas>
+<!--<div id="container"><canvas id="glCanvas" class="canvas"></canvas></div>-->
 <div id="miniViewport"><canvas id="miniGlCanvas" class="canvas"></div>
 <div id="info"></div>
 <div id='interface'></div>
@@ -39,7 +40,7 @@
 //  SOURCE INIT
 //-----------------------------------------------------
 
-var zoom = 2;
+var zoom = 0.5;
 var isBestQuality;
 
 var info, menu, glCanvas, miniGlCanvas;
@@ -62,8 +63,8 @@ function init(){
 	glCanvas = document.getElementById("glCanvas");
 	miniGlCanvas = document.getElementById("miniGlCanvas");
 
-	glCanvas.style.webkitTransform = glCanvas.style.MozTransform = glCanvas.style.msTransform = glCanvas.style.OTransform ="scale3d("+zoom+".0, "+zoom+".0, 1.0)";
-	glCanvas.style.webkitTransformOrigin = glCanvas.style.MozTransformOrigin = glCanvas.style.msTransformOrigin = glCanvas.style.OTransformOrigin ="0 0 0";
+	//glCanvas.style.webkitTransform = glCanvas.style.MozTransform = glCanvas.style.msTransform = glCanvas.style.OTransform ="scale3d("+zoom+".0, "+zoom+".0, 1.0)";
+	//glCanvas.style.webkitTransformOrigin = glCanvas.style.MozTransformOrigin = glCanvas.style.msTransformOrigin = glCanvas.style.OTransformOrigin ="0 0 0";
 
 	initGui();
 	initMiniMap2D();
@@ -147,8 +148,8 @@ function init3D() {
 
 
 
-	renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "lowp", antialias:isBestQuality });
-	renderer.setSize( vsize.x, vsize.y );
+	renderer = new THREE.WebGLRenderer({ canvas:glCanvas, devicePixelRatio:zoom, precision: "lowp", antialias:isBestQuality });
+	renderer.setSize( vsize.x, vsize.y, true );
 	//renderer.domElement.style.cssText = "position:absolute; top:0; left:0;";
 
 	//var bigGl = renderer.getContext();
@@ -157,8 +158,8 @@ function init3D() {
 	//renderer.domElement.style.webkitTransform = "scale3d(2.0, 2.0, 1.0)";
 
 
-	container = document.getElementById( 'container' );
-	container.appendChild( renderer.domElement );
+	//container = document.getElementById( 'container' );
+	//container.appendChild( renderer.domElement );
 
 	renderer.shadowMapEnabled = false;
 	//renderer.gammaOutput = true;
@@ -198,14 +199,14 @@ function init3D() {
 	document.addEventListener( 'keydown', onKeyDown, false );
 	document.addEventListener( 'keyup', onKeyUp, false );
 
-	container.addEventListener( 'mousemove', onMouseMove, false );
-	container.addEventListener( 'mousedown', onMouseDown, false );
-	container.addEventListener( 'mouseup', onMouseUp, false );
-	container.addEventListener( 'mouseout', onMouseUp, false );
+	glCanvas.addEventListener( 'mousemove', onMouseMove, false );
+	glCanvas.addEventListener( 'mousedown', onMouseDown, false );
+	glCanvas.addEventListener( 'mouseup', onMouseUp, false );
+	glCanvas.addEventListener( 'mouseout', onMouseUp, false );
 
-	container.addEventListener( 'touchstart', onMouseDown, false );
-	container.addEventListener( 'touchend', onMouseUp, false );
-	container.addEventListener( 'touchmove', onMouseMove, false );
+	glCanvas.addEventListener( 'touchstart', onMouseDown, false );
+	glCanvas.addEventListener( 'touchend', onMouseUp, false );
+	glCanvas.addEventListener( 'touchmove', onMouseMove, false );
 
 	//setInterval(move, 1000/60);
 
@@ -254,8 +255,8 @@ function scaleGeometry(g, s){
 }
 
 function onWindowResize() {
-	vsize.x = window.innerWidth/zoom;
-    vsize.y = window.innerHeight/zoom;
+	vsize.x = Math.round(window.innerWidth/zoom);
+    vsize.y = Math.round(window.innerHeight/zoom);
     vsize.z = vsize.x/vsize.y;
 	camera.aspect = vsize.z;
 	camera.updateProjectionMatrix();
