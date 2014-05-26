@@ -9,7 +9,16 @@
 	*{  margin: 0; padding: 0; border: 0; }
 	body { background-color:#000000; overflow:hidden; color:#000000; font-family:Verdana; font-size:10px;}
     #info{ pointer-events:none; position:absolute; left:10px; top:15px; width: 140px; height: 120px; }
-    #interface{ position: absolute; left:0px; top:90px; width:0px; height:0px; }
+    #interface{ position: absolute; left:0; top:90px; width:0px; height:0px; }
+    #container{ position:absolute; left:0; top:0; }
+    #glCanvas{ position: absolute;
+top: 0;
+left: 0;
+
+/* Scale out 2X from the corner */
+-webkit-transform: scale3d(2.0, 2.0, 1.0);
+-webkit-transform-origin: 0 0 0;
+}
 </style>
 <script src="build/three.min.js"></script>
 <script src="build/sea3d.min.js"></script>
@@ -21,7 +30,7 @@
     |_\___/\__|_||_| 2014
 -->
 <body>
-<div id="container"></div>
+<div id="container"><canvas id="glCanvas" class="canvas"></canvas></div>
 <div id="miniViewport"></div>
 <div id="info"></div>
 <div id='interface'></div>
@@ -33,17 +42,20 @@
 //  SOURCE INIT
 //-----------------------------------------------------
 
-var info, menu;
+var info, menu, glCanvas;
 window.onload = init;
 
 function init(){
 	//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 	info = document.getElementById("info");
 	menu = document.getElementById("interface");
+
+	glCanvas = document.getElementById("glCanvas");
+
 	initGui();
 	initMiniMap2D(256,256);
 	init3D();
-	//initOIMO();
+	initOIMO();
 	animate();
 	setInterval(move, 1000/60); 
 }
@@ -108,7 +120,7 @@ function initOIMO() {
 //=======================================
 
 function init3D() {
-	vsize = new THREE.Vector3( window.innerWidth, window.innerHeight, window.innerWidth/window.innerHeight );
+	vsize = new THREE.Vector3( window.innerWidth*0.5, window.innerHeight*0.5, (window.innerWidth*0.5)/(window.innerHeight*0.5) );
 	vPlayer = new THREE.Vector3();
 	vWorld = new THREE.Vector3(); 
 	vTarget = new THREE.Vector3();
@@ -117,9 +129,17 @@ function init3D() {
 
 	clock = new THREE.Clock();
 
-	renderer = new THREE.WebGLRenderer({precision: "lowp", antialias:false});
+
+
+	renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "lowp", antialias:false});
 	renderer.setSize( vsize.x, vsize.y );
-	renderer.domElement.style.cssText = "position:absolute; bottom:0px; left:0px;";
+	//renderer.domElement.style.cssText = "position:absolute; top:0; left:0;";
+
+	//var bigGl = renderer.getContext();
+	
+	//renderer.domElement.style.webkitTransformationOrigin = "50% 50%"
+	//renderer.domElement.style.webkitTransform = "scale3d(2.0, 2.0, 1.0)";
+
 
 	container = document.getElementById( 'container' );
 	container.appendChild( renderer.domElement );
@@ -218,8 +238,8 @@ function scaleGeometry(g, s){
 }
 
 function onWindowResize() {
-	vsize.x = window.innerWidth;
-    vsize.y = window.innerHeight;
+	vsize.x = window.innerWidth*0.5;
+    vsize.y = window.innerHeight*0.5;
     vsize.z = vsize.x/vsize.y;
 	camera.aspect = vsize.z;
 	camera.updateProjectionMatrix();
@@ -256,7 +276,7 @@ function rayTest(sh) {
 		var intersects = raycaster.intersectObjects( content.children );
 		if ( intersects.length > 0 ) {
 			marker.position.set( 0, 0, 0 );
-			marker.lookAt(intersects[0].face.normal);
+			if(intersects[0].face)marker.lookAt(intersects[0].face.normal);
 			marker.position.copy( intersects[0].point );
 			
 			if(sh)shoot();
@@ -428,8 +448,8 @@ function onMouseDown( e ) {
 	    py = e.clientY;
 	}
 	mouse.down = true;
-	mouse.mx = ( px / vsize.x ) * 2 - 1;
-	mouse.my = - ( py / vsize.y ) * 2 + 1;
+	mouse.mx = ( px / (vsize.x*2) ) * 2 - 1;
+	mouse.my = - ( py / (vsize.y*2) ) * 2 + 1;
 	mouse.ox = px;
 	mouse.oy = py;
 	mouse.h = cam.horizontal;
