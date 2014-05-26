@@ -11,23 +11,11 @@
     #info{ pointer-events:none; position:absolute; left:10px; top:15px; width: 140px; height: 120px; }
     #interface{ position: absolute; left:0; top:90px; width:0px; height:0px; }
     #container{ position:absolute; left:0; top:0; }
-    #glCanvas{ position: absolute;
-top: 0;
-left: 0;
+    #miniViewport{ position:absolute; left:10px; bottom:10px; }
+    #glCanvas{ position: absolute; top: 0; left: 0; }
+    #miniGlCanvas{ position: absolute; top: 0; left: 0; }
 
-/* Scale out 2X from the corner */
--webkit-transform: scale3d(2.0, 2.0, 1.0);
--webkit-transform-origin: 0 0 0;
-
--moz-transform: scale3d(2.0, 2.0, 1.0);
--moz-transform-origin: 0 0 0;
-
--o-transform: scale3d(2.0, 2.0, 1.0);
--o-transform-origin: 0 0 0;
-
--ms-transform: scale3d(2.0, 2.0, 1.0);
--ms-transform-origin: 0 0 0;
-}
+    
 </style>
 <script src="build/three.min.js"></script>
 <script src="build/sea3d.min.js"></script>
@@ -40,7 +28,7 @@ left: 0;
 -->
 <body>
 <div id="container"><canvas id="glCanvas" class="canvas"></canvas></div>
-<div id="miniViewport"></div>
+<div id="miniViewport"><canvas id="miniGlCanvas" class="canvas"></div>
 <div id="info"></div>
 <div id='interface'></div>
 
@@ -51,18 +39,34 @@ left: 0;
 //  SOURCE INIT
 //-----------------------------------------------------
 
-var info, menu, glCanvas;
+var zoom = 2;
+var isBestQuality;
+
+var info, menu, glCanvas, miniGlCanvas;
+//var miniSize = {w:256, h:256, f:1};
+//var miniSize = {w:128, h:128, f:0.5};
+//var miniSize = {w:64, h:64, f:0.25};
+var miniSize = {w:32, h:32, f:0.125};
 window.onload = init;
 
 function init(){
+	var touchable = 'createTouch' in document;
+    if(touchable) isBestQuality = false;
+    else isBestQuality = true;
+
+    if(isBestQuality)zoom=1;
 	//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 	info = document.getElementById("info");
 	menu = document.getElementById("interface");
 
 	glCanvas = document.getElementById("glCanvas");
+	miniGlCanvas = document.getElementById("miniGlCanvas");
+
+	glCanvas.style.webkitTransform = glCanvas.style.MozTransform = glCanvas.style.msTransform = glCanvas.style.OTransform ="scale3d("+zoom+".0, "+zoom+".0, 1.0)";
+	glCanvas.style.webkitTransformOrigin = glCanvas.style.MozTransformOrigin = glCanvas.style.msTransformOrigin = glCanvas.style.OTransformOrigin ="0 0 0";
 
 	initGui();
-	initMiniMap2D(256,256);
+	initMiniMap2D();
 	init3D();
 	initOIMO();
 	animate();
@@ -91,7 +95,7 @@ var mouse = { down:false, ox:0, oy:0, h:0, v:0, mx:0, my:0 };
 
 // map2d
 var camera_mini, scene_mini, renderer_mini, player_mini;
-var map2d, miniGl, tmpZone, ctxTest, ctx3, cc;
+var map2d, miniGl, tmpZone, ctxTest, ctx3, piy, cLevel;
 var lock={f:false, b:false, l:false, r:false, fl:false, fr:false, bl:false, br:false };
 var px = {space:0, f:0, b:0, l:0, r:0, m:0, fl:0, fr:0, bl:0, br:0};
 
@@ -106,6 +110,8 @@ var isMiniMapVisible = false;
 
 var gui = [];
 var bulletMat, bulletGeo;
+
+
 
 //=======================================
 //  OIMO INIT
@@ -129,7 +135,8 @@ function initOIMO() {
 //=======================================
 
 function init3D() {
-	vsize = new THREE.Vector3( window.innerWidth*0.5, window.innerHeight*0.5, (window.innerWidth*0.5)/(window.innerHeight*0.5) );
+	vsize = new THREE.Vector3( window.innerWidth/zoom, window.innerHeight/zoom, 0 );
+	vsize.z = vsize.x/vsize.y;
 	vPlayer = new THREE.Vector3();
 	vWorld = new THREE.Vector3(); 
 	vTarget = new THREE.Vector3();
@@ -140,7 +147,7 @@ function init3D() {
 
 
 
-	renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "lowp", antialias:false});
+	renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "lowp", antialias:isBestQuality });
 	renderer.setSize( vsize.x, vsize.y );
 	//renderer.domElement.style.cssText = "position:absolute; top:0; left:0;";
 
@@ -247,8 +254,8 @@ function scaleGeometry(g, s){
 }
 
 function onWindowResize() {
-	vsize.x = window.innerWidth*0.5;
-    vsize.y = window.innerHeight*0.5;
+	vsize.x = window.innerWidth/zoom;
+    vsize.y = window.innerHeight/zoom;
     vsize.z = vsize.x/vsize.y;
 	camera.aspect = vsize.z;
 	camera.updateProjectionMatrix();
@@ -386,7 +393,8 @@ function move() {
     player_mini.position.z = level.oz;//vPlayer.z;
 	player_mini.rotation.y = -easeRot.y;
     
-    var POS = new THREE.Vector3( level.ox, level.oy, level.oz )
+    var POS = new THREE.Vector3( level.ox, level.oy, level.oz );
+    //console.log(POS.y)
     vPlayer.lerp(POS, 0.1);
 
 	player.position.copy(vPlayer);
@@ -457,8 +465,8 @@ function onMouseDown( e ) {
 	    py = e.clientY;
 	}
 	mouse.down = true;
-	mouse.mx = ( px / (vsize.x*2) ) * 2 - 1;
-	mouse.my = - ( py / (vsize.y*2) ) * 2 + 1;
+	mouse.mx = ( px / (vsize.x*zoom) ) * 2 - 1;
+	mouse.my = - ( py / (vsize.y*zoom) ) * 2 + 1;
 	mouse.ox = px;
 	mouse.oy = py;
 	mouse.h = cam.horizontal;
@@ -489,8 +497,8 @@ function onMouseMove( e ) {
 		cam.vertical = (-(py - mouse.oy)*0.3) + mouse.v;
 		//moveCamera();
 	} else {
-		mouse.mx = ( px / vsize.x ) * 2 - 1;
-	    mouse.my = - ( py / vsize.y ) * 2 + 1;
+		mouse.mx = ( px / (vsize.x*zoom) ) * 2 - 1;
+	    mouse.my = - ( py / (vsize.y*zoom) ) * 2 + 1;
 		rayTest();
 	}
 }
@@ -543,30 +551,34 @@ function createHeightGradMaterial(color) {
 //  MAP 2D
 //-----------------------------------------------------
 
-function initMiniMap2D(w, h) {
-
-	renderer_mini = new THREE.WebGLRenderer({ precision: "lowp", antialias: false, alpha:false});
-	renderer_mini.setClearColor( 0x102030, 1 );
-	renderer_mini.setSize( w, h );
-	renderer_mini.domElement.style.cssText = "position:absolute; bottom:0px; left:0px;";
+function initMiniMap2D(W, H) {
+    setMapTestSize(8);
+	renderer_mini = new THREE.WebGLRenderer({ canvas:miniGlCanvas, precision: "lowp", antialias: false});
+	//renderer_mini.setClearColor( 0xFFFFFF, 1 );
+	renderer_mini.setSize( miniSize.w, miniSize.h );
+	//renderer_mini.setSize( px.space*2, px.space*2 );
+	//renderer_mini.domElement.style.cssText = "position:absolute; bottom:0px; left:0px;";
 	//renderer_mini.autoClear = false;
 	renderer_mini.sortObjects = false;
 	renderer_mini.sortElements = false;
 
 	map2d = document.getElementById( 'miniViewport' );
-	map2d.style.cssText = "display:none; position:absolute; bottom:10px; left:10px; pointer-events:none; width:256px; height:256px;";
+	map2d.style.cssText = "display:none; position:absolute; bottom:10px; left:10px; pointer-events:none; width:"+miniSize.w+"px; height:"+miniSize.h+"px;";
 	map2d.appendChild( renderer_mini.domElement );
 	
 
     if(isMiniMapVisible) map2d.display = "block";
 
 
-    var w = 500*worldSize;
-    camera_mini = new THREE.OrthographicCamera( -w , w , w , -w , 1, 4000*worldSize );
+    var w = (500*worldSize)*miniSize.f;
+   // var w = 100*worldSize;
+    camera_mini = new THREE.OrthographicCamera( -w , w , w , -w , 0.1, (4000*worldSize)*miniSize.f );
+   // camera_mini = new THREE.OrthographicCamera( -w , w , w , -w , 0.1, 200*worldSize );
     //camera_mini.scale.set(1,1,-1);
     //camera_mini = new THREE.PerspectiveCamera( 45, 1, 1, 10000 );
     player_mini = new THREE.Object3D();
-    camera_mini.position.y = 2000*worldSize;
+    camera_mini.position.y = (2000*worldSize)*miniSize.f;
+    //camera_mini.position.y = 100*worldSize;
     scene_mini = new THREE.Scene();
     scene_mini.add(player_mini);
     player_mini.add(camera_mini);
@@ -574,13 +586,17 @@ function initMiniMap2D(w, h) {
 
     player_mini.position.x = level.ox;
     player_mini.position.z = level.oz;
+    player_mini.position.y = 180*worldSize;//level.oy;
 
     // get collision color
     renderer_mini.render( scene_mini, camera_mini);
     miniGl = renderer_mini.getContext();
-    var pixels = new Uint8Array(1 * 1 * 4);
-    miniGl.readPixels(128, 128, 1, 1, miniGl.RGBA, miniGl.UNSIGNED_BYTE, pixels);
-    cc = {r:pixels[0], g:pixels[1], b:pixels[2], a:pixels[3]};
+
+    
+    tmpZone = new Uint8Array((px.space*2) * (px.space*2) * 4);
+    //var pixels = new Uint8Array(1 * 1 * 4);
+    //miniGl.readPixels(128, 128, 1, 1, miniGl.RGBA, miniGl.UNSIGNED_BYTE, pixels);
+    piy = {r:0, g:0, b:0, a:255};
 }
 
 function changelens(v) {
@@ -601,19 +617,18 @@ function display2DMap(b){
 		map2d.style.display = "block";
 	}else{
 		map2d.style.display = "none";
-		if(ctx3)ctx3.clearRect ( 0 , 0 , 256 , 256 );
+		if(ctx3)ctx3.clearRect ( 0 , 0 , miniSize.w , miniSize.h );
 		if(ctxTest)ctxTest.clearRect ( 0 , 0 , 16 , 16 );
 		//if(ctxTest2)ctxTest2.clearRect ( 0 , 0 , 64 , 64 );
 	}
 }
 
 function drawMap(){
-	if(px.space == 0) setMapTestSize(8);
 
 	renderer_mini.render( scene_mini, camera_mini );
+	miniGl.readPixels((miniSize.w*0.5)-px.space, (miniSize.h*0.5)-px.space, px.space*2, px.space*2, miniGl.RGBA, miniGl.UNSIGNED_BYTE, tmpZone);
+	//miniGl.readPixels(0, 0, px.space*2, px.space*2, miniGl.RGBA, miniGl.UNSIGNED_BYTE, tmpZone);
 
-	tmpZone = new Uint8Array((px.space*2) * (px.space*2) * 4);
-	miniGl.readPixels(128-px.space, 128-px.space, px.space*2, px.space*2, miniGl.RGBA, miniGl.UNSIGNED_BYTE, tmpZone);
 
 	// collision
 	lock.f = colorTest( px.f );
@@ -629,7 +644,20 @@ function drawMap(){
 	if(ctxTest)drawMapTest();
 
 	// height
-    level.y = Math.round(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*1)-180)*worldSize;
+	piy.r = tmpZone[px.m+0];
+	piy.v = tmpZone[px.m+1];
+	piy.b = tmpZone[px.m+2];
+	 
+	if(piy.r !== 0 && piy.v !==0 && piy.b !==0 ) cLevel = 3;
+	else{
+		if(piy.r !== 0) cLevel = 0;
+		if(piy.v !== 0) cLevel = 1;
+		if(piy.b !== 0) cLevel = 2;
+	}
+
+
+
+    level.y = Math.round(((tmpZone[px.m+0]+tmpZone[px.m+1]+tmpZone[px.m+2])*1)-180)*worldSize;
 
 	if(!level.firstDraw && isMiniMapVisible){
 		initPlayer();
@@ -641,7 +669,7 @@ function drawMap(){
 
 function colorTest(n){
 	var b = false;
-	if(tmpZone[n] == cc.r && tmpZone[n+1] == cc.g && tmpZone[n+2] == cc.b && tmpZone[n+3] == cc.a) b = true;
+	if(tmpZone[n] === 0 && tmpZone[n+1] === 0 && tmpZone[n+2] === 0 && tmpZone[n+3] === 255) b = true;
 	return b;
 }
 
@@ -668,18 +696,18 @@ function setMapTestSize(n){
 
 function initTopMap(){
     var map3 = document.createElement("canvas");
-    map3.width = 256; map3.height = 256;
+    map3.width = miniSize.w; map3.height = miniSize.h;
     map3.style.cssText = "position:absolute; bottom:0px; left:0px;";
     map2d.appendChild( map3 );
     
     ctx3 = map3.getContext("2d");
     ctx3.fillStyle = 'black';
-    ctx3.fillRect(0, 0, 1, 256);
-    ctx3.fillRect(255, 0, 1, 256);
-    ctx3.fillRect(1, 0, 254, 1);
-    ctx3.fillRect(1, 255, 254, 1);
+    ctx3.fillRect(0, 0, 1, miniSize.h);
+    ctx3.fillRect(miniSize.w-1, 0, 1, miniSize.h);
+    ctx3.fillRect(1, 0, miniSize.w-2, 1);
+    ctx3.fillRect(1, miniSize.h-1, miniSize.w-2, 1);
     ctx3.save();
-	ctx3.translate(128, 128);
+	ctx3.translate((miniSize.w*0.5), (miniSize.h*0.5));
 	drawPlayer(ctx3);
 	ctx3.restore();
 }
@@ -687,7 +715,7 @@ function initTopMap(){
 function initTestMap(){
 	var mapTest = document.createElement("canvas");
 	mapTest.width = 16; mapTest.height = 16;
-	mapTest.style.cssText = "position:absolute; bottom:120px; left:120px;";
+	mapTest.style.cssText = "position:absolute; bottom:"+((miniSize.w*0.5)-8)+"px; left:"+((miniSize.h*0.5)-8)+"px;";
     ctxTest = mapTest.getContext("2d");
     map2d.appendChild( mapTest );
 }
@@ -697,15 +725,21 @@ function drawMapTest() {
 	var id = ctxTest.createImageData(16,16);
 	var d  = id.data;
 	for (var i= 0; i<d.length;i++){ d[i] = 0;}
-	if(lock.f) dp(d, px.f);
-    if(lock.b) dp(d, px.b);
+	//if(lock.f) dp(d, px.f);
+    //if(lock.b) dp(d, px.b);
+    if(lock.b) dp(d, px.f);
+    if(lock.f) dp(d, px.b);
     if(lock.l) dp(d, px.l);
     if(lock.r) dp(d, px.r);
 
-    if(lock.fl) dp(d, px.fl);
+    /*if(lock.fl) dp(d, px.fl);
     if(lock.fr) dp(d, px.fr);
     if(lock.bl) dp(d, px.bl);
-    if(lock.br) dp(d, px.br);
+    if(lock.br) dp(d, px.br);*/
+    if(lock.bl) dp(d, px.fl);
+    if(lock.br) dp(d, px.fr);
+    if(lock.fl) dp(d, px.bl);
+    if(lock.fr) dp(d, px.br);
 	ctxTest.putImageData( id, 0, 0);
 }
 
@@ -734,7 +768,7 @@ function drawPlayer(ctx) {
 
 function initGui(){
 	gui[1] = new miniGUI.OnOff ({ container:menu, value:false, y:30,name:"Mini Map", onChange: function(value){ display2DMap(value) } });
-	gui[2] = new miniGUI.Slide ({ container:menu, value:1, y:60, name:"Map Scale", onChange: function(value){ changelens(10+value*490) } });
+	//gui[2] = new miniGUI.Slide ({ container:menu, value:1, y:60, name:"Map Scale", onChange: function(value){ changelens(10+value*490) } });
 }
 
 //-----------------------------------------------------
