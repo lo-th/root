@@ -34,49 +34,14 @@
 <script>
 'use strict';
 
-var zoom = 0.5;
 var isBestQuality= false;
 
-var info, menu, glCanvas, miniGlCanvas;
-//var miniSize = {w:256, h:256, f:1};
-//var miniSize = {w:128, h:128, f:0.5};
-//var miniSize = {w:64, h:64, f:0.25};
-var miniSize = {w:32, h:32, f:0.125};
-
-window.onload = init;
-
-function init(){
-	var touchable = 'createTouch' in document;
-    if(touchable) isBestQuality = false;
-    else isBestQuality = true;
-
-    if(isBestQuality)zoom=1;
-	//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-	info = document.getElementById("info");
-	menu = document.getElementById("interface");
-
-	glCanvas = document.getElementById("glCanvas");
-	miniGlCanvas = document.getElementById("miniGlCanvas");
-
-	levelOrigin = new THREE.Vector3(800*worldSize, 180*worldSize, 600*worldSize);
-	level = new THREE.Vector3(800*worldSize, 180*worldSize, 600*worldSize);
-
-	initMiniMap2D();
-	init3D();
-	initOIMO();
-	animate();
-
-	setInterval(move, 1000/60); 
-}
-
-var OimoWorker;
-var oimoInfos = "";
-
+var OimoWorker, oimoInfos = "";
 
 var worldSize = 0.1; 
-var FAR = 4000*worldSize;
-var camera, scene, renderer, content, bulletContent, sky, player, clock;
-var vPlayer, levelOrigin, level, vsize, ease, easeRot;
+var far = 4000*worldSize;
+var camera, scene, renderer, content, bulletContent, sky, player, clock, timer, zoom;
+var levelOrigin, level, vsize, ease, easeRot;
 
 var cfg = { speed:0.5*worldSize, maxSpeed:10*worldSize, posY:100*worldSize };
 var cam = { horizontal:90, vertical:90, distance:worldSize };
@@ -98,38 +63,49 @@ var bullets = [];
 var bulletMoves = [];
 var bulletMat, bulletGeo;
 
-//=======================================
-//  OIMO INIT
-//=======================================
+var info, menu, glCanvas, miniGlCanvas;
+//var miniSize = {w:256, h:256, f:1};
+//var miniSize = {w:128, h:128, f:0.5};
+//var miniSize = {w:64, h:64, f:0.25};
+var miniSize = {w:32, h:32, f:0.125};
 
-function initOIMO() {
-	OimoWorker = new Worker('js/worker.oimo.js');
-	OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
-	OimoWorker.postMessage({tell:"INIT", url:"../build/oimo.min.js"});
+window.onload = init;
 
-	OimoWorker.onmessage = function(e) {
-	   	var phase = e.data.tell;
-	   	if( phase == "RUN"){
-	   		oimoInfos = "oimo: " + e.data.infos[0] + " fps";
-	   	}
-	}
+function init(){
+	var touchable = 'createTouch' in document;
+    if(touchable){ isBestQuality = false; zoom=0.5;}
+    else{ isBestQuality = true; zoom=1;}
+
+	//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	info = document.getElementById("info");
+	menu = document.getElementById("interface");
+
+	glCanvas = document.getElementById("glCanvas");
+	miniGlCanvas = document.getElementById("miniGlCanvas");
+
+	levelOrigin = new THREE.Vector3(800*worldSize, 180*worldSize, 600*worldSize);
+	level = new THREE.Vector3(800*worldSize, 180*worldSize, 600*worldSize);
+
+	initMiniMap2D();
+	init3D();
+	initOIMO();
+	loop();
+
+	timer = setInterval(move, 1000/60); 
 }
 
-//=======================================
-//  THREE INIT
-//=======================================
+//===== THREE INIT =====
 
 function init3D() {
 	vsize = new THREE.Vector3( window.innerWidth, window.innerHeight, 0 );
 	vsize.z = vsize.x/vsize.y;
 
-	vPlayer = new THREE.Vector3();
 	ease = new THREE.Vector3();
 	easeRot = new THREE.Vector3();
 
 	//clock = new THREE.Clock();
 
-	renderer = new THREE.WebGLRenderer({ canvas:glCanvas, devicePixelRatio:zoom, precision: "lowp", antialias:isBestQuality });
+	renderer = new THREE.WebGLRenderer({ canvas:glCanvas, devicePixelRatio:zoom, antialias:isBestQuality });
 	renderer.setSize( vsize.x, vsize.y, true );
 	renderer.shadowMapEnabled = false;
 	//renderer.gammaOutput = true;
@@ -142,12 +118,10 @@ function init3D() {
 
 	player = new THREE.Object3D();
 	player.position.copy(levelOrigin);
-	vPlayer.copy(levelOrigin);
 	scene.add(player);
 
-	camera = new THREE.PerspectiveCamera( 70, vsize.z, worldSize, FAR );
-	camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
-	camera.lookAt( player.position );
+	camera = new THREE.PerspectiveCamera( 60, vsize.z, worldSize, far );
+	moveCamera();
 	
 	content = new THREE.Object3D();
 	scene.add(content);
@@ -167,7 +141,7 @@ function init3D() {
 
 	// backgroud
     var backMat = new THREE.MeshBasicMaterial( { map:createHeightGradMaterial([[0.5,0.45,0.35, 0],['#48608c','lightskyblue', 'skyblue','deepskyblue']]), side:THREE.BackSide, depthWrite: false } );
-    sky = new THREE.Mesh(new THREE.IcosahedronGeometry(FAR/2,1),backMat);
+    sky = new THREE.Mesh(new THREE.IcosahedronGeometry(far/2,1),backMat);
     scene.add( sky );
 
 	window.addEventListener( 'resize', onWindowResize, false );
@@ -236,14 +210,10 @@ function onWindowResize() {
 	renderer.setSize( vsize.x, vsize.y, true );
 }
 
-//-----------------------------------------------------
-//
 //  RENDER LOOP
-//
-//-----------------------------------------------------
 
-function animate() {
-	requestAnimationFrame( animate, renderer.domElement );
+function loop() {
+	requestAnimationFrame( loop, renderer.domElement );
 	renderer.render( scene, camera );
 	showInfo();
 }
@@ -275,20 +245,11 @@ function rayTest(sh) {
 function move() {
 	updateBullets();
 	
-	easeRot.y = cam.horizontal*ToRad;
-	var rot = unwrapDegrees(Math.round(cam.horizontal));
-
-	//acceleration
-	if (key.front) ease.z += cfg.speed;
-	if (key.back) ease.z -= cfg.speed;
-	if (key.left) ease.x += cfg.speed;
-	if (key.right) ease.x -= cfg.speed;
-	  
-	//speed limite
-	if (ease.x > cfg.maxSpeed) ease.x = cfg.maxSpeed;
-	if (ease.x < -cfg.maxSpeed) ease.x = -cfg.maxSpeed;
-	if (ease.z > cfg.maxSpeed) ease.z = cfg.maxSpeed;
-	if (ease.z < -cfg.maxSpeed) ease.z = -cfg.maxSpeed;
+	//acceleration and speed limite
+	if (key.front) ease.z = (ease.z > cfg.maxSpeed) ?  cfg.maxSpeed : ease.z+cfg.speed;
+	if (key.back)  ease.z = (ease.z < -cfg.maxSpeed)? -cfg.maxSpeed : ease.z-cfg.speed;
+	if (key.left)  ease.x = (ease.x > cfg.maxSpeed) ?  cfg.maxSpeed : ease.x+cfg.speed;
+	if (key.right) ease.x = (ease.x < -cfg.maxSpeed)? -cfg.maxSpeed : ease.x-cfg.speed;
 
 	//deceleration
 	if (!key.front && !key.back) {
@@ -303,9 +264,11 @@ function move() {
 	}
 	
 	// stop if no move
-	if (ease.x == 0 && ease.z == 0 && !mouse.down ) return;//&& level.firstDraw ) return;
+	if (ease.x == 0 && ease.z == 0 && !mouse.down ) return;
 
 	// find direction of player
+	easeRot.y = cam.horizontal*ToRad;
+	var rot = unwrapDegrees(Math.round(cam.horizontal));
 	easeRot.x = Math.sin(easeRot.y) * ease.x + Math.cos(easeRot.y) * ease.z;
 	easeRot.z = Math.cos(easeRot.y) * ease.x - Math.sin(easeRot.y) * ease.z;
 
@@ -351,15 +314,10 @@ function move() {
     player_mini.position.z = levelOrigin.z;
 	player_mini.rotation.y = -easeRot.y;
 
-    vPlayer.lerp(levelOrigin, 0.1);
+    player.position.lerp(levelOrigin, 0.1);
+	sky.position.copy(player.position);
 
-	player.position.copy(vPlayer);
-	sky.position.copy(vPlayer);
-
-	camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
-	camera.lookAt( player.position );
-
-	
+	moveCamera();
 }
 
 //  BULLET
@@ -368,7 +326,7 @@ function shoot() {
 	var n = bullets.length;
 	var bullet = new THREE.Mesh( bulletGeo, bulletMat );
 	bulletContent.add(bullet);
-	bullet.position.copy(vPlayer);
+	bullet.position.copy(player.position);
 	
 	bulletMoves[n] = marker.position.clone();
 	bullets[n] = bullet;
@@ -394,8 +352,8 @@ function destroyBullet(n) {
 //  MOUSE
 
 function moveCamera() {
-    camera.position.copy(Orbit(center, cam.horizontal, cam.vertical, cam.distance));
-    camera.lookAt(center);
+    camera.position.copy(Orbit(player.position, cam.horizontal, cam.vertical, cam.distance));
+    camera.lookAt(player.position);
 }
 
 function onMouseDown( e ) {
@@ -439,7 +397,6 @@ function onMouseMove( e ) {
 		document.body.style.cursor = 'move';
 		cam.horizontal =((px - mouse.ox)*0.3) + mouse.h;
 		cam.vertical = (-(py - mouse.oy)*0.3) + mouse.v;
-		//moveCamera();
 	} else {
 		mouse.mx = ( px / vsize.x ) * 2 - 1;
 	    mouse.my = - ( py / vsize.y ) * 2 + 1;
@@ -650,4 +607,52 @@ function Orbit(origine, horizontal, vertical, distance) {
 	return p;
 }
 
-</script></body></html>
+//===== OIMO INIT =====
+
+function initOIMO() {
+	OimoWorker = new Worker(window.URL.createObjectURL( new Blob([document.querySelector('#workerOimo').textContent], {type : 'text/javascript'}) ));//new Worker('js/worker.oimo.js');
+	OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
+	OimoWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/oimo.min.js" });
+
+	OimoWorker.onmessage = function(e) {
+	   	var phase = e.data.tell;
+	   	if( phase == "RUN"){
+	   		oimoInfos = "oimo: " + e.data.infos[0] + " fps";
+	   	}
+	}
+}
+
+</script>
+
+<!--======== OIMO WORKER =========-->
+
+<script id="workerOimo" type="javascript/worker">
+
+'use strict';
+var world, timer, infos = [];
+
+self.onmessage = function (e) {
+	var p = e.data.tell;
+
+	if(p == "INIT"){
+		importScripts(e.data.url);
+		// Init world
+        OIMO.WORLD_SCALE = 1;
+        OIMO.INV_SCALE = 1;
+        world = new OIMO.World(1/60, 2, 8);
+        world.gravity.init(0,-10,0);
+        timer = setInterval(update, 1000/60); 
+	}
+}
+
+var update = function(){
+	world.step();
+
+	infos[0] = world.performance.fpsint;
+	self.postMessage({tell:"RUN", infos:infos});
+}
+
+</script>
+
+
+</body></html>
