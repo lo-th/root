@@ -610,9 +610,11 @@ function Orbit(origine, horizontal, vertical, distance) {
 //===== OIMO INIT =====
 
 function initOIMO() {
-	OimoWorker = new Worker(window.URL.createObjectURL( new Blob([document.querySelector('#workerOimo').textContent], {type : 'text/javascript'}) ));//new Worker('js/worker.oimo.js');
+	OimoWorker = new Worker('js/worker.oimo.js');
+	//OimoWorker = new Worker(window.URL.createObjectURL( new Blob([document.querySelector('#workerOimo').textContent], {type : 'text/javascript'}) ));//new Worker('js/worker.oimo.js');
 	OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
-	OimoWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/oimo.min.js" });
+	//OimoWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/oimo.min.js" });
+	OimoWorker.postMessage({tell:"INIT"});
 
 	OimoWorker.onmessage = function(e) {
 	   	var phase = e.data.tell;
@@ -626,7 +628,7 @@ function initOIMO() {
 
 <!--======== OIMO WORKER =========-->
 
-<script id="workerOimo" type="javascript/worker">
+<!--<script id="workerOimo" type="javascript/worker">
 
 'use strict';
 var world, timer, infos = [];
@@ -652,7 +654,7 @@ var update = function(){
 	self.postMessage({tell:"RUN", infos:infos});
 }
 
-</script>
+</script>-->
 
 
 </body></html>
