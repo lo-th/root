@@ -5,15 +5,15 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=11,chrome=1">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<style>		
-	*{  margin: 0; padding: 0; border: 0; }
-	body { background-color:#000; color:#000; font:10px sans-serif;}
-    #info{  position:absolute; left:10px; top:10px; width: 140px; height: 120px; pointer-events:none;}
-    #interface{ position: absolute; left:0; top:0; width:0px; height:0px; }
-    #glCanvas{ position: absolute; top: 0; left: 0; display:block;}
-    #miniGlCanvas{ position:absolute; bottom:10px; left:10px; pointer-events:none;}
-    #miniTop{ position:absolute; bottom:10px; left:10px; pointer-events:none;}
-    #mapTest{ position:absolute; bottom:18px; left:18px; pointer-events:none;}
+<style>
+*{  margin: 0; padding: 0; border: 0; pointer-events:none; }
+html { width:100%; height:100%; }
+body { background-color:#000; color:#000; font:10px sans-serif; width:100%; height:100%; pointer-events:auto;}
+#info{ position:absolute; left:10px; top:10px; width:140px; height:120px; }
+#glCanvas{ position: absolute; top: 0; left: 0; display:block;}
+#miniGlCanvas{ position:absolute; bottom:10px; left:10px;}
+#miniTop{ position:absolute; bottom:10px; left:10px;}
+#mapTest{ position:absolute; bottom:32px; left:32px;}
 </style>
 <script src="build/three.min.js"></script>
 <script src="build/sea3d.min.js"></script>
@@ -66,8 +66,8 @@ var bulletMat, bulletGeo;
 var info, menu, glCanvas, miniGlCanvas;
 //var miniSize = {w:256, h:256, f:1};
 //var miniSize = {w:128, h:128, f:0.5};
-//var miniSize = {w:64, h:64, f:0.25};
-var miniSize = {w:32, h:32, f:0.125};
+var miniSize = {w:64, h:64, f:0.25};
+//var miniSize = {w:32, h:32, f:0.125};
 
 window.onload = init;
 
@@ -91,7 +91,7 @@ function init(){
 	initOIMO();
 	loop();
 
-	timer = setInterval(move, 1000/60); 
+	timer = setInterval(move, 1e3/60); 
 }
 
 //===== THREE INIT =====
@@ -113,6 +113,7 @@ function init3D() {
 	renderer.autoClear = false;
 
 	scene = new THREE.Scene();
+	scene.add( new THREE.AmbientLight( 0x383838 ) );
 	projector = new THREE.Projector();
 	raycaster = new THREE.Raycaster();
 
@@ -129,8 +130,8 @@ function init3D() {
 	bulletContent = new THREE.Object3D();
 	scene.add(bulletContent);
 
-	bulletMat = new THREE.MeshBasicMaterial({ color:0x303030 });
-	bulletGeo = new THREE.SphereGeometry(5*worldSize,6,6);
+	bulletMat = new THREE.MeshBasicMaterial({ color:0xffffff });
+	bulletGeo = new THREE.SphereGeometry(8*worldSize,6,6);
 
 	// marker
 	var geometry = new THREE.CylinderGeometry( 0, 3*worldSize, 10*worldSize, 3 );
@@ -145,17 +146,20 @@ function init3D() {
     scene.add( sky );
 
 	window.addEventListener( 'resize', onWindowResize, false );
-	document.addEventListener( 'keydown', onKeyDown, false );
-	document.addEventListener( 'keyup', onKeyUp, false );
+	//document.addEventListener( 'keydown', onKeyDown, false );
+	//document.addEventListener( 'keyup', onKeyUp, false );
 
-	glCanvas.addEventListener( 'mousemove', onMouseMove, false );
-	glCanvas.addEventListener( 'mousedown', onMouseDown, false );
-	glCanvas.addEventListener( 'mouseup', onMouseUp, false );
-	glCanvas.addEventListener( 'mouseout', onMouseUp, false );
+	bindKeys();
 
-	glCanvas.addEventListener( 'touchstart', onMouseDown, false );
-	glCanvas.addEventListener( 'touchend', onMouseUp, false );
-	glCanvas.addEventListener( 'touchmove', onMouseMove, false );
+	var body = document.body;
+	body.addEventListener( 'mousemove', onMouseMove, false );
+	body.addEventListener( 'mousedown', onMouseDown, false );
+	body.addEventListener( 'mouseup', onMouseUp, false );
+	body.addEventListener( 'mouseout', onMouseUp, false );
+
+	body.addEventListener( 'touchstart', onMouseDown, false );
+	body.addEventListener( 'touchend', onMouseUp, false );
+	body.addEventListener( 'touchmove', onMouseMove, false );
 
 	loadSea3dDirect();
 }
@@ -181,7 +185,8 @@ function loadSea3dDirect(){
     		else{ 
     			content.add( m );
     			omat = m.material;
-    			mat = new THREE.MeshBasicMaterial({map:m.material.map,transparent:m.material.transparent, opacity:m.material.opacity });
+    			if(m.material.map) mat = new THREE.MeshBasicMaterial({map:m.material.map,transparent:m.material.transparent, opacity:m.material.opacity });
+    			else mat = new THREE.MeshBasicMaterial({ color:m.material.color, transparent:m.material.transparent, opacity:m.material.opacity });
     			if(m.name == 'balcon' || m.name == 'windows' || m.name == 'cadres') mat.side = THREE.DoubleSide;
     			m.material = mat;
 
@@ -406,7 +411,32 @@ function onMouseMove( e ) {
 
 //  KEYBOARD
 
-function onKeyDown ( event ) {
+function bindKeys() {
+	document.onkeydown = function(e) {
+	    e = e || window.event;
+		switch ( e.keyCode ) {
+		    case 38: case 87: case 90: key.front = true; break; // up, W, Z
+			case 40: case 83: key.back = true; break;           // down, S
+			case 37: case 65: case 81: key.left = true; break;  // left, A, Q
+			case 39: case 68: key.right = true; break;          // right, D
+			case 17: case 67: key.crouch = false; break;        // ctrl, c
+			case 32: key.jump = false; break;                   // space
+		}
+	}
+	document.onkeyup = function(e) {
+	    e = e || window.event
+		switch( e.keyCode ) {
+			case 38: case 87: case 90: key.front = false; break; // up, W, Z
+			case 40: case 83: key.back = false; break;           // down, S
+			case 37: case 65: case 81: key.left = false; break;  // left, A, Q
+			case 39: case 68: key.right = false; break;          // right, D
+			case 17: case 67: key.crouch = false; break;         // ctrl, c
+			case 32: key.jump = false; break;                    // space
+		}
+	}
+	self.focus();
+}
+/*function onKeyDown ( event ) {
 	switch ( event.keyCode ) {
 	    case 38: case 87: case 90: key.front = true; break; // up, W, Z
 		case 40: case 83: key.back = true; break;           // down, S
@@ -426,7 +456,7 @@ function onKeyUp ( event ) {
 		case 17: case 67: key.crouch = false; break;         // ctrl, c
 		case 32: key.jump = false; break;                    // space
 	}
-}
+}*/
 
 //  TEXTURE
 
