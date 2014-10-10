@@ -8,8 +8,8 @@
 <style>
 * {  margin: 0; padding: 0; border: 0;}
 html{overflow:hidden; width:100%; height:100%;}
-body{ background-color: #000000; overflow: hidden; color:#FFFFFF; font-family:monospace; font-size: 10px;}
-#info{ pointer-events:none; position: absolute; left:10px; top:10px; width: 200px; height: 200px; }
+body{ background-color: #000000; overflow: hidden; color:#FFFFFF; font-family:monospace; font-size: 11px;}
+#info{ pointer-events:none; position: absolute; left:10px; top:10px; width: 400px; height: 500px; }
 #container{ position: absolute; left:0px; top:0;  }
 #container canvas { position: absolute; left:0; top:0; border: 0 none;}
 </style>
@@ -20,14 +20,35 @@ body{ background-color: #000000; overflow: hidden; color:#FFFFFF; font-family:mo
 </head>
 <body>
 <div id='container'></div>
-<div id='info'>X-ray shader</div>
+<div id='info'>X-ray shader<br><br>
+Glow Shader<br>
+&nbsp;c : definie le glow  interieur <0.5 ou exterieur > 5<br>
+&nbsp;p : definie la puissance de l'effet diffus ou precis<br>
+Add Color<br>
+&nbsp;La couleur de l'effet<br>
+Rim Light<br>
+&nbsp;useRim : Cree une lumiere diffuse et definie ca puissance<br>
+&nbsp;rimPower : diffus ou precis<br>
+Extra Option<br>
+&nbsp;useScreen : augmente la luminosité<br>
+&nbsp;blending : juste pour test par default add<br>
+Back Side<br>
+&nbsp;cree un model inversé pour l'interieur<br>
+&nbsp;opacity : change l'opacité du model interieur<br>
+Perlin Noise<br>
+&nbsp;noise power : definie la visibilité du bruit<br>
+&nbsp;scale : change la complexité du bruit<br>
+&nbsp;animated : bruit animé ou pas <br>
+&nbsp;speed : vitesse de l'animation du bruit<br>
+&nbsp;Mesh projection : change le style de projection du bruit<br>
+</div>
 <script>
 var envTexture = null;
 var materialFront = null;
 var materialBack = null;
 
-var settings = { c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.0, useRim:1, time:0 , useScreen:false, blending:'add', showBack:false, model:'test' };
-var noiseSetting = {scale:10, animated:false, speed:0.0035, projection:false};
+var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'test', opacity:0.1 };
+var noiseSetting = {scale:10, animated:false, speed:0.003, projection:false};
 
 var gui;
 
@@ -55,10 +76,15 @@ var mainShader={// type1
         tMatCap: {type: 't', value: null},
         noiseMat: {type: 't', value: null},
         glowColor: {type: 'c', value: null},
+        opacity: {type: 'f', value: 1},
         noise: {type: 'f', value: 0},
         useScreen: {type: 'f', value: 0},
+        useGlow: {type: 'f', value: 1},
+        useGlowColor: {type: 'f', value: 1},
         c: {type: 'f', value: 1.0},
         p: {type: 'f', value: 1.4},
+        useRim: {type: 'f', value: 0},
+        rimPower: {type: 'f', value: 0},
         noiseProjection: {type: 'f', value: 0}
     },
     fs:[
@@ -67,13 +93,20 @@ var mainShader={// type1
         'uniform vec2 uu;',
         'uniform float noise;',
         'uniform vec3 glowColor;',
+        'uniform float opacity;',
+        'uniform float useGlow;',
+        'uniform float useGlowColor;',
+        'uniform float useRim;',
+        'uniform float rimPower;',
         'varying float intensity;',
         'uniform float useScreen;',
         'uniform float noiseProjection;',
         'varying vec2 vN;',
         'varying vec2 vU;',
         'varying vec2 vUv;',
-        'float random(vec3 scale,float seed){return fract(sin(dot(gl_FragCoord.xyz+seed,scale))*43758.5453+seed);}',
+        'varying vec3 vEye;',
+        'varying vec3 vNormal;',
+        //'float random(vec3 scale,float seed){return fract(sin(dot(gl_FragCoord.xyz+seed,scale))*43758.5453+seed);}',
 
         'void main() {',
             'vec3 base = texture2D( tMatCap, vN ).rgb;',
@@ -81,34 +114,55 @@ var mainShader={// type1
             //'vec2 uu = vec2( 1., 1. );',
             'vec3 bnoise = texture2D( noiseMat, vU ).rgb;',
 
+            'if( useRim > 0. ) {',
+                'float f = rimPower * abs( dot( vNormal, normalize( vEye ) ) );',
+                'f = useRim * ( 1. - smoothstep( 0.0, 1., f ) );',
+                'base += vec3( f );',
+            '}',
             'if( useScreen == 1. ) {',
                 'base = vec3( 1. ) - ( vec3( 1. ) - base ) * ( vec3( 1. ) - base );',
             '}',
             // noise
             //'base += noise * ( .5 - random( vec3( 1. ), length( gl_FragCoord ) ) );',
             'base += noise * bnoise;',
+            'if( useGlowColor == 1. ) {',
+                'base *= glowColor;',
+            '}',
             // glow color
-            'vec3 glow = glowColor * intensity;',
-            'base *= glow;',
+            'if( useGlow == 1. ) {',
+                //'vec3 glow = glowColor * intensity;',
+                'base *= intensity;',
+            '}',
 
-            'gl_FragColor = vec4( base, 1. );',
+            'gl_FragColor = vec4( base, opacity );',
         '}'
     ].join("\n"),
     vs:[
         'uniform float c;',
         'uniform float p;',
+        'uniform float useRim;',
+        'uniform float useGlow;',
+        'uniform float useGlowColor;',
         'varying vec2 vN;',
         'varying vec2 vU;',
         'varying vec2 vUv;',
+        'varying vec3 vEye;',
+        'varying vec3 vNormal;',
         'varying float intensity;',
         'uniform float noiseProjection;',
         'void main() {',
             'vec3 e = normalize( vec3( modelViewMatrix * vec4( position, 1.0 ) ) );',
             'vec3 n = normalize( normalMatrix * normal );',
+            'vNormal = n;',
             'vec3 g = normalize( vec3( projectionMatrix * modelViewMatrix * vec4( position, 1.0 )));',
             //'vec3 h = normalize( vec3( projectionMatrix * modelViewMatrix ));',
             //'vec3 g = normalize( normalMatrix * viewVector );',
-            'intensity = pow( c - dot(n, g), p );',
+            'if( useGlow == 1. ) {',
+                'intensity = pow( c - dot(n, g), p );',
+            '} else {',
+                'intensity = 0.;',
+            '}',
+
             'vec3 r = reflect( e, n );',
             'float m = 2. * sqrt( pow( r.x, 2. ) + pow( r.y, 2. ) + pow( r.z + 1., 2. ) );',
             'vN = r.xy / m + .5;',
@@ -119,6 +173,11 @@ var mainShader={// type1
             '} else {',
                 'vU = g.xy;',
             '}',
+            'if( useRim > 0. ) {',
+                'vEye = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;',
+            '} else {',
+                'vEye = vec3( 0. );',
+            '}',
 
             //'vU = uv;',//g.xy;',//vec2(h.x, h.y);',//g.xy*scale;',////uv;',//
            // 'vU.x = vU.x+(g.x*0.5);',
@@ -128,15 +187,43 @@ var mainShader={// type1
     ].join("\n")
 };
 
+var backShader={
+    uniforms:{ 
+        tMatCap: {type: 't', value: null},
+        noiseMat: {type: 't', value: null},
+        glowColor: {type: 'c', value: null},
+        opacity: {type: 'f', value: 0.1},
+        noise: {type: 'f', value: 0},
+        useScreen: {type: 'f', value: 0},
+        useGlow: {type: 'f', value: 1},
+        useGlowColor: {type: 'f', value: 1},
+        c: {type: 'f', value: 1.0},
+        p: {type: 'f', value: 1.4},
+        useRim: {type: 'f', value: 0},
+        rimPower: {type: 'f', value: 0},
+        noiseProjection: {type: 'f', value: 0}
+    }
+}
+
+function clone(obj) {
+    if (null == obj || "object" != typeof obj) return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+    }
+    return copy;
+}
+
 function initShader(){
 	// la texture pojeté 
 	envTexture = THREE.ImageUtils.loadTexture( 'env.jpg' );
 
-	var currentShader = mainShader;
+	color = new THREE.Color(settings.color.replace("#", "0x"));
+
 	materialFront = new THREE.ShaderMaterial({
-	    uniforms: currentShader.uniforms,
-		vertexShader: currentShader.vs,
-		fragmentShader: currentShader.fs,
+	    uniforms: mainShader.uniforms,
+		vertexShader: mainShader.vs,
+		fragmentShader: mainShader.fs,
 		side: THREE.FrontSide,//DoubleSide,
 		blending: THREE.AdditiveBlending,
 		wrapping: THREE.ClampToEdgeWrapping,
@@ -146,17 +233,19 @@ function initShader(){
 		depthWrite: true,
 		transparent: true
 	});
-
+	materialFront.uniforms.opacity.value = 1;
 	materialFront.uniforms.c.value = settings.c;
 	materialFront.uniforms.p.value = settings.p;
 	materialFront.uniforms.noise.value = settings.noise;
 	materialFront.uniforms.tMatCap.value = envTexture;
-	materialFront.uniforms.glowColor.value =  new THREE.Color(settings.color.replace("#", "0x"));
+	materialFront.uniforms.glowColor.value = color; 
+
+	//__________________________________________________
 
 	materialBack = new THREE.ShaderMaterial({
-	    uniforms: currentShader.uniforms,
-		vertexShader: currentShader.vs,
-		fragmentShader: currentShader.fs,
+	    uniforms: backShader.uniforms,
+		vertexShader: mainShader.vs,
+		fragmentShader: mainShader.fs,
 		side: THREE.BackSide,
 		blending: THREE.AdditiveBlending,
 		wrapping: THREE.ClampToEdgeWrapping,
@@ -166,11 +255,12 @@ function initShader(){
 		depthWrite: true,
 		transparent: true
 	});
-
+	materialBack.uniforms.opacity.value = settings.opacity;
 	materialBack.uniforms.c.value = settings.c;
 	materialBack.uniforms.p.value = settings.p;
 	materialBack.uniforms.noise.value = settings.noise;
 	materialBack.uniforms.tMatCap.value = envTexture;
+	materialBack.uniforms.glowColor.value = color;
 	materialBack.uniforms.glowColor.value.setHex( settings.color.replace("#", "0x"));
 	materialBack.visible = settings.showBack;
 }
@@ -218,28 +308,45 @@ function clearAllModel(){
 function initGUI(){
 	gui = new dat.GUI();
 
-    var top = gui.addFolder('Glow Shader');
-
-	top.add( settings, 'c' ).min(0.0).max(1.0).step(0.01).name("c").listen().onChange( function(value) {changeUniforms('c')});
-	top.add( settings, 'p' ).min(0.0).max(2.0).step(0.01).name("p").listen().onChange( function(value) {changeUniforms('p')});
-	top.add( settings, 'noise' ).min(0.0).max(1).step(0.01).name("noise").listen().onChange( function(value) {changeUniforms('noise')});
-	top.add( settings, 'useScreen').name("useScreen").onChange( function(value) { changeUniforms('useScreen') });
-	top.add( settings, 'showBack').name("show Back").onChange( function(value) { changeUniforms('showBack') });
-	var glowColor = top.addColor( settings, 'color' ).name('Glow Color').listen().onChange( function(value) {changeUniforms('glowColor')});
-	//top.add(settings, 'side', [ 'back', 'front', 'double' ] ).onChange( function(value) {changeUniforms('side')});;
-	top.add(settings, 'blending', [ 'add', 'normal', 'sub', 'mul' ] ).onChange( function(value) {changeUniforms('blending')});
+	var top = gui.addFolder('3d Models');
+	top.add(settings, 'model', [ 'test', 'onkba',  'skull', 'head' ] ).onChange( function(value) {changeModel()});
 	top.open();
 
-	var top1 = gui.addFolder('3d Models');
-	top1.add(settings, 'model', [ 'test', 'onkba',  'skull', 'head' ] ).onChange( function(value) {changeModel()});
+    var top0 = gui.addFolder('Glow Shader');
+
+    top0.add( settings, 'useGlow').name("useGlow").onChange( function(value) { changeUniforms('useGlow') });
+	top0.add( settings, 'c' ).min(0.0).max(1.0).step(0.01).name("c").listen().onChange( function(value) {changeUniforms('c')});
+	top0.add( settings, 'p' ).min(0.0).max(2.0).step(0.01).name("p").listen().onChange( function(value) {changeUniforms('p')});
+	top0.open();
+	
+	var top1 = gui.addFolder('Add Color');
+	top1.add( settings, 'useGlowColor').name("useGlowColor").onChange( function(value) { changeUniforms('useGlowColor') });
+	top1.addColor( settings, 'color' ).name('Glow Color').listen().onChange( function(value) {changeUniforms('glowColor')});
 	top1.open();
 
-	var top2 = gui.addFolder('Perlin Noise');
-	top2.add( noiseSetting, 'scale' ).min(1.0).max(50.).step(0.1).name("scale").onChange( function(value) {changeNoiseUniforms('scale')});
-	top2.add( noiseSetting, 'animated' ).name("animated").onChange( function(value) {changeNoiseUniforms('scale')});
-	top2.add( noiseSetting, 'speed' ).min(0.0001).max(0.1000).step(0.001).name("speed").onChange( function(value) {});
-	top2.add( noiseSetting, 'projection').name("projection").onChange( function(value) { changeNoiseUniforms('projection') });
+	var top2 = gui.addFolder('Rim Light');
+	top2.add( settings, 'useRim').min(0.00).max(1.00).step(0.01).name("useRim").listen().onChange( function(value) { changeUniforms('useRim') });
+	top2.add( settings, 'rimPower' ).min(0.00).max(2.00).step(0.01).name("rimPower").onChange( function(value) {changeUniforms('rimPower')});
 	top2.open();
+	settings.useRim = 0;
+
+	var top3 = gui.addFolder('Extra Option');
+	top3.add( settings, 'useScreen').name("useScreen").onChange( function(value) { changeUniforms('useScreen') });
+	top3.add(settings, 'blending', [ 'add', 'normal', 'sub', 'mul' ] ).onChange( function(value) {changeUniforms('blending')});
+	top3.open();
+
+	var top4 = gui.addFolder('Back Side');
+	top4.add( settings, 'showBack').name("show Back").onChange( function(value) { changeUniforms('showBack') });
+	top4.add( settings, 'opacity' ).min(0.0).max(1.0).step(0.01).name("opacity").listen().onChange( function(value) {changeUniforms('opacity')});
+	top4.open();
+	
+	var top20 = gui.addFolder('Perlin Noise');
+	top20.add( settings, 'noise' ).min(0.0).max(1).step(0.01).name("noise power").listen().onChange( function(value) {changeUniforms('noise')});
+	top20.add( noiseSetting, 'scale' ).min(1.0).max(50.).step(0.1).name("scale").onChange( function(value) {changeNoiseUniforms('scale')});
+	top20.add( noiseSetting, 'animated' ).name("animated").onChange( function(value) {changeNoiseUniforms('scale')});
+	top20.add( noiseSetting, 'speed' ).min(0.0001).max(0.1000).step(0.001).name("speed").onChange( function(value) {});
+	top20.add( noiseSetting, 'projection').name("Mesh projection").onChange( function(value) { changeNoiseUniforms('projection') });
+	top20.open();
 }
 
 function changeModel(){
@@ -281,12 +388,14 @@ function changeUniforms(type){
 		else if(settings.blending == 'mul') materialFront.blending = materialBack.blending = THREE.MultiplyBlending;
 		else materialFront.blending = materialBack.blending = THREE.NormalBlending;
 	}
-	else if(type=='useScreen'){
-		if(settings.useScreen){ 
+	else if(type=='opacity'){
+		materialBack.uniforms[ type ].value = settings[ type ]; 
+	}
+	else if(type=='useScreen' || type=='useGlow' || type=='useGlowColor'){
+		if(settings[ type ]){ 
 			materialFront.uniforms[ type ].value = 1;
 			materialBack.uniforms[ type ].value = 1;
-		}
-		else {
+		} else {
 			materialFront.uniforms[ type ].value = 0;
 			materialBack.uniforms[ type ].value = 0;
 		}
