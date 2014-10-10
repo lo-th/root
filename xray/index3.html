@@ -47,8 +47,10 @@ var envTexture = null;
 var materialFront = null;
 var materialBack = null;
 
-var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'test', opacity:0.1 };
+var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'test', opacity:0.1, env:'' };
 var noiseSetting = {scale:10, animated:false, speed:0.003, projection:false};
+
+var envLists = ['env1', 'env2', 'env3', 'env4', 'env5', 'env6', 'env7', 'env8', 'env9', 'env10'];
 
 var gui;
 
@@ -214,6 +216,12 @@ function clone(obj) {
     return copy;
 }
 
+function loadNewEnv(){
+	envTexture = THREE.ImageUtils.loadTexture( 'images/'+settings.env +'.jpg' );
+	materialFront.uniforms.tMatCap.value = envTexture;
+	materialBack.uniforms.tMatCap.value = envTexture;
+}
+
 function initShader(){
 	// la texture pojeté 
 	envTexture = THREE.ImageUtils.loadTexture( 'env.jpg' );
@@ -347,6 +355,10 @@ function initGUI(){
 	top20.add( noiseSetting, 'speed' ).min(0.0001).max(0.1000).step(0.001).name("speed").onChange( function(value) {});
 	top20.add( noiseSetting, 'projection').name("Mesh projection").onChange( function(value) { changeNoiseUniforms('projection') });
 	top20.open();
+
+	var top30 = gui.addFolder('Environnement Bitmap');
+	top30.add(settings, 'env',  envLists).onChange( function(value) { loadNewEnv() });
+	top30.open();
 }
 
 function changeModel(){
