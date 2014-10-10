@@ -72,7 +72,7 @@ function renderLoop(){
 
 //--------------------------------- X-RAY SHADER
 
-var mainShader={// type1
+var mainShader={
     attributes:{},
     uniforms:{ 
         tMatCap: {type: 't', value: null},
@@ -111,9 +111,9 @@ var mainShader={// type1
         //'float random(vec3 scale,float seed){return fract(sin(dot(gl_FragCoord.xyz+seed,scale))*43758.5453+seed);}',
 
         'void main() {',
+            // reflexion map
             'vec3 base = texture2D( tMatCap, vN ).rgb;',
-
-            //'vec2 uu = vec2( 1., 1. );',
+            // noise map
             'vec3 bnoise = texture2D( noiseMat, vU ).rgb;',
 
             'if( useRim > 0. ) {',
@@ -132,7 +132,6 @@ var mainShader={// type1
             '}',
             // glow color
             'if( useGlow == 1. ) {',
-                //'vec3 glow = glowColor * intensity;',
                 'base *= intensity;',
             '}',
 
@@ -157,19 +156,14 @@ var mainShader={// type1
             'vec3 n = normalize( normalMatrix * normal );',
             'vNormal = n;',
             'vec3 g = normalize( vec3( projectionMatrix * modelViewMatrix * vec4( position, 1.0 )));',
-            //'vec3 h = normalize( vec3( projectionMatrix * modelViewMatrix ));',
-            //'vec3 g = normalize( normalMatrix * viewVector );',
             'if( useGlow == 1. ) {',
                 'intensity = pow( c - dot(n, g), p );',
             '} else {',
                 'intensity = 0.;',
             '}',
-
             'vec3 r = reflect( e, n );',
             'float m = 2. * sqrt( pow( r.x, 2. ) + pow( r.y, 2. ) + pow( r.z + 1., 2. ) );',
             'vN = r.xy / m + .5;',
-            //'vec2 scale = vec2(20.0, 20.0);',
-            //'vec2 scale = vec2(0.1, 0.1);',
             'if( noiseProjection == 1. ) {',
                 'vU = uv;',
             '} else {',
@@ -180,10 +174,6 @@ var mainShader={// type1
             '} else {',
                 'vEye = vec3( 0. );',
             '}',
-
-            //'vU = uv;',//g.xy;',//vec2(h.x, h.y);',//g.xy*scale;',////uv;',//
-           // 'vU.x = vU.x+(g.x*0.5);',
-            //"vUv = uv;",
             'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1. );',
         '}'
     ].join("\n")
