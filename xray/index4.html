@@ -48,7 +48,7 @@ var materialFront = null;
 var materialBack = null;
 
 var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'test', opacity:0.1, env:'' };
-var noiseSetting = {scale:10, animated:false, speed:0.003, projection:false};
+var noiseSetting = {scale:20, animated:false, speed:0.003, projection:false};
 
 var envLists = ['env1', 'env2', 'env3', 'env4', 'env5', 'env6', 'env7', 'env8', 'env9', 'env10'];
 
@@ -465,7 +465,7 @@ function update2D(){
 
 var perlin={
     uniforms:{
-    	scale: {type: 'f', value: 10.0},
+    	scale: {type: 'f', value: 20.0},
         time: {type: 'f', value: 0}
     },
     fs:[
