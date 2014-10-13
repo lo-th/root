@@ -346,7 +346,7 @@ function initGUI(){
 	settings.useRim = 0;
 
 	var top3 = gui.addFolder('Extra Option');
-	top2.add( settings, 'useExtraRim').name("useExtraRim").onChange( function(value) { changeUniforms('useExtraRim') });
+	top3.add( settings, 'useExtraRim').name("useExtraRim").onChange( function(value) { changeUniforms('useExtraRim') });
 	top3.add( settings, 'useScreen').name("useScreen").onChange( function(value) { changeUniforms('useScreen') });
 	top3.add(settings, 'blending', [ 'add', 'normal', 'sub', 'mul' ] ).onChange( function(value) {changeUniforms('blending')});
 	top3.open();
