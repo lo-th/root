@@ -47,7 +47,7 @@ var envTexture = null;
 var materialFront = null;
 var materialBack = null;
 
-var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'test', opacity:0.1, env:'' };
+var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'test', opacity:0.1, env:'', useExtraRim:false };
 var noiseSetting = {scale:20, animated:false, speed:0.003, projection:false};
 
 var envLists = ['env1', 'env2', 'env3', 'env4', 'env5', 'env6', 'env7', 'env8', 'env9', 'env10'];
@@ -86,6 +86,7 @@ var mainShader={
         c: {type: 'f', value: 1.0},
         p: {type: 'f', value: 1.4},
         useRim: {type: 'f', value: 0},
+        useExtraRim: {type: 'f', value: 0},
         rimPower: {type: 'f', value: 0},
         noiseProjection: {type: 'f', value: 0}
     },
@@ -99,6 +100,7 @@ var mainShader={
         'uniform float useGlow;',
         'uniform float useGlowColor;',
         'uniform float useRim;',
+        'uniform float useExtraRim;',
         'uniform float rimPower;',
         'varying float intensity;',
         'uniform float useScreen;',
@@ -108,9 +110,11 @@ var mainShader={
         'varying vec2 vUv;',
         'varying vec3 vEye;',
         'varying vec3 vNormal;',
+        'varying vec3 vPosition;',
         //'float random(vec3 scale,float seed){return fract(sin(dot(gl_FragCoord.xyz+seed,scale))*43758.5453+seed);}',
 
         'void main() {',
+            'float op = opacity;',
             // reflexion map
             'vec3 base = texture2D( tMatCap, vN ).rgb;',
             // noise map
@@ -134,8 +138,17 @@ var mainShader={
             'if( useGlow == 1. ) {',
                 'base *= intensity;',
             '}',
+            // extra Rim
+            'if( useExtraRim == 1. ) {',
+                'float rim = max( 0., abs( dot( vNormal, -vPosition ) ) );',
+                'float r = smoothstep( .25, .75, 1. - rim );',
+                'r -= smoothstep( .5, 1., 1. - rim );',
+                'vec3 c = vec3( 168. / 255., 205. / 255., 225. / 255. );',
+                'base *= c;',
+                'op *= r;',
+            '}',
 
-            'gl_FragColor = vec4( base, opacity );',
+            'gl_FragColor = vec4( base, op );',
         '}'
     ].join("\n"),
     vs:[
@@ -149,11 +162,13 @@ var mainShader={
         'varying vec2 vUv;',
         'varying vec3 vEye;',
         'varying vec3 vNormal;',
+        'varying vec3 vPosition;',
         'varying float intensity;',
         'uniform float noiseProjection;',
         'void main() {',
             'vec3 e = normalize( vec3( modelViewMatrix * vec4( position, 1.0 ) ) );',
             'vec3 n = normalize( normalMatrix * normal );',
+            'vPosition = e;',
             'vNormal = n;',
             'vec3 g = normalize( vec3( projectionMatrix * modelViewMatrix * vec4( position, 1.0 )));',
             'if( useGlow == 1. ) {',
@@ -193,6 +208,7 @@ var backShader={
         c: {type: 'f', value: 1.0},
         p: {type: 'f', value: 1.4},
         useRim: {type: 'f', value: 0},
+        useExtraRim: {type: 'f', value: 0},
         rimPower: {type: 'f', value: 0},
         noiseProjection: {type: 'f', value: 0}
     }
@@ -330,6 +346,7 @@ function initGUI(){
 	settings.useRim = 0;
 
 	var top3 = gui.addFolder('Extra Option');
+	top2.add( settings, 'useExtraRim').name("useExtraRim").onChange( function(value) { changeUniforms('useExtraRim') });
 	top3.add( settings, 'useScreen').name("useScreen").onChange( function(value) { changeUniforms('useScreen') });
 	top3.add(settings, 'blending', [ 'add', 'normal', 'sub', 'mul' ] ).onChange( function(value) {changeUniforms('blending')});
 	top3.open();
@@ -394,7 +411,7 @@ function changeUniforms(type){
 	else if(type=='opacity'){
 		materialBack.uniforms[ type ].value = settings[ type ]; 
 	}
-	else if(type=='useScreen' || type=='useGlow' || type=='useGlowColor'){
+	else if(type=='useScreen' || type=='useGlow' || type=='useGlowColor' || type=='useExtraRim'){
 		if(settings[ type ]){ 
 			materialFront.uniforms[ type ].value = 1;
 			materialBack.uniforms[ type ].value = 1;
