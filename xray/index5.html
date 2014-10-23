@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>main</title>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=11" />
+<style>
+* {  margin: 0; padding: 0; border: 0;}
+html{overflow:hidden; width:100%; height:100%;}
+body{ background-color: #000000; overflow: hidden; color:#FFFFFF; font-family:monospace; font-size: 11px;}
+#info{ pointer-events:none; position: absolute; left:10px; top:10px; width: 400px; height: 500px; }
+#container{ position: absolute; left:0px; top:0;  }
+#container canvas { position: absolute; left:0; top:0; border: 0 none;}
+</style>
+<script src="js/libs/three.min.js"></script>
+<script src="js/libs/sea3d.min.js"></script>
+<script src='js/libs/dat.gui.min.js'></script>
+<script src="js/v3d.js"></script>
+<script src="js/Xray.js"></script>
+</head>
+<body>
+<div id='container'></div>
+<div id='info'>X-ray shader<br><br>
+Glow Shader<br>
+&nbsp;c : definie le glow  interieur <0.5 ou exterieur > 5<br>
+&nbsp;p : definie la puissance de l'effet diffus ou precis<br>
+Add Color<br>
+&nbsp;La couleur de l'effet<br>
+Rim Light<br>
+&nbsp;useRim : Cree une lumiere diffuse et definie ca puissance<br>
+&nbsp;rimPower : diffus ou precis<br>
+Extra Option<br>
+&nbsp;useScreen : augmente la luminosité<br>
+&nbsp;blending : juste pour test par default add<br>
+Back Side<br>
+&nbsp;cree un model inversé pour l'interieur<br>
+&nbsp;opacity : change l'opacité du model interieur<br>
+Perlin Noise<br>
+&nbsp;noise power : definie la visibilité du bruit<br>
+&nbsp;scale : change la complexité du bruit<br>
+&nbsp;animated : bruit animé ou pas <br>
+&nbsp;speed : vitesse de l'animation du bruit<br>
+&nbsp;Mesh projection : change le style de projection du bruit<br>
+</div>
+<script>
+var envTexture = null;
+var materialFront = null;
+var materialBack = null;
+var noise = null;
+
+var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'dress', opacity:0.1, env:'', useExtraRim:false };
+var noiseSetting = {scale:20, animated:false, speed:0.003, projection:false};
+
+var envLists = ['env1', 'env2', 'env3', 'env4', 'env5', 'env6', 'env7', 'env8', 'env9', 'env10'];
+var gui;
+
+//--------------------------------- THREE JS view
+
+var v = new V3D.View(-90);
+var meshs = [];
+var meshsBack = [];
+
+function renderLoop(){
+
+	if(noiseSetting.animated){
+		noise.render(); 
+	}
+    v.render();
+    requestAnimationFrame( renderLoop );
+}
+
+function loadNewEnv(){
+	envTexture = THREE.ImageUtils.loadTexture( 'images/'+settings.env +'.jpg' );
+	materialFront.uniforms.tMatCap.value = envTexture;
+	materialBack.uniforms.tMatCap.value = envTexture;
+}
+
+function initShader(){
+	// la texture pojeté 
+	envTexture = THREE.ImageUtils.loadTexture( 'env.jpg' );
+	color = new THREE.Color(settings.color.replace("#", "0x"));
+
+	//________________________________________
+
+	materialFront = new Xray.Shader('front');
+	materialFront.uniforms.opacity.value = 1;
+	materialFront.uniforms.c.value = settings.c;
+	materialFront.uniforms.p.value = settings.p;
+	materialFront.uniforms.noise.value = settings.noise;
+	materialFront.uniforms.tMatCap.value = envTexture;
+	materialFront.uniforms.glowColor.value = color; 
+
+	materialFront.depthTest = false;
+	materialFront.depthWrite = false;
+
+	//________________________________________
+
+	materialBack = new Xray.Shader('back');
+	materialBack.uniforms.opacity.value = settings.opacity;
+	materialBack.uniforms.c.value = settings.c;
+	materialBack.uniforms.p.value = settings.p;
+	materialBack.uniforms.noise.value = settings.noise;
+	materialBack.uniforms.tMatCap.value = envTexture;
+	materialBack.uniforms.glowColor.value = color;
+	materialBack.uniforms.glowColor.value.setHex( settings.color.replace("#", "0x"));
+	materialBack.visible = settings.showBack;
+
+	materialFront.depthTest = false;
+	materialFront.depthWrite = false;
+
+	//________________________________________
+
+	noise = new Xray.Noise(v.renderer);
+	materialFront.uniforms.noiseMat.value=noise.map;
+    materialBack.uniforms.noiseMat.value=noise.map;
+}
+
+
+//--------------------------------- SEA3D object import
+
+var pool = new SEA3D.Pool();
+var size = 3;
+var modelPos = [0,0,0];
+pool.load( [ settings.model+'.sea'], initObject );
+
+function initObject()
+{
+	var m, mb, n;
+	for(var key in pool.meshs){
+		m = pool.meshs[key];
+	    m.scale.set(-size,size,size);
+		m.position.y+=modelPos[1];
+		m.material = materialFront;
+		v.scene.add(m);
+
+		mb = m.clone();
+		mb.material = materialBack;
+		v.scene.add(mb);
+
+		n = meshs.length;
+		meshsBack[n] = mb;
+		meshs[n] = m;
+	}
+
+	console.log(pool.getList());
+}
+
+function clearAllModel(){
+	var i = meshs.length;
+	while(i--){
+		v.scene.remove(meshs[i]);
+		v.scene.remove(meshsBack[i]);
+	}
+	pool.clear();
+}
+
+
+//--------------------------------- GUI
+
+function initGUI(){
+	gui = new dat.GUI();
+
+	var top = gui.addFolder('3d Models');
+	top.add(settings, 'model', [ 'dress', 'test', 'onkba',  'skull', 'head'] ).onChange( function(value) {changeModel()});
+	top.open();
+
+    var top0 = gui.addFolder('Glow Shader');
+
+    top0.add( settings, 'useGlow').name("useGlow").onChange( function(value) { changeUniforms('useGlow') });
+	top0.add( settings, 'c' ).min(0.0).max(1.0).step(0.01).name("c").listen().onChange( function(value) {changeUniforms('c')});
+	top0.add( settings, 'p' ).min(0.0).max(2.0).step(0.01).name("p").listen().onChange( function(value) {changeUniforms('p')});
+	top0.open();
+	
+	var top1 = gui.addFolder('Add Color');
+	top1.add( settings, 'useGlowColor').name("useGlowColor").onChange( function(value) { changeUniforms('useGlowColor') });
+	top1.addColor( settings, 'color' ).name('Glow Color').listen().onChange( function(value) {changeUniforms('glowColor')});
+	top1.open();
+
+	var top2 = gui.addFolder('Rim Light');
+	top2.add( settings, 'useRim').min(0.00).max(1.00).step(0.01).name("useRim").listen().onChange( function(value) { changeUniforms('useRim') });
+	top2.add( settings, 'rimPower' ).min(0.00).max(2.00).step(0.01).name("rimPower").onChange( function(value) {changeUniforms('rimPower')});
+	top2.open();
+	settings.useRim = 0;
+
+	var top3 = gui.addFolder('Extra Option');
+	top3.add( settings, 'useExtraRim').name("useExtraRim").onChange( function(value) { changeUniforms('useExtraRim') });
+	top3.add( settings, 'useScreen').name("useScreen").onChange( function(value) { changeUniforms('useScreen') });
+	top3.add(settings, 'blending', [ 'add', 'normal', 'sub', 'mul' ] ).onChange( function(value) {changeUniforms('blending')});
+	top3.open();
+
+	var top4 = gui.addFolder('Back Side');
+	top4.add( settings, 'showBack').name("show Back").onChange( function(value) { changeUniforms('showBack') });
+	top4.add( settings, 'opacity' ).min(0.0).max(1.0).step(0.01).name("opacity").listen().onChange( function(value) {changeUniforms('opacity')});
+	top4.open();
+	
+	var top20 = gui.addFolder('Perlin Noise');
+	top20.add( settings, 'noise' ).min(0.0).max(1).step(0.01).name("noise power").listen().onChange( function(value) {changeUniforms('noise')});
+	top20.add( noiseSetting, 'scale' ).min(1.0).max(50.).step(0.1).name("scale").onChange( function(value) {changeNoiseUniforms('scale')});
+	top20.add( noiseSetting, 'animated' ).name("animated").onChange( function(value) {changeNoiseUniforms('scale')});
+	top20.add( noiseSetting, 'speed' ).min(0.0001).max(0.1000).step(0.001).name("speed").onChange( function(value) {noise.speed = value;});
+	top20.add( noiseSetting, 'projection').name("Mesh projection").onChange( function(value) { changeNoiseUniforms('projection') });
+	top20.open();
+
+	var top30 = gui.addFolder('Environnement Bitmap');
+	top30.add(settings, 'env',  envLists).onChange( function(value) { loadNewEnv() });
+	top30.open();
+}
+
+function changeModel(){
+	clearAllModel();
+	var name = settings.model;
+	if(name == 'test' || name == 'onkba'){ size = 5; modelPos = [0,-250,0];}
+	else if(name == 'head'){size = 25; modelPos = [0,-150,0];}
+	else if(name == 'dress'){size = 3; modelPos = [0,0,0];}
+	else {size = 30; modelPos = [0,0,0];}
+	pool.load( [name+'.sea'], initObject );
+}
+function changeNoiseUniforms(type){
+	if(type=='scale'){ 
+		//shaderNoise.uniforms[ type ].value = noiseSetting[ type ]; 
+		noise.shader.uniforms[ type ].value = noiseSetting[ type ];
+	}
+	if(type=='animated'){ 
+		if(noiseSetting.animated) noiseSetting.animated = false;
+		else noiseSetting.animated = true
+	}
+	if(type=='projection'){
+	     if(noiseSetting.projection){
+	     	materialFront.uniforms.noiseProjection.value = 1.0;
+		    materialBack.uniforms.noiseProjection.value = 1.0;
+	     } else {
+	     	materialFront.uniforms.noiseProjection.value = 0.0;
+		    materialBack.uniforms.noiseProjection.value = 0.0;
+	     }
+	}
+
+	if(!noiseSetting.animated)update2D();
+}
+function changeUniforms(type){
+	if(type=='glowColor'){ 
+		materialFront.uniforms.glowColor.value.setHex( settings.color.replace("#", "0x"));
+		materialBack.uniforms.glowColor.value.setHex( settings.color.replace("#", "0x"));
+	}
+	else if(type=='blending'){
+		if(settings.blending == 'add') materialFront.blending = materialBack.blending = THREE.AdditiveBlending;
+		else if(settings.blending == 'sub') materialFront.blending = materialBack.blending = THREE.SubtractiveBlending;
+		else if(settings.blending == 'mul') materialFront.blending = materialBack.blending = THREE.MultiplyBlending;
+		else materialFront.blending = materialBack.blending = THREE.NormalBlending;
+	}
+	else if(type=='opacity'){
+		materialBack.uniforms[ type ].value = settings[ type ]; 
+	}
+	else if(type=='useScreen' || type=='useGlow' || type=='useGlowColor' || type=='useExtraRim'){
+		if(settings[ type ]){ 
+			materialFront.uniforms[ type ].value = 1;
+			materialBack.uniforms[ type ].value = 1;
+		} else {
+			materialFront.uniforms[ type ].value = 0;
+			materialBack.uniforms[ type ].value = 0;
+		}
+	}
+	else if(type=='showBack'){
+		if(settings.showBack)materialBack.visible = true;
+		else materialBack.visible = false;
+	}else{
+	    materialFront.uniforms[ type ].value = settings[ type ]; 
+	    materialBack.uniforms[ type ].value = settings[ type ]; 
+	}
+}
+
+//--------------------------------- INIT
+
+function init(){
+	renderLoop();
+	initShader();
+	initGUI();
+}
+window.onload = init;
+
+</script>
+</body>
+</html>

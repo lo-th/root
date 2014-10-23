@@ -47,7 +47,7 @@ var envTexture = null;
 var materialFront = null;
 var materialBack = null;
 
-var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'test', opacity:0.1, env:'', useExtraRim:false };
+var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'dress', opacity:0.1, env:'', useExtraRim:false };
 var noiseSetting = {scale:20, animated:false, speed:0.003, projection:false};
 
 var envLists = ['env1', 'env2', 'env3', 'env4', 'env5', 'env6', 'env7', 'env8', 'env9', 'env10'];
@@ -294,7 +294,7 @@ function initObject()
 	for(var key in pool.meshs){
 		m = pool.meshs[key];
 	    m.scale.set(-size,size,size);
-		m.position.y+=modelPos[1];
+		//m.position.y+=modelPos[1];
 		m.material = materialFront;
 		v.scene.add(m);
 
@@ -306,6 +306,8 @@ function initObject()
 		meshsBack[n] = mb;
 		meshs[n] = m;
 	}
+
+	console.log(pool.getList());
 }
 
 function clearAllModel(){
