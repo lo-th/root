@@ -70,11 +70,17 @@ function renderLoop(){
     requestAnimationFrame( renderLoop );
 }
 
-function loadNewEnv(){
-	envTexture = THREE.ImageUtils.loadTexture( 'images/'+settings.env +'.jpg' );
-	materialFront.uniforms.tMatCap.value = envTexture;
-	materialBack.uniforms.tMatCap.value = envTexture;
+//--------------------------------- INIT
+
+function init(){
+	renderLoop();
+	initShader();
+	initGUI();
 }
+window.onload = init;
+
+
+//--------------------------------- SHADER
 
 function initShader(){
 	// la texture pojeté 
@@ -124,8 +130,7 @@ var size = 3;
 var modelPos = [0,0,0];
 pool.load( [ settings.model+'.sea'], initObject );
 
-function initObject()
-{
+function initObject(){
 	var m, mb, n;
 	for(var key in pool.meshs){
 		m = pool.meshs[key];
@@ -203,7 +208,7 @@ function initGUI(){
 	top20.open();
 
 	var top30 = gui.addFolder('Environnement Bitmap');
-	top30.add(settings, 'env',  envLists).onChange( function(value) { loadNewEnv() });
+	top30.add(settings, 'env',  envLists).onChange( function(value) { changeEnv() });
 	top30.open();
 }
 
@@ -216,6 +221,13 @@ function changeModel(){
 	else {size = 30; modelPos = [0,0,0];}
 	pool.load( [name+'.sea'], initObject );
 }
+
+function changeEnv(){
+	envTexture = THREE.ImageUtils.loadTexture( 'images/'+settings.env +'.jpg' );
+	materialFront.uniforms.tMatCap.value = envTexture;
+	materialBack.uniforms.tMatCap.value = envTexture;
+}
+
 function changeNoiseUniforms(type){
 	if(type=='scale'){ 
 		//shaderNoise.uniforms[ type ].value = noiseSetting[ type ]; 
@@ -237,6 +249,7 @@ function changeNoiseUniforms(type){
 
 	if(!noiseSetting.animated)update2D();
 }
+
 function changeUniforms(type){
 	if(type=='glowColor'){ 
 		materialFront.uniforms.glowColor.value.setHex( settings.color.replace("#", "0x"));
@@ -268,15 +281,6 @@ function changeUniforms(type){
 	    materialBack.uniforms[ type ].value = settings[ type ]; 
 	}
 }
-
-//--------------------------------- INIT
-
-function init(){
-	renderLoop();
-	initShader();
-	initGUI();
-}
-window.onload = init;
 
 </script>
 </body>
