@@ -266,7 +266,7 @@ function initShader(){
 		wrapping: THREE.ClampToEdgeWrapping,
 		shading: THREE.SmoothShading,
 		color:0X000000,
-		depthTest: true,
+		depthTest: false,
 		depthWrite: true,
 		transparent: true
 	});
@@ -284,8 +284,8 @@ function initShader(){
 //--------------------------------- SEA3D object import
 
 var pool = new SEA3D.Pool();
-var size = 5;
-var modelPos = [0,-250,0];
+var size = 3;
+var modelPos = [0,0,0];
 pool.load( [ settings.model+'.sea'], initObject );
 
 function initObject()
@@ -326,7 +326,7 @@ function initGUI(){
 	gui = new dat.GUI();
 
 	var top = gui.addFolder('3d Models');
-	top.add(settings, 'model', [ 'test', 'onkba',  'skull', 'head'] ).onChange( function(value) {changeModel()});
+	top.add(settings, 'model', [ 'dress', 'test', 'onkba',  'skull', 'head'] ).onChange( function(value) {changeModel()});
 	top.open();
 
     var top0 = gui.addFolder('Glow Shader');
@@ -376,6 +376,7 @@ function changeModel(){
 	var name = settings.model;
 	if(name == 'test' || name == 'onkba'){ size = 5; modelPos = [0,-250,0];}
 	else if(name == 'head'){size = 25; modelPos = [0,-150,0];}
+	else if(name == 'dress'){size = 3; modelPos = [0,0,0];}
 	else {size = 30; modelPos = [0,-0,0];}
 	pool.load( [name+'.sea'], initObject );
 }
