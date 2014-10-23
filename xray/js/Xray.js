@@ -14,7 +14,9 @@ Xray.Mesh.prototype = {
 
 
 
-
+//---------------------------------
+// X ray shader
+//---------------------------------
 
 Xray.Shader = function(side){
 
@@ -25,7 +27,6 @@ Xray.Shader = function(side){
     }
 
     this.uniforms = THREE.UniformsUtils.merge( [ Xray.Base.uniforms ] );
-    //this.uniforms = JSON.parse( JSON.stringify( Xray.Base.uniforms ) );
 
     this.shader = new THREE.ShaderMaterial({
         uniforms : this.uniforms,
@@ -48,7 +49,7 @@ Xray.Base ={
     uniforms:{ 
         tMatCap: {type: 't', value: null},
         noiseMat: {type: 't', value: null},
-        glowColor: {type: 'c', value: null},
+        glowColor: {type: 'c', value: new THREE.Color() },
         opacity: {type: 'f', value: 1},
         noise: {type: 'f', value: 0},
         useScreen: {type: 'f', value: 0},

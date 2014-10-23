@@ -85,7 +85,8 @@ window.onload = init;
 function initShader(){
 	// la texture pojeté 
 	envTexture = THREE.ImageUtils.loadTexture( 'env.jpg' );
-	color = new THREE.Color(settings.color.replace("#", "0x"));
+	// xray color
+	color = settings.color.replace("#", "0x");
 
 	//________________________________________
 
@@ -95,8 +96,8 @@ function initShader(){
 	materialFront.uniforms.p.value = settings.p;
 	materialFront.uniforms.noise.value = settings.noise;
 	materialFront.uniforms.tMatCap.value = envTexture;
-	materialFront.uniforms.glowColor.value = color; 
-
+	materialFront.uniforms.glowColor.value.setHex( color );
+	
 	materialFront.depthTest = false;
 	materialFront.depthWrite = true;
 
@@ -108,8 +109,7 @@ function initShader(){
 	materialBack.uniforms.p.value = settings.p;
 	materialBack.uniforms.noise.value = settings.noise;
 	materialBack.uniforms.tMatCap.value = envTexture;
-	materialBack.uniforms.glowColor.value = color;
-	materialBack.uniforms.glowColor.value.setHex( settings.color.replace("#", "0x"));
+	materialBack.uniforms.glowColor.value.setHex( color );
 	materialBack.visible = settings.showBack;
 
 	materialFront.depthTest = false;
@@ -117,7 +117,7 @@ function initShader(){
 
 	//________________________________________
 
-	noise = new Xray.Noise();//v.renderer);
+	noise = new Xray.Noise();
     noise.setRenderer( v.renderer );
 	materialFront.uniforms.noiseMat.value=noise.map;
     materialBack.uniforms.noiseMat.value=noise.map;
