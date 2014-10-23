@@ -92,7 +92,7 @@ function initShader(){
 	materialFront.uniforms.glowColor.value = color; 
 
 	materialFront.depthTest = false;
-	materialFront.depthWrite = false;
+	materialFront.depthWrite = true;
 
 	//________________________________________
 
@@ -107,7 +107,7 @@ function initShader(){
 	materialBack.visible = settings.showBack;
 
 	materialFront.depthTest = false;
-	materialFront.depthWrite = false;
+	materialFront.depthWrite = true;
 
 	//________________________________________
 
