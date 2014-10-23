@@ -1,8 +1,20 @@
 var Xray = {};
 
 Xray.Mesh = function(geometry, parametre){
+    this.shaderFront = new Xray.Shader();
+    this.shaderBack = new Xray.Shader();
+    this.shaderNoise = new Xray.Noise();
+
+    this.mesh = new THREE.Mesh(geometry);
 
 }
+Xray.Mesh.prototype = {
+    constructor: Xray.Mesh,
+}
+
+
+
+
 
 Xray.Shader = function(side){
 
@@ -10,10 +22,7 @@ Xray.Shader = function(side){
     var sider = THREE.FrontSide;
     if(side == 'back'){
         sider = THREE.BackSide;
-       // this.uniforms = Xray.Base.uniformsBack;
-    }/* else {
-        this.uniforms = Xray.Base.uniforms;
-    }*/
+    }
 
     this.uniforms = THREE.UniformsUtils.merge( [ Xray.Base.uniforms ] );
     //this.uniforms = JSON.parse( JSON.stringify( Xray.Base.uniforms ) );
@@ -34,16 +43,6 @@ Xray.Shader = function(side){
     return this.shader;
 }
 
-Xray.clone = function(obj) {
-  var newObj = (obj instanceof Array) ? [] : {};
-  for (var i in obj) {
-    if (i == 'clone') continue;
-    if (obj[i] && typeof obj[i] == "object") {
-      newObj[i] = obj[i].clone();
-    } else newObj[i] = obj[i]
-  } return newObj;
-};
-
 Xray.Base ={
     attributes:{},
     uniforms:{ 
@@ -62,22 +61,6 @@ Xray.Base ={
         rimPower: {type: 'f', value: 0},
         noiseProjection: {type: 'f', value: 0}
     },
-    /*uniformsBack:{ 
-        tMatCap: {type: 't', value: null},
-        noiseMat: {type: 't', value: null},
-        glowColor: {type: 'c', value: null},
-        opacity: {type: 'f', value: 1},
-        noise: {type: 'f', value: 0},
-        useScreen: {type: 'f', value: 0},
-        useGlow: {type: 'f', value: 1},
-        useGlowColor: {type: 'f', value: 1},
-        c: {type: 'f', value: 1.0},
-        p: {type: 'f', value: 1.4},
-        useRim: {type: 'f', value: 0},
-        useExtraRim: {type: 'f', value: 0},
-        rimPower: {type: 'f', value: 0},
-        noiseProjection: {type: 'f', value: 0}
-    },*/
     fs:[
         'uniform sampler2D tMatCap;',
         'uniform sampler2D noiseMat;',
@@ -186,7 +169,7 @@ Xray.Base ={
 //---------------------------------
 
 Xray.Noise = function(renderer){
-    this.renderer = renderer;
+    this.renderer = renderer || null; //new THREE.WebGLRenderer({precision: "mediump", antialias:false});
     this.speed = 0.003;
     this.scale = 20;
     this.animated = false;
@@ -212,15 +195,20 @@ Xray.Noise = function(renderer){
     });
 
     this.quadTarget.material = this.shader;
-
-    this.render();
+    if(this.renderer !== null) this.render();
 }
 
 Xray.Noise.prototype = {
     constructor: Xray.Noise,
+    setRenderer : function(renderer){
+        this.renderer = renderer;
+        this.render();
+    },
     render : function(){
-        this.shader.uniforms.time.value += this.speed;
-        this.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.map, true );
+        if(this.renderer !== null){
+            this.shader.uniforms.time.value += this.speed;
+            this.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.map, true );
+        }
     }
 }
 

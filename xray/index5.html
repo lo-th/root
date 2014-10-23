@@ -117,7 +117,8 @@ function initShader(){
 
 	//________________________________________
 
-	noise = new Xray.Noise(v.renderer);
+	noise = new Xray.Noise();//v.renderer);
+    noise.setRenderer( v.renderer );
 	materialFront.uniforms.noiseMat.value=noise.map;
     materialBack.uniforms.noiseMat.value=noise.map;
 }
@@ -247,7 +248,7 @@ function changeNoiseUniforms(type){
 	     }
 	}
 
-	if(!noiseSetting.animated)update2D();
+	if(!noiseSetting.animated)noise.render();
 }
 
 function changeUniforms(type){
