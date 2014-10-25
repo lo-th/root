@@ -9,7 +9,7 @@ Xray.Mesh = function(geometry, parametre){
 
 }
 Xray.Mesh.prototype = {
-    constructor: Xray.Mesh,
+    constructor: Xray.Mesh
 }
 
 
@@ -18,16 +18,23 @@ Xray.Mesh.prototype = {
 // X ray shader
 //---------------------------------
 
-Xray.Shader = function(side){
+Xray.Shader = function(side, settings){
 
     var side = side || 'front';
     var sider = THREE.FrontSide;
+    var show = true;
+    var color = settings.color.replace("#", "0x");
     if(side == 'back'){
         sider = THREE.BackSide;
+        show = settings.showBack;
     }
-
     this.uniforms = THREE.UniformsUtils.merge( [ Xray.Base.uniforms ] );
-
+    this.uniforms.opacity.value = settings.opacity;
+    this.uniforms.c.value = settings.c;
+    this.uniforms.p.value = settings.p;
+    this.uniforms.noise.value = settings.noise;
+    this.uniforms.tMatCap.value = THREE.ImageUtils.loadTexture( settings.envTexture );
+    this.uniforms.glowColor.value.setHex( color );
     this.shader = new THREE.ShaderMaterial({
         uniforms : this.uniforms,
         vertexShader: Xray.Base.vs,
@@ -36,11 +43,14 @@ Xray.Shader = function(side){
         wrapping: THREE.ClampToEdgeWrapping,
         shading: THREE.SmoothShading,
         color:0X000000,
-        depthTest: true,
+        depthTest: false,
         depthWrite: true,
         transparent: true,
         side : sider
     });
+    
+    this.shader.visible = show;
+
     return this.shader;
 }
 
@@ -169,34 +179,34 @@ Xray.Base ={
 // 2D noise map
 //---------------------------------
 
-Xray.Noise = function(renderer){
-    this.renderer = renderer || null; //new THREE.WebGLRenderer({precision: "mediump", antialias:false});
-    this.speed = 0.003;
-    this.scale = 20;
-    this.animated = false;
+Xray.Noise = function(renderer, settings){
+  this.renderer = renderer || null; //new THREE.WebGLRenderer({precision: "mediump", antialias:false});
+  this.speed = settings.speed || 0.003;
+  this.scale = settings.scale || 20;
+  this.animated = settings.animate || false;
 
-    var pars = { minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
-    this.map  = new THREE.WebGLRenderTarget( 512, 512, pars );
-    this.map.wrapS = this.map.wrapT = THREE.RepeatWrapping;
-    this.map.repeat = new THREE.Vector2(1,1);
-    this.cameraOrtho = new THREE.OrthographicCamera(512/ - 2, 512 / 2, 512 / 2, 512 / - 2, -1000, 1000);
-    this.cameraOrtho.position.z = 100;
-    this.sceneRenderTarget = new THREE.Scene();
+  var pars = { minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
+  this.map  = new THREE.WebGLRenderTarget( 512, 512, pars );
+  this.map.wrapS = this.map.wrapT = THREE.RepeatWrapping;
+  this.map.repeat = new THREE.Vector2(1,1);
+  this.cameraOrtho = new THREE.OrthographicCamera(512/ - 2, 512 / 2, 512 / 2, 512 / - 2, -1000, 1000);
+  this.cameraOrtho.position.z = 100;
+  this.sceneRenderTarget = new THREE.Scene();
 
-    var plane = new THREE.PlaneGeometry( 512, 512 );
+  var plane = new THREE.PlaneGeometry( 512, 512 );
 
-    this.quadTarget = new THREE.Mesh( plane, new THREE.MeshBasicMaterial( { color: 0xFF0000 } ) );
-    this.quadTarget.position.z = 0;
-    this.sceneRenderTarget.add( this.quadTarget );
+  this.quadTarget = new THREE.Mesh( plane, new THREE.MeshBasicMaterial( { color: 0xFF0000 } ) );
+  this.quadTarget.position.z = 0;
+  this.sceneRenderTarget.add( this.quadTarget );
 
-    this.shader = new THREE.ShaderMaterial({
-        uniforms: Xray.perlin.uniforms,
-        vertexShader: Xray.perlin.vs,
-        fragmentShader: Xray.perlin.fs
-    });
+  this.shader = new THREE.ShaderMaterial({
+    uniforms: Xray.perlin.uniforms,
+    vertexShader: Xray.perlin.vs,
+    fragmentShader: Xray.perlin.fs
+  });
 
-    this.quadTarget.material = this.shader;
-    if(this.renderer !== null) this.render();
+  this.quadTarget.material = this.shader;
+  if(this.renderer !== null) this.render();
 }
 
 Xray.Noise.prototype = {
