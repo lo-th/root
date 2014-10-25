@@ -43,8 +43,8 @@ Xray.Shader = function(side, settings){
         wrapping: THREE.ClampToEdgeWrapping,
         shading: THREE.SmoothShading,
         color:0X000000,
-        depthTest: false,
-        depthWrite: true,
+        depthTest: settings.depthTest,
+        depthWrite: settings.depthWrite,
         transparent: true,
         side : sider
     });
