@@ -49,7 +49,8 @@ var materialFront = null;
 var materialBack = null;
 var noise = null;
 
-var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'dress', opacity:0.1, env:'', useExtraRim:false };
+var settings = { useGlowColor:true, useGlow:true, c: 1.0, p: 1.4, color: "#28277c", noise:0.03, rimPower:0.01, useRim:0.01, time:0 , useScreen:false, blending:'add', showBack:false, model:'dress', opacity:1, env:'', useExtraRim:false, depthTest: false, depthWrite: true, envTexture: 'env.jpg' };
+
 var noiseSetting = {scale:20, animated:false, speed:0.003, projection:false};
 
 var envLists = ['env1', 'env2', 'env3', 'env4', 'env5', 'env6', 'env7', 'env8', 'env9', 'env10'];
@@ -83,42 +84,15 @@ window.onload = init;
 //--------------------------------- SHADER
 
 function initShader(){
-	// la texture pojeté 
-	envTexture = THREE.ImageUtils.loadTexture( 'env.jpg' );
 	// xray color
-	color = settings.color.replace("#", "0x");
-
-	//________________________________________
-
-	materialFront = new Xray.Shader('front');
-	materialFront.uniforms.opacity.value = 1;
-	materialFront.uniforms.c.value = settings.c;
-	materialFront.uniforms.p.value = settings.p;
-	materialFront.uniforms.noise.value = settings.noise;
-	materialFront.uniforms.tMatCap.value = envTexture;
-	materialFront.uniforms.glowColor.value.setHex( color );
 	
-	materialFront.depthTest = false;
-	materialFront.depthWrite = true;
 
 	//________________________________________
 
-	materialBack = new Xray.Shader('back');
-	materialBack.uniforms.opacity.value = settings.opacity;
-	materialBack.uniforms.c.value = settings.c;
-	materialBack.uniforms.p.value = settings.p;
-	materialBack.uniforms.noise.value = settings.noise;
-	materialBack.uniforms.tMatCap.value = envTexture;
-	materialBack.uniforms.glowColor.value.setHex( color );
-	materialBack.visible = settings.showBack;
+	materialFront = new Xray.Shader('front', settings);
 
-	materialFront.depthTest = false;
-	materialFront.depthWrite = true;
-
-	//________________________________________
-
-	noise = new Xray.Noise();
-    noise.setRenderer( v.renderer );
+	materialBack = new Xray.Shader('back', settings);
+	noise = new Xray.Noise(v.renderer, noiseSetting);
 	materialFront.uniforms.noiseMat.value=noise.map;
     materialBack.uniforms.noiseMat.value=noise.map;
 }
