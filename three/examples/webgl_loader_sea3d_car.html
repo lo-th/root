@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - loaders - sea3D</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body { font-family: Monospace; background-color:#999999; color:#fff; margin:0px; overflow:hidden; }
+			#info { position:absolute; color:#fff; top: 10px; width: 100%; text-align: center; display:block; }
+			#container{ position:absolute; top:0; left:0; }
+			#top{ position:absolute; bottom:10px; left:10px; width:400px; height:30px; pointer-events:auto; cursor:pointer;}
+			#debug{ position:absolute; top:10px; right:10px; text-align:right; pointer-events:none;}
+			#info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer; }
+			select { display:inline-block; padding: 4px 3px 5px 5px; width:70px; outline:none; border:1px solid #74818b; border-radius:4px; background-color:#69757e; pointer-events:auto; cursor:pointer;}
+			#bb,#bb1,#bb2,#bb3{ display: inline-block; padding: 4px 3px 5px 5px; width:70px; outline:none; border:1px solid #74818b; border-radius:4px; background-color:#69757e; pointer-events:auto; cursor:pointer;}
+			#bb1.uncheck,#bb2.uncheck,#bb3.uncheck { background-color:#666666;}
+			#bb3{width:80px;}
+			#envSelector{position:absolute; bottom:10px; right:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
+		</style>
+	</head>
+
+	<body>
+
+	    <div id="container"></div>
+		<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> -sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank"> LoTh </a>
+		</div>
+		<div id='top'>
+		<input type="button" value="FLY" id="bb" onClick="fly();">
+	    <select id="selDRIVE" onChange:"changeOptions();">
+	        <option value="RWD" selected="selected">RWD</option>
+	        <option value="FWD">FWD</option>
+	        <option value="AWD">AWD</option>
+	    </select>
+	    <input type="button" value="ABS" id="bb1" onClick="changeOptions('abs');">
+	    <input type="button" value="TCS" id="bb2" onClick="changeOptions('tcs');">
+	    <input type="button" value="STEERING" id="bb3" onClick="changeOptions('steering');">
+	    </div>
+	    <div id="debug"></div>
+	    <div id="envSelector"></div>
+
+		<script src="../build/three.min.js"></script>
+
+		<script src="js/controls/OrbitControls.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/libs/tween.min.js"></script>
+
+		<script src="js/loaders/sea3d.min.js"></script>
+		<script src="js/shaders/spherical.js"></script>
+		<script src="js/game/cargame.js"></script>
+		
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+
+			var camera, controls, scene, renderer, clock;
+
+			var ToRad = Math.PI/180;
+			var key = [0,0,0,0,0,0,0];
+			var worldSize =  1;
+			var wheels = [];
+			var doors = [];
+			var shaders = [];
+			var carOptions = {drive:'RWD', abs:1, tcs:1, steering:1};
+			var carTransform = {a:0, b:180, pos:0, dl:0, dr:0};
+			var car, ground;
+			var isFullLoaded = false;
+			var isFly = false;
+			var game;
+			var environment;
+			var envLists = ['env.jpg','env1.jpg','env2.jpg', 'env3.jpg','env4.jpg','env5.jpg','env6.jpg','env7.jpg','env8.jpg'];
+			var envcontext;
+			var nEnv = 0;
+
+			init();
+			animate();
+
+			function init() {
+
+				// init environment
+				initEnvironment();
+
+				container = document.getElementById('container');
+
+				clock = new THREE.Clock();
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				camera.position.z = -200;
+				camera.position.y = 80;
+
+				controls = new THREE.OrbitControls( camera,  container);
+				controls.noZoom = false;
+				controls.noPan = false;
+				controls.noKeys = true;
+
+				scene = new THREE.Scene();
+				scene.fog = new THREE.Fog( 0x999999, 300, 1000 );
+				scene.add( camera );
+
+				// renderer
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x999999, 1 );
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				var canvas = document.createElement( 'canvas' );
+				canvas.width = canvas.height = 1024;
+			    var groundtexture = new THREE.Texture(canvas);
+			    groundtexture.needsUpdate = true;
+			    ground = new THREE.Mesh( new THREE.PlaneBufferGeometry ( 2150*worldSize, 2150*worldSize, 1, 1 ), new THREE.MeshBasicMaterial( { map:groundtexture, color:0x666666 }));
+			    ground.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*ToRad));
+			    ground.position.y = -17*worldSize;
+			    scene.add( ground );
+			    ground.visible = false;
+
+			    // init car game
+			    game = new Application(canvas, updateCar, carOptions);
+			    
+				// init load sea3d
+				loadSea3d();
+
+				bindKeys();
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function loadSea3d(){
+
+			    var loader = new THREE.SEA3D( true );
+			    loader.onComplete = function( e ) {
+			        var m;
+			        var i = loader.meshes.length;
+			        while(i--){
+			            m = loader.meshes[i];
+			            if(m.name == 'wheel_av_l') wheels[0] = m;
+			            if(m.name == 'wheel_av_r') wheels[1] = m;
+			            if(m.name == 'wheel_ar_l') wheels[2] = m;
+			            if(m.name == 'wheel_ar_r') wheels[3] = m;
+			            if(m.name == 'axe_l') {wheels[4] = m; }
+			            if(m.name == 'axe_r') {wheels[5] = m; }
+			            if(m.name == 'doorLeft') {doors[0] = m; }
+			            if(m.name == 'doorRight') {doors[1] = m; }
+			            if(m.name == 'steeringWheel') wheels[6] = m;
+			            if(m.name == 'glass') m.material.transparent = true;
+			            if(m.name == 'body'){ car = m; }
+			            var tx = m.material.map;
+			            var trans = m.material.transparent;
+			            var side = THREE.FrontSide;
+			            if(m.name == 'doorGlassRight' || m.name == 'doorGlassLeft' || m.name == 'trunk'){trans = true; side=THREE.DoubleSide; }
+			            if(m.name == 'headLight') trans = false;
+			            if(tx) m.material = new THREE.SphereShader({env:environment, map:tx, transparent:trans, color:0xFFFFFF, side:side});
+			            else m.material = new THREE.SphereShader({ color:0x333333, env:environment});
+
+			            shaders[i] = m.material;
+			        }
+
+			        // sea3d export object link, pivot point, material with texture
+			        // i only have to add car all other parts is linked
+
+			        car.scale.set(worldSize, worldSize, -worldSize);
+			        scene.add( car );
+
+			        isFullLoaded = true;
+			        ground.visible = true;
+			        
+			    }
+			    // force buffer geometry 
+			    loader.parser = THREE.SEA3D.BUFFER;
+			    loader.load( 'models/sea3d/c1gt.sea' );
+
+			}
+
+			function updateCar(x, y, z, r, zz, st, v) {
+
+			    if(!isFullLoaded) return;
+
+			    doors[0].rotation.z = carTransform.dl * ToRad;
+			    doors[1].rotation.z = carTransform.dr * ToRad;
+
+		        ground.material.map.needsUpdate = true;
+		        car.rotation.y = r;
+		        car.position.y = carTransform.pos;
+
+		        var i = 4;
+		        if(game.current == 3){
+		        	while(i--){ wheels[i].rotation.order = 'ZYX';
+		        		if(i==1 || i==3) wheels[i].rotation.z = carTransform.a * ToRad;
+		        		else wheels[i].rotation.z = carTransform.b * ToRad;
+		        		wheels[i].rotation.x += v * 3.6 * ToRad;
+		        	}
+
+		        }else{
+			        while(i--){
+			        	wheels[i].rotation.order = 'XYZ';
+			        	if(i==1 || i==3) wheels[i].rotation.z = carTransform.a* ToRad;
+			        	else wheels[i].rotation.z = -carTransform.b  * ToRad;
+			            wheels[i].rotation.x += v * 3.6 * ToRad;
+			        }
+
+			        wheels[4].rotation.y = -st;
+			        wheels[5].rotation.y = -st;
+			        wheels[6].rotation.z = -st * 3;
+		        }
+
+			}
+
+			function changeOptions(type){
+
+				switch ( type ) {
+					case 'abs': 
+					    if(carOptions.abs){document.getElementById('bb1').className = 'uncheck'; carOptions.abs = 0;}
+					    else {document.getElementById('bb1').className = ''; carOptions.abs = 1;}
+					break;
+					case 'tcs': 
+					    if(carOptions.tcs){document.getElementById('bb2').className = 'uncheck'; carOptions.tcs = 0;}
+					    else {document.getElementById('bb2').className = ''; carOptions.tcs = 1;}
+					break;
+					case 'steering': 
+					    if(carOptions.steering){document.getElementById('bb3').className = 'uncheck'; carOptions.steering = 0;}
+					    else {document.getElementById('bb3').className = ''; carOptions.steering = 1;}
+					break;
+				}
+
+				carOptions.drive = document.getElementById('selDRIVE').value;
+				game.setOptions(carOptions);
+
+			}
+
+			function fly(){
+				var i = 4, t;
+				while(i--){
+					if(i==1 || i==3) wheels[i].rotation.x = 0;
+					else wheels[i].rotation.x = 180 * ToRad;
+				}
+
+				if(!isFly){
+					isFly = true;
+					game.change(3);
+					document.getElementById('bb').value = 'LAND';
+					t = new TWEEN.Tween( carTransform ).to( {a:-35, b:215, pos:17, dl:-90, dr:90}, 1000 ).easing( TWEEN.Easing.Cubic.Out ).start();
+				} else {
+					isFly = false;
+					game.change(1);
+					document.getElementById('bb').value = 'FLY';
+					t = new TWEEN.Tween( carTransform ).to( {a:0, b:180, pos:0, dl:0, dr:0}, 1000 ).easing( TWEEN.Easing.Cubic.Out ).start();
+				}
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function initEnvironment(){
+
+				var env = document.getElementById('envSelector');
+				var canvas = document.createElement( 'canvas' );
+				canvas.width = canvas.height = 64;
+				env.appendChild( canvas );
+				envcontext = canvas.getContext('2d');
+				loadNewEnv(true);
+				env.onclick = loadNewEnv;
+
+			}
+
+			function loadNewEnv(){
+
+				var img = new Image();
+				img.onload = function(){
+					nEnv++;
+					if(nEnv==envLists.length) nEnv = 0;
+					envcontext.drawImage(img, 0, 0, 64,64);
+					
+					environment = new THREE.Texture(img);
+					environment.needsUpdate = true;
+
+					var i = shaders.length;
+		            while(i--)shaders[i].uniforms.env.value = environment;
+				}
+				img.src = 'textures/spherical/'+envLists[nEnv];
+
+			}
+
+			function bindKeys() {
+
+			    document.onkeydown = function(e) {
+			        e = e || window.event;
+			        switch ( e.keyCode ) {
+			            case 38: case 87: case 90: key[0] = 1; break; // up, W, Z
+			            case 40: case 83: key[1] = 1; break;          // down, S
+			            case 37: case 65: case 81: key[2] = 1; break; // left, A, Q
+			            case 39: case 68: key[3] = 1; break;          // right, D
+			            case 17: case 67: key[4] = 1; break;          // ctrl, c
+			            case 32: key[5] = 1; break;                   // space
+			        }
+			    }
+			    document.onkeyup = function(e) {
+			        e = e || window.event
+			        switch( e.keyCode ) {
+			            case 38: case 87: case 90: key[0] = 0; break; // up, W, Z
+			            case 40: case 83: key[1] = 0; break;          // down, S
+			            case 37: case 65: case 81: key[2] = 0; break; // left, A, Q
+			            case 39: case 68: key[3] = 0;  break;         // right, D
+			            case 17: case 67: key[4] = 0; break;          // ctrl, c
+			            case 32: key[5] = 0; break;                   // space
+			        }
+			    }
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				TWEEN.update();
+
+				game.step();
+
+				controls.update();
+				renderer.render( scene, camera );
+
+				stats.update();
+
+			}
+
+		</script>
+
+	</body>
+</html>

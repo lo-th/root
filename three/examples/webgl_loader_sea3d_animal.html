@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - loaders - sea3D</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			#info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+		</style>
+	</head>
+
+	<body>
+		<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> -
+		sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank"> LoTh
+		</div>
+
+		<script src="../build/three.min.js"></script>
+
+		<script src="js/controls/OrbitControls.js"></script>
+
+		<script src="js/loaders/sea3d.min.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src='js/libs/dat.gui.min.js'></script>
+		<script src="js/shaders/spherical.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+
+			var camera, controls, scene, renderer, clock;
+
+			var pool;
+			var ToRad = Math.PI/180;
+
+			var gui;
+			var settings = {morph:0, idle:0, walk:100};
+
+			init();
+			animate();
+
+			function init() {
+
+				clock = new THREE.Clock();
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				camera.position.z = -100;
+				camera.position.y = 30;
+
+				controls = new THREE.OrbitControls( camera );
+				controls.target.y = 10;
+
+				controls.noZoom = false;
+				controls.noPan = false;
+
+				scene = new THREE.Scene();
+				scene.add( camera );
+
+				// renderer
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				//renderer.setClearColor( 0x333333, 1 );
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				initGui();
+
+				// init load sea3d
+				pool = new SEA3D.Pool();
+				pool.load( ['models/sea3d/spider.sea'], initObject, 'auto' );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function createShader(img) {
+
+				var shader = THREE.Spherical;
+
+				var uniforms = THREE.UniformsUtils.merge([
+					shader.uniforms,
+					THREE.UniformsLib[ "common" ],
+				]);
+				material = new THREE.ShaderMaterial({
+			        uniforms: uniforms,
+			        vertexShader: shader.vs,
+			        fragmentShader: shader.fs,
+			        shading: THREE.SmoothShading,
+			        skinning : true,
+			        morphTargets : true
+			    });
+			    if(img){
+			    	var tx = THREE.ImageUtils.loadTexture( img );
+			    	tx.flipY = false;
+			        material.uniforms.map.value = tx;
+			        material.uniforms.useMap.value = 1.0;
+			    }
+			    material.uniforms.mat.value = THREE.ImageUtils.loadTexture( 'textures/spherical/env.jpg' );
+			    material.uniforms.color.value = new THREE.Color( 0xFFFFFF );
+			    return material;
+
+			}
+
+			var body;
+			var bodys = [];
+			var max = 60;
+
+			function initObject() {
+
+				var size = 1;
+
+				console.log(pool.getList());
+				//var head = pool.getMesh('woman_head');
+				for(var i =0; i<max;i++){
+					body = pool.getMesh('spider_body').clone();
+
+					//head.setWeight("neck", 1);
+	                //head.setWeight("earOut", 0.6);
+
+					//head.scale.set(-size,size,size);
+			        body.scale.set(size,size,-size);
+			        body.position.set(-500+Math.random()*1000,0,-500+Math.random()*1000 );
+			        body.rotation.set(0,0,0);
+			        body.material = createShader('textures/sea3d/spider.jpg');
+
+			        body.animations[0].play(0);
+			        body.animations[1].play(0);
+			        body.animations[0].weight = 0;
+			        body.animations[1].weight = 1;
+
+					scene.add(body);
+					bodys[i] = body;
+			    }
+
+				//scene.add(head);
+			}
+
+			function initGui() {
+
+				gui = new dat.GUI();
+				var top = gui.addFolder('Morph');
+				top.add( settings, 'morph').min(0).max(100).step(1).name("morph").listen().onChange( function(value) { updateMorph(); })
+				top.open();
+				var top2 = gui.addFolder('Animation');
+				top2.add( settings, 'idle').min(0).max(100).step(1).name("idle").listen().onChange( function(value) { settings.walk=100-value; updateAnimation(); });
+				top2.add( settings, 'walk').min(0).max(100).step(1).name("walk").listen().onChange( function(value) { settings.idle=100-value; updateAnimation(); });
+				top2.open();
+
+			}
+
+			function updateMorph() {
+				for(var i =0; i<max;i++){
+					bodys[i].setWeight("exo", settings.morph/100 );
+				}
+			}
+
+			function updateAnimation() {
+				for(var i =0; i<max;i++){
+					bodys[i].animations[0].weight = settings.idle/100;
+					bodys[i].animations[1].weight = settings.walk/100;
+				}
+			}
+
+			function onWindowResize() {
+
+				//camera.aspect = window.innerWidth / window.innerHeight;
+				//camera.updateProjectionMatrix();
+
+				//renderer.setSize( window.innerWidth, window.innerHeight );
+
+				//controls.handleResize();
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				var delta = clock.getDelta();
+				THREE.AnimationHandler.update( delta );
+
+				controls.update();
+				renderer.render( scene, camera );
+
+				stats.update();
+
+			}
+
+		</script>
+
+	</body>
+</html>

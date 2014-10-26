@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - loaders - sea3D</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			#info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+		</style>
+	</head>
+
+	<body>
+		<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> -
+		sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank"> LoTh
+		</div>
+
+		<script src="../build/three.min.js"></script>
+
+		<script src="js/controls/OrbitControls.js"></script>
+
+		<script src="js/loaders/sea3d.min.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/shaders/spherical.js"></script>
+		<script src="js/modifiers/SubdivisionModifier.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+
+			var camera, controls, scene, renderer, clock;
+
+			var pool;
+			var ToRad = Math.PI/180;
+
+			init();
+			animate();
+
+			function init() {
+
+				clock = new THREE.Clock();
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 2000 );
+				camera.position.z = -100;
+				camera.position.y = 80;
+				camera.scale.x = -1
+				//camera.scale.set(-1, 1, 1);
+
+				controls = new THREE.OrbitControls( camera );
+				controls.target.y = 50;
+
+				controls.noZoom = false;
+				controls.noPan = false;
+
+				scene = new THREE.Scene();
+				scene.add( camera );
+
+				// renderer
+
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				// init load sea3d
+				pool = new SEA3D.Pool();
+				pool.load( ['models/sea3d/woman.sea'], initObject );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			var body, head;
+			var bodyBones = {};
+			var headBones = {};
+			var modelLoaded = false;
+
+			function initObject() {
+
+				
+
+				var size = 1;
+
+				console.log(pool.getList());
+				head = pool.getMesh('woman_head');
+				body = pool.getMesh('woman_body');//.clone();
+
+				head.setWeight("neck", 1);
+                head.setWeight("earOut", 0.6);
+
+                head.setWeight("surprise", 1);
+
+				head.scale.set(size,size,size);
+		        body.scale.set(size,size,size);
+
+		        /*
+		        var modifier = new THREE.SubdivisionModifier( 2 )
+		        var smooth = body.geometry.clone();
+				smooth.mergeVertices();
+				smooth.computeFaceNormals();
+				smooth.computeVertexNormals();
+
+		        modifier.modify( smooth);
+		        var mat = createShader(false,false)
+		        var mesh = new THREE.Mesh( smooth, mat )
+		        scene.add(mesh);*/
+
+
+		       /* head.position.set(0,0,0);
+		        head.rotation.set(0,0,0);//(180*ToRad,0*ToRad,-90*ToRad);
+		        body.position.set(0,0,0);
+		        body.rotation.set(0,0,0);*/
+
+		        for(var j=0; j<body.skeleton.bones.length; j++){
+		        	var bone = body.skeleton.bones[j]
+				    var name = bone.name;
+				    bodyBones[name] = bone;
+				    if(name='Bone006')bone.add(head);
+		        }
+
+		        for(var j=0; j<head.skeleton.bones.length; j++){
+		        	var bone = head.skeleton.bones[j]
+				    var name = bone.name;
+				    //headBones[name] = bone;
+				    //bone.matrix.copy(bodyBones[name].matrix)
+				    //bone.matrixWorld.copy(bodyBones[name].matrixWorld)
+				    //if(name='Bone006')bone.matrixWorld = bodyBones[name].matrixWorld.clone() ;
+				    //bone.matrixAutoUpdate = false;
+				   // bone.matrixWorldNeedsUpdate = true;
+				    console.log(name)
+		        }
+		        //head.skeleton = body.skeleton
+
+				scene.add(body);
+				scene.add(head);
+
+				body.material = createShader(true,false);
+				head.material = createShader(true,true);
+
+				body.animations[0].stop(0);
+				body.animations[1].play(0);
+				body.animations[2].stop(0);
+
+				head.animations[0].stop(0);
+				head.animations[1].play(0);
+				head.animations[2].stop(0);
+
+				//upBone()
+				modelLoaded = true;
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				controls.handleResize();
+
+			}
+
+			function upBone(){
+				for(var key in headBones){
+					var mtx = bodyBones[key].matrix.clone();
+					headBones[key].matrix.copy(mtx)
+					/*if(key=='Bone006'){
+						var mtx2 = bodyBones[key].matrixWorld.clone();
+						//mtx2.multiply(mtx);
+						//mtx.multiply(mtx2);
+						headBones[key].matrix.copy(mtx2)
+						headBones[key].quaternion.setFromRotationMatrix( mtx );
+						headBones[key].position.setFromMatrixPosition( mtx );
+						//headBones[key].matrixWorldNeedsUpdate = true;
+					}*/
+
+					//var mtx = bodyBones[key].matrixWorld.clone();
+					
+					
+
+					//headBones[key].position.setFromMatrixPosition( mtx );
+					//headBones[key].quaternion.setFromRotationMatrix( mtx );
+					//headBones[key].applyMatrix(bodyBones[key].matrix.clone());
+
+
+					
+					//headBones[key].matrixWorld = mtx;
+					//headBones[key].matrixWorldNeedsUpdate = true;
+					//var mtx = bodyBones[key].matrixWorld;
+					//headBones[key].matrixWorld = mtx.clone();
+					//headBones[key].position.setFromMatrixPosition( mtx );
+					//headBones[key].quaternion.setFromRotationMatrix( mtx );
+					//headBones[key].updateMatrixWorld();
+				}
+				
+			}
+
+			function createShader( anim, morph, img) {
+
+				var shader = THREE.Spherical;
+
+				var uniforms = THREE.UniformsUtils.merge([
+					shader.uniforms,
+					THREE.UniformsLib[ "common" ],
+				]);
+				material = new THREE.ShaderMaterial({
+			        uniforms: uniforms,
+			        vertexShader: shader.vs,
+			        fragmentShader: shader.fs,
+			        shading: THREE.SmoothShading,
+			        skinning : anim || false,
+			        morphTargets : morph || false
+			    });
+			    if(img){
+			    	var tx = THREE.ImageUtils.loadTexture( img );
+			    	tx.flipY = false;
+			        material.uniforms.map.value = tx;
+			        material.uniforms.useMap.value = 1.0;
+			    }
+			    material.uniforms.mat.value = THREE.ImageUtils.loadTexture( 'textures/spherical/env2.jpg' );
+			    material.uniforms.color.value = new THREE.Color( 0xFFFFFF );
+			    return material;
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				var delta = clock.getDelta();
+				THREE.AnimationHandler.update( delta );
+				//if(modelLoaded)upBone();
+
+				controls.update();
+				renderer.render( scene, camera );
+
+				stats.update();
+
+			}
+
+		</script>
+
+	</body>
+</html>
