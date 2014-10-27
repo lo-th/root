@@ -390,8 +390,8 @@ CarGame.ArcadeCar = function () {
     CarGame.ControllableObject.call(this);
     this.steer_angle = 0;
     this.velocity = new CarGame.Vec2(0, 0);
-    this.angular_vel = 0;
     this.prev_accel = new CarGame.Vec2(0, 0);
+    this.angular_vel = 0;
     this.speed = 0;
     this.direction = 1;
     this.trans = new CarGame.Trans2(this.pos, this.angle, null);
@@ -430,14 +430,10 @@ CarGame.ArcadeCar.prototype.set_drive = function (a, b) {
 };
 CarGame.ArcadeCar.prototype.run = function (a) {
     if (!(0.001 > a)) {
-        var b = new CarGame.Vec2(),
-            c = 0,
-            d = 0,
-            e = 0,
-            f = [0, 0],
-            k = this.velocity.Copy();
+        var b = new CarGame.Vec2(), c = 0, d = 0, f = [0, 0];
+        var k = this.velocity.Copy();
         k.MulTM(this.trans.m_r);
-        e = k.y;
+        var e = k.y;
         (0 < this.traction || 0 <= e * this.traction) && !this.hand_brake ? (d = Math.abs(e), d = 1 < d ? this.power / d : this.power, d *= this.traction) : (e = this.hand_brake ? 1 * this.buget * this.braking_coef : Math.abs(this.traction) * this.buget * this.braking_coef, f[0] = this.front_braking * e, f[1] = (1 - this.front_braking) * e);
         var g = this.prev_accel.Copy();
         g.MulTM(this.trans.m_r);
@@ -468,18 +464,14 @@ CarGame.ArcadeCar.prototype.run = function (a) {
     }
 };
 CarGame.ArcadeCar.prototype.draw = function (a) {
-    var w = 1;
-    var h = 2;
-    var corner = 0.1;
-    var corner2 = 0.2;
-    var corner3 = 0.15;
+    // car shadow
+    var w = 1, h = 2, corner = 0.1, corner2 = 0.2, corner3 = 0.15;
     a = [{x:-w-corner, y:-h+corner},{x:-w, y:-h},  {x:0, y:-h-0.1 },  { x:w, y:-h }, { x:w+corner, y:-h+corner },
     { x:w+corner, y:h-corner3 },{ x:w-corner2, y:h }, { x:0, y:h+0.1 }, { x:-w+corner2, y:h },  { x:-w-corner, y:h-corner3 }, { x:-w-corner, y:-h+corner }];
     this.engine.m_ctx_ex.set_trans(new CarGame.Trans2(this.pos, this.angle, null));
     this.engine.m_ctx_ex.m_trans.pos = new CarGame.Vec2().add(this.engine.m_ctx_ex.m_trans.pos, { x: 0.1, y: -0.1 });
     this.engine.m_ctx_ex.draw_poly(a, null, "rgba(0,0,0,0.5)");
-
-
+    // car stipes
     for (var b = this.wheels.length; b--;) for (a = this.wheels[b].length; a--;) {
         var c = this.wheels[b][a];
         this.engine.m_ctx_ex.set_trans(new CarGame.Trans2({ x: 0, y: 0 }, 0));
@@ -527,24 +519,18 @@ CarGame.Hover.prototype.run = function (a) {
     b.AddV(new CarGame.Vec2().multiplyScalar(-d, this.trans.m_r.col1));
     this.velocity.AddV(new CarGame.Vec2().multiplyScalar(a, b));
     this.speed = this.velocity.Length();
-    //Debug.write_line("<br/>Speed: " + Math.round(3.6 * this.speed) + "km/h");
-    
     this.angle += a * this.angular_vel;
     this.pos.AddV(new CarGame.Vec2().multiplyScalar(a, this.velocity));
-    this.trans = new CarGame.Trans2(this.pos, this.angle, null)
+    this.trans = new CarGame.Trans2(this.pos, this.angle, null);
 };
 CarGame.Hover.prototype.draw = function (a) {
-    var w = 0.8;
-    var h = 1.8;
-    var corner = 0.1;
-    var corner2 = 0.2;
-    var corner3 = 0.15;
+    // car shadow
+    var w = 0.8, h = 1.8, corner = 0.1, corner2 = 0.2, corner3 = 0.15;
     a = [{x:-w-corner, y:-h+corner},{x:-w, y:-h},  {x:0, y:-h-0.1 },  { x:w, y:-h }, { x:w+corner, y:-h+corner },
     { x:w+corner, y:h-corner3 },{ x:w-corner2, y:h }, { x:0, y:h+0.1 }, { x:-w+corner2, y:h },  { x:-w-corner, y:h-corner3 }, { x:-w-corner, y:-h+corner }];
     this.engine.m_ctx_ex.set_trans(new CarGame.Trans2(this.pos, this.angle, null));
     this.engine.m_ctx_ex.m_trans.pos = new CarGame.Vec2().add(this.engine.m_ctx_ex.m_trans.pos, { x: 0.1, y: -0.1 });
     this.engine.m_ctx_ex.draw_poly(a, null, "rgba(0,0,0,0.5)");
-
 };
 
 // -------------------------- Mech

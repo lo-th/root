@@ -23,7 +23,7 @@
 
 	    <div id="container"></div>
 		<div id="info">
-		<a href="http://threejs.org" target="_blank">three.js</a> -sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank"> LoTh </a>
+		<a href="http://threejs.org" target="_blank">three.js</a> -sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank"> LoTh </a><br> Use key to control car
 		</div>
 		<div id='top'>
 		<input type="button" value="FLY" id="bb" onClick="fly();">
@@ -67,7 +67,7 @@
 			var shaders = [];
 			var carOptions = {drive:'RWD', abs:1, tcs:1, steering:1};
 			var carTransform = {a:0, b:180, pos:0, dl:0, dr:0};
-			var car, ground;
+			var car, ground, carHide;
 			var isFullLoaded = false;
 			var isFly = false;
 			var game;
@@ -139,27 +139,27 @@
 			    var loader = new THREE.SEA3D( true );
 			    loader.onComplete = function( e ) {
 			        var m;
+			        // get reference of some loaded mesh
 			        var i = loader.meshes.length;
 			        while(i--){
 			            m = loader.meshes[i];
+			            if(m.name == 'body'){ car = m; }
 			            if(m.name == 'wheel_av_l') wheels[0] = m;
 			            if(m.name == 'wheel_av_r') wheels[1] = m;
 			            if(m.name == 'wheel_ar_l') wheels[2] = m;
 			            if(m.name == 'wheel_ar_r') wheels[3] = m;
-			            if(m.name == 'axe_l') {wheels[4] = m; }
-			            if(m.name == 'axe_r') {wheels[5] = m; }
-			            if(m.name == 'doorLeft') {doors[0] = m; }
-			            if(m.name == 'doorRight') {doors[1] = m; }
+			            if(m.name == 'axe_l') wheels[4] = m;
+			            if(m.name == 'axe_r') wheels[5] = m;
 			            if(m.name == 'steeringWheel') wheels[6] = m;
-			            if(m.name == 'glass') m.material.transparent = true;
-			            if(m.name == 'body'){ car = m; }
+			            if(m.name == 'doorLeft') doors[0] = m; 
+			            if(m.name == 'doorRight') doors[1] = m;
+			            if(m.name == 'MotorAndBorder'){ carHide = m; m.visible = false; }
 			            var tx = m.material.map;
 			            var trans = m.material.transparent;
 			            var side = THREE.FrontSide;
-			            if(m.name == 'doorGlassRight' || m.name == 'doorGlassLeft' || m.name == 'trunk'){trans = true; side=THREE.DoubleSide; }
-			            if(m.name == 'headLight') trans = false;
-			            if(tx) m.material = new THREE.SphereShader({env:environment, map:tx, transparent:trans, color:0xFFFFFF, side:side});
-			            else m.material = new THREE.SphereShader({ color:0x333333, env:environment});
+			            if(m.name == 'glass' || m.name == 'doorGlassRight' || m.name == 'doorGlassLeft' || m.name == 'trunk'){ trans = true; side=THREE.DoubleSide; }
+			            if(tx) m.material = new THREE.SphereShader({ env:environment, map:tx, transparent:trans, color:0xFFFFFF, side:side });
+			            else m.material = new THREE.SphereShader({ env:environment, color:0x333333 });
 
 			            shaders[i] = m.material;
 			        }
@@ -246,13 +246,14 @@
 				if(!isFly){
 					isFly = true;
 					game.change(3);
+					carHide.visible = true;
 					document.getElementById('bb').value = 'LAND';
 					t = new TWEEN.Tween( carTransform ).to( {a:-35, b:215, pos:17, dl:-90, dr:90}, 1000 ).easing( TWEEN.Easing.Cubic.Out ).start();
 				} else {
 					isFly = false;
 					game.change(1);
 					document.getElementById('bb').value = 'FLY';
-					t = new TWEEN.Tween( carTransform ).to( {a:0, b:180, pos:0, dl:0, dr:0}, 1000 ).easing( TWEEN.Easing.Cubic.Out ).start();
+					t = new TWEEN.Tween( carTransform ).to( {a:0, b:180, pos:0, dl:0, dr:0}, 1000 ).easing( TWEEN.Easing.Cubic.Out ).onComplete( function() {  carHide.visible = false;} ).start();
 				}
 
 			}
