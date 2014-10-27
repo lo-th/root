@@ -124,7 +124,7 @@
 			    ground.visible = false;
 
 			    // init car game
-			    game = new Application(canvas, updateCar, carOptions);
+			    game = new CarGame.Engine(canvas, updateCar, carOptions);
 			    
 				// init load sea3d
 				loadSea3d();
@@ -327,7 +327,7 @@
 
 				TWEEN.update();
 
-				game.step();
+				game.step(key);
 
 				controls.update();
 				renderer.render( scene, camera );
