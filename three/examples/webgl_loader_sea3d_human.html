@@ -22,14 +22,16 @@
 				display:block;
 			}
 			#info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+			#envSelector{position:absolute; bottom:10px; right:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
 		</style>
 	</head>
 
 	<body>
 		<div id="info">
 		<a href="http://threejs.org" target="_blank">three.js</a> -
-		sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank"> LoTh
+		sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank"> LoTh</a>
 		</div>
+		<div id="envSelector"></div>
 
 		<script src="../build/three.min.js"></script>
 
@@ -40,7 +42,6 @@
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
 		<script src="js/shaders/spherical.js"></script>
-		<script src="js/modifiers/SubdivisionModifier.js"></script>
 
 		<script>
 
@@ -53,10 +54,20 @@
 			var pool;
 			var ToRad = Math.PI/180;
 
+			var shaders = [];
+
+			var environment;
+			var envLists = ['env.jpg','env1.jpg','env2.jpg', 'env3.jpg','env4.jpg','env5.jpg','env6.jpg','env7.jpg','env8.jpg'];
+			var envcontext;
+			var nEnv = 0;
+
 			init();
 			animate();
 
 			function init() {
+
+				// init environment
+				initEnvironment();
 
 				clock = new THREE.Clock();
 
@@ -77,7 +88,7 @@
 
 				// renderer
 
-				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
 				container = document.createElement( 'div' );
@@ -120,24 +131,6 @@
 				head.scale.set(size,size,size);
 		        body.scale.set(size,size,size);
 
-		        /*
-		        var modifier = new THREE.SubdivisionModifier( 2 )
-		        var smooth = body.geometry.clone();
-				smooth.mergeVertices();
-				smooth.computeFaceNormals();
-				smooth.computeVertexNormals();
-
-		        modifier.modify( smooth);
-		        var mat = createShader(false,false)
-		        var mesh = new THREE.Mesh( smooth, mat )
-		        scene.add(mesh);*/
-
-
-		       /* head.position.set(0,0,0);
-		        head.rotation.set(0,0,0);//(180*ToRad,0*ToRad,-90*ToRad);
-		        body.position.set(0,0,0);
-		        body.rotation.set(0,0,0);*/
-
 		        for(var j=0; j<body.skeleton.bones.length; j++){
 		        	var bone = body.skeleton.bones[j]
 				    var name = bone.name;
@@ -161,8 +154,11 @@
 				scene.add(body);
 				scene.add(head);
 
-				body.material = createShader(true,false);
-				head.material = createShader(true,true);
+				shaders[0] = new THREE.SphereShader({env:environment, skinning:true });
+				shaders[1] = new THREE.SphereShader({env:environment, skinning:true, morphTargets:true });
+
+				body.material = shaders[0];
+				head.material = shaders[1];
 
 				body.animations[0].stop(0);
 				body.animations[1].play(0);
@@ -222,33 +218,37 @@
 				
 			}
 
-			function createShader( anim, morph, img) {
+			function initEnvironment(){
 
-				var shader = THREE.Spherical;
-
-				var uniforms = THREE.UniformsUtils.merge([
-					shader.uniforms,
-					THREE.UniformsLib[ "common" ],
-				]);
-				material = new THREE.ShaderMaterial({
-			        uniforms: uniforms,
-			        vertexShader: shader.vs,
-			        fragmentShader: shader.fs,
-			        shading: THREE.SmoothShading,
-			        skinning : anim || false,
-			        morphTargets : morph || false
-			    });
-			    if(img){
-			    	var tx = THREE.ImageUtils.loadTexture( img );
-			    	tx.flipY = false;
-			        material.uniforms.map.value = tx;
-			        material.uniforms.useMap.value = 1.0;
-			    }
-			    material.uniforms.mat.value = THREE.ImageUtils.loadTexture( 'textures/spherical/env2.jpg' );
-			    material.uniforms.color.value = new THREE.Color( 0xFFFFFF );
-			    return material;
+				var env = document.getElementById('envSelector');
+				var canvas = document.createElement( 'canvas' );
+				canvas.width = canvas.height = 64;
+				env.appendChild( canvas );
+				envcontext = canvas.getContext('2d');
+				loadNewEnv(true);
+				env.onclick = loadNewEnv;
 
 			}
+
+			function loadNewEnv(){
+
+				var img = new Image();
+				img.onload = function(){
+					nEnv++;
+					if(nEnv==envLists.length) nEnv = 0;
+					envcontext.drawImage(img, 0, 0, 64,64);
+					
+					environment = new THREE.Texture(img);
+					environment.needsUpdate = true;
+
+					var i = shaders.length;
+		            while(i--)shaders[i].uniforms.env.value = environment;
+				}
+				img.src = 'textures/spherical/'+envLists[nEnv];
+
+			}
+
+			
 
 			function animate() {
 

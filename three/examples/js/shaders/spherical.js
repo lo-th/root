@@ -25,7 +25,7 @@ THREE.SphereShader =  function(o){
         material.uniforms.useMap.value = 1.0;
     }
     material.uniforms.env.value = o.env || null;
-    material.uniforms.diffuse.value = new THREE.Color( o.color || 0xFF0000 );
+    material.uniforms.diffuse.value = new THREE.Color( o.color || 0xFFFFFF );
     material.uniforms.opacity.value = o.opacity || 1;
     return material;
 }
