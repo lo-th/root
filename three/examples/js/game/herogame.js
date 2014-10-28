@@ -4,6 +4,8 @@
 * Character game with map collision and height test
 */
 
+'use strict';
+
 var HeroGame = {};
 
 HeroGame.ToRad = Math.PI/180;
@@ -11,9 +13,10 @@ HeroGame.ToRad = Math.PI/180;
 HeroGame.Player = function( container, camera, scene, revers, debug ){
 	this.revers = revers || false;
 	this.obj = new THREE.Group();
-    /*var bbox = new THREE.Mesh( new THREE.BoxGeometry( 0.16, 0.2, 0.1 ) );
-    bbox.position.y = 0.1;
-    this.obj.add(bbox);*/
+	/*var shadow = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1, 1 ),  new THREE.MeshBasicMaterial( { color:0x666666, transparent:true, opacity:0.5, blending:THREE.MultiplyBlending }) );
+	shadow.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(90*HeroGame.ToRad));
+	shadow.position.y = 0.05
+	this.obj.add(shadow)*/
     this.obj.position.y = 0.5;
     scene.add(this.obj);
 

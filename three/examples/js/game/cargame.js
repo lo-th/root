@@ -1,3 +1,10 @@
+/**
+* source @author SHVV / https://github.com/SHVV/Car-Demo
+* update @author loth / http://3dflashlo.wordpress.com/
+*
+* Simple car physics
+*/
+
 'use strict';
 
 var CarGame = {};
@@ -534,7 +541,7 @@ CarGame.Hover.prototype.draw = function (a) {
 };
 
 // -------------------------- Mech
-
+/*
 CarGame.Mech = function () {
     CarGame.ControllableObject.call(this);
     this.velocity = new CarGame.Vec2(0, 0);
@@ -572,3 +579,4 @@ CarGame.Mech.prototype.draw = function (a) {
         y: 0
     }, 2, "#808080", "white")
 };
+*/
