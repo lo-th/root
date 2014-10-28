@@ -1,9 +1,17 @@
-THREE.SphereShader =  function(o){
+/**
+ * @author Jaume Sanchez Elias / http://www.clicktorelease.com/
+ * @author loth / http://3dflashlo.wordpress.com/
+ *
+ * Spherical Environment Shader
+ */
+
+THREE.SphericalShader =  function(o){
     o = o || {};
     var shader = THREE.Spherical;
     var uniforms = THREE.UniformsUtils.merge([
         shader.uniforms,
         THREE.UniformsLib[ "common" ],
+        THREE.UniformsLib[ "fog" ]
     ]);
     var material = new THREE.ShaderMaterial({
         uniforms: uniforms,

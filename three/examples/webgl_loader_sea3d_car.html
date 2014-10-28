@@ -48,7 +48,7 @@
 		<script src="js/libs/tween.min.js"></script>
 
 		<script src="js/loaders/sea3d.min.js"></script>
-		<script src="js/shaders/spherical.js"></script>
+		<script src="js/shaders/SphericalShader.js"></script>
 		<script src="js/game/cargame.js"></script>
 		
 		<script>
@@ -158,8 +158,8 @@
 			            var trans = m.material.transparent;
 			            var side = THREE.FrontSide;
 			            if(m.name == 'glass' || m.name == 'doorGlassRight' || m.name == 'doorGlassLeft' || m.name == 'trunk'){ trans = true; side=THREE.DoubleSide; }
-			            if(tx) m.material = new THREE.SphereShader({ env:environment, map:tx, transparent:trans, color:0xFFFFFF, side:side });
-			            else m.material = new THREE.SphereShader({ env:environment, color:0x333333 });
+			            if(tx) m.material = new THREE.SphericalShader({ env:environment, map:tx, transparent:trans, color:0xFFFFFF, side:side });
+			            else m.material = new THREE.SphericalShader({ env:environment, color:0x333333 });
 
 			            shaders[i] = m.material;
 			        }

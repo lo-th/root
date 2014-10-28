@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - loaders - sea3D</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			#info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+			#envSelector{position:absolute; bottom:10px; right:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
+		</style>
+	</head>
+
+	<body>
+		<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> -
+		sea3d format loader test - model from <a href="http://3dflashlo.wordpress.com/" target="_blank">LoTh</a><br> Use key to control hero
+		</div>
+		<div id="envSelector"></div>
+
+		<script src="../build/three.min.js"></script>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/libs/tween.min.js"></script>
+
+		<script src="js/loaders/sea3d.min.js"></script>
+		<script src="js/shaders/SphericalShader.js"></script>
+		<script src="js/game/herogame.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+
+			var camera, scene, renderer, clock;
+
+			var wsize = {w:window.innerWidth, h:window.innerHeight} 
+
+			var pool;
+			var ToRad = Math.PI/180;
+			var key = [0,0,0,0,0,0,0];
+
+			var shaders = [];
+
+			var environment;
+			var envLists = ['env.jpg','env1.jpg','env2.jpg','env3.jpg','env4.jpg','env5.jpg','env6.jpg','env7.jpg','env8.jpg','env9.jpg'];
+			var envcontext;
+			var nEnv = 0;
+
+
+
+			var isCamRevers = true;
+
+			var heroGame;
+
+			init();
+			animate();
+
+			function init() {
+
+				// init environment
+				initEnvironment();
+
+				clock = new THREE.Clock();
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				if(isCamRevers) camera.scale.x = -1
+
+				scene = new THREE.Scene();
+				scene.fog = new THREE.Fog( 0x999999, 3, 50 );
+
+				// renderer
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x999999, 1 );
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				
+				// init hero game
+				heroGame = new HeroGame.Player( container, camera, scene, isCamRevers, false );
+
+				// init load sea3d
+				loadLevel();
+				loadHero('droid');
+
+				
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function loadLevel(){
+
+			    var loader = new THREE.SEA3D( true );
+			    loader.onComplete = function( e ) {
+			        var m;
+			        // get reference of some loaded mesh
+			        var i = loader.meshes.length;
+			        while(i--){
+			            m = loader.meshes[i];
+			            var tx = m.material.map;
+			            var trans = m.material.transparent;
+			            var side = THREE.FrontSide;
+
+			            if(!isCamRevers)m.scale.set(1,1,-1);
+			            m.position.set(0,0,0);
+			            
+			            m.material = new THREE.SphericalShader({ env:environment, color:0x333333, fog:true });
+			            shaders[i] = m.material;
+			            scene.add(m)
+
+
+			            var ff = new THREE.Mesh( m.geometry.clone() );
+			            heroGame.miniMap.add(ff);
+
+
+			            //player.miniMap.addGeometry(m.geometry.clone());
+
+			            //player.miniMap.addGeometry(m.geometry);
+			        }
+			    }
+			    // force buffer geometry 
+			    //loader.parser = THREE.SEA3D.BUFFER;
+			    //loader.parser = THREE.SEA3D.DEFAULT;
+			    loader.parser = THREE.SEA3D.AUTO;
+			    loader.load( 'models/sea3d/base.sea' );
+			}
+
+			function loadHero(name){
+
+			    var loader = new THREE.SEA3D( true );
+			    loader.onComplete = function( e ) {
+			    	var model = loader.meshes[0];
+			    	var tx = model.material.map;
+			    	model.material = new THREE.SphericalShader({ env:environment, map:tx, color:0xFFFFFF, skinning:true, morphTargets:true });
+			    	shaders.push(model.material);
+
+			    	heroGame.addHero(model, 0.015);
+
+
+			        
+			    }
+			    // force buffer geometry 
+			    //loader.parser = THREE.SEA3D.BUFFER;
+			    //loader.parser = THREE.SEA3D.DEFAULT;
+			    loader.parser = THREE.SEA3D.AUTO;
+			    loader.load( 'models/sea3d/'+name+'.sea' );
+			}
+
+
+			function onWindowResize() {
+				wsize = {w:window.innerWidth, h:window.innerHeight} 
+
+				camera.aspect = wsize.w / wsize.h;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( wsize.w, wsize.h );
+
+			}
+
+			function initEnvironment(){
+
+				var env = document.getElementById('envSelector');
+				var canvas = document.createElement( 'canvas' );
+				canvas.width = canvas.height = 64;
+				env.appendChild( canvas );
+				envcontext = canvas.getContext('2d');
+				loadNewEnv(true);
+				env.onclick = loadNewEnv;
+
+			}
+
+			function loadNewEnv(){
+
+				var img = new Image();
+				img.onload = function(){
+					nEnv++;
+					if(nEnv==envLists.length) nEnv = 0;
+					envcontext.drawImage(img, 0, 0, 64,64);
+					
+					environment = new THREE.Texture(img);
+					environment.needsUpdate = true;
+
+					var i = shaders.length;
+		            while(i--)shaders[i].uniforms.env.value = environment;
+				}
+				img.src = 'textures/spherical/'+envLists[nEnv];
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				heroGame.update( clock.getDelta() );
+
+				renderer.render( scene, camera );
+
+				stats.update();
+
+			}
+
+		</script>
+
+	</body>
+</html>
