@@ -21,17 +21,15 @@ HeroGame.Player = function( container, camera, scene, revers, debug ){
     this.rotation = new THREE.Vector3( 0, 0, 0 );
     this.newRotation = new THREE.Vector3( 0, 0, 0 );
     this.model = false;
+
     this.timeScale = 1;
-    this.timeToStep = 0;
-    this.isFrameStepping = false;
-    this.animLength = 0;
-    this.W = {R:0};
+    this.delta = 0;
+
     this.isMove = false;
     this.isJump = false;
     this.isFall = false;
     this.onGround = true;
-    this.delta = 0;
-
+    
     this.weights = {};
 
     this.levelOrigin = new THREE.Vector3(0,0,0);
@@ -259,14 +257,11 @@ HeroGame.Player.prototype = {
     	this.obj.position.set(x,y,z);
     },
     setRotation:function(y){
-        //this.obj.rotation.y = y;
         this.rotation.y = y;
         if(this.isMove){
             this.newRotation.lerp(this.rotation, 0.25);
             this.obj.rotation.y = this.newRotation.y;
-            //this.obj.rotation.y = this.rotation.y
          }
-        //this.obj.rotation.lerp(this.rotation, 0.5);
     },
     lerp:function(v,f){
     	this.obj.position.lerp(v,f);
@@ -300,7 +295,7 @@ HeroGame.Player.prototype = {
     },
     stopWalk:function(){
         if(this.model){
-            if(this.W['walk']!==0 || this.W['step_right']!==0 || this.W['step_left']!==0){ 
+            if(this.weights['walk']!==0 || this.weights['step_right']!==0 || this.weights['step_left']!==0){ 
                 this.easing({idle:1, walk:0, step_left:0, step_right:0});       
             }
         }
