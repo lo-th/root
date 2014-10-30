@@ -41,7 +41,7 @@
 
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
-		<script src="js/shaders/spherical.js"></script>
+		<script src="js/shaders/SphericalShader.js"></script>
 
 		<script>
 
@@ -154,8 +154,8 @@
 				scene.add(body);
 				scene.add(head);
 
-				shaders[0] = new THREE.SphereShader({env:environment, skinning:true });
-				shaders[1] = new THREE.SphereShader({env:environment, skinning:true, morphTargets:true });
+				shaders[0] = new THREE.SphericalShader({env:environment, skinning:true });
+				shaders[1] = new THREE.SphericalShader({env:environment, skinning:true, morphTargets:true });
 
 				body.material = shaders[0];
 				head.material = shaders[1];

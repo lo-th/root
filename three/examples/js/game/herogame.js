@@ -750,7 +750,7 @@ HeroGame.deepShader={
         'void main(void) {',
             'gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
             'dy = position.y*deep;',
-            'vc = vec4(dy,dy,dy, 1.0);',
+            'if(position.y>0.){vc = vec4(dy,dy,dy, 1.0);}else{vc = vec4(0,0,-dy, 1.0);}',
         '}'
     ].join("\n")
 };

@@ -122,32 +122,20 @@
 			        var i = loader.meshes.length;
 			        while(i--){
 			            m = loader.meshes[i];
-			            var tx = m.material.map;
-			            var trans = m.material.transparent;
-			            var side = THREE.FrontSide;
-
-			            if(!isCamRevers)m.scale.set(1,1,-1);
-			            m.position.set(0,0,0);
-			            
-			            m.material = new THREE.SphericalShader({ env:environment, color:0x333333, fog:true });
-			            shaders[i] = m.material;
-			            scene.add(m)
-
-
-			            var ff = new THREE.Mesh( m.geometry.clone() );
-			            heroGame.miniMap.add(ff);
-
-
-			            //player.miniMap.addGeometry(m.geometry.clone());
-
-			            //player.miniMap.addGeometry(m.geometry);
+			            if(m.name=='collision'){// add to minimap
+			            	heroGame.miniMap.add(m);
+			            } else { // add to scene
+			            	if(!isCamRevers)m.scale.set(1,1,-1);
+				            //m.position.set(0,0,0);
+				            m.material = new THREE.SphericalShader({ env:environment, color:0x333333, fog:true });
+				            shaders.push( m.material );
+				            scene.add(m);
+			            }
 			        }
 			    }
 			    // force buffer geometry 
-			    //loader.parser = THREE.SEA3D.BUFFER;
-			    //loader.parser = THREE.SEA3D.DEFAULT;
-			    loader.parser = THREE.SEA3D.AUTO;
-			    loader.load( 'models/sea3d/base.sea' );
+			    loader.parser = THREE.SEA3D.BUFFER;
+			    loader.load( 'models/sea3d/basic.sea' );
 			}
 
 			function loadHero(name){
@@ -159,7 +147,7 @@
 			    	model.material = new THREE.SphericalShader({ env:environment, map:tx, color:0xFFFFFF, skinning:true, morphTargets:true });
 			    	shaders.push(model.material);
 
-			    	heroGame.addHero(model, 0.015);
+			    	heroGame.addHero(model, 0.01);
 			    }
 			    // force buffer geometry 
 			    //loader.parser = THREE.SEA3D.BUFFER;
