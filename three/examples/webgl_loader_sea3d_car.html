@@ -70,11 +70,9 @@
 			var car, ground, carHide;
 			var isFullLoaded = false;
 			var isFly = false;
-			var game;
-			var environment;
-			var envLists = ['env.jpg','env1.jpg','env2.jpg', 'env3.jpg','env4.jpg','env5.jpg','env6.jpg','env7.jpg','env8.jpg','env9.jpg'];
-			var envcontext;
-			var nEnv = 0;
+			var carGame;
+
+			var environment, envcontext, envLists, nEnv = 0;
 
 			init();
 			animate();
@@ -124,7 +122,7 @@
 			    ground.visible = false;
 
 			    // init car game
-			    game = new CarGame.Engine(canvas, updateCar, carOptions);
+			    carGame = new CarGame.Engine(canvas, updateCar, carOptions);
 			    
 				// init load sea3d
 				loadSea3d();
@@ -192,7 +190,7 @@
 		        car.position.y = carTransform.pos;
 
 		        var i = 4;
-		        if(game.current == 3){
+		        if(carGame.current == 3){
 		        	while(i--){ wheels[i].rotation.order = 'ZYX';
 		        		if(i==1 || i==3) wheels[i].rotation.z = carTransform.a * ToRad;
 		        		else wheels[i].rotation.z = carTransform.b * ToRad;
@@ -232,7 +230,7 @@
 				}
 
 				carOptions.drive = document.getElementById('selDRIVE').value;
-				game.setOptions(carOptions);
+				carGame.setOptions(carOptions);
 
 			}
 
@@ -245,13 +243,13 @@
 
 				if(!isFly){
 					isFly = true;
-					game.change(3);
+					carGame.change(3);
 					carHide.visible = true;
 					document.getElementById('bb').value = 'LAND';
 					t = new TWEEN.Tween( carTransform ).to( {a:-35, b:215, pos:17, dl:-90, dr:90}, 1000 ).easing( TWEEN.Easing.Cubic.Out ).start();
 				} else {
 					isFly = false;
-					game.change(1);
+					carGame.change(1);
 					document.getElementById('bb').value = 'FLY';
 					t = new TWEEN.Tween( carTransform ).to( {a:0, b:180, pos:0, dl:0, dr:0}, 1000 ).easing( TWEEN.Easing.Cubic.Out ).onComplete( function() {  carHide.visible = false;} ).start();
 				}
@@ -268,6 +266,7 @@
 
 			function initEnvironment(){
 
+				envLists = ['env.jpg','env1.jpg','env2.jpg', 'env3.jpg','env4.jpg','env5.jpg','env6.jpg','env7.jpg','env8.jpg','env9.jpg'];
 				var env = document.getElementById('envSelector');
 				var canvas = document.createElement( 'canvas' );
 				canvas.width = canvas.height = 64;
@@ -285,10 +284,9 @@
 					nEnv++;
 					if(nEnv==envLists.length) nEnv = 0;
 					envcontext.drawImage(img, 0, 0, 64,64);
-					
 					environment = new THREE.Texture(img);
 					environment.needsUpdate = true;
-
+					// update each material
 					var i = shaders.length;
 		            while(i--)shaders[i].uniforms.env.value = environment;
 				}
@@ -328,7 +326,7 @@
 
 				TWEEN.update();
 
-				game.step(key);
+				carGame.step(key);
 
 				controls.update();
 				renderer.render( scene, camera );

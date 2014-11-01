@@ -51,22 +51,15 @@
 
 			var camera, scene, renderer, clock;
 
-			var wsize = {w:window.innerWidth, h:window.innerHeight} 
-
-			var pool;
 			var ToRad = Math.PI/180;
 			var key = [0,0,0,0,0,0,0];
 
 			var shaders = [];
 
-			var environment;
-			var envLists = ['env.jpg','env1.jpg','env2.jpg','env3.jpg','env4.jpg','env5.jpg','env6.jpg','env7.jpg','env8.jpg','env9.jpg'];
-			var envcontext;
-			var nEnv = 0;
-
-
+			var environment, envcontext, envLists, nEnv = 0;
 
 			var isCamRevers = true;
+			var isMapDebug = false;
 
 			var heroGame;
 
@@ -102,10 +95,10 @@
 
 				
 				// init hero game
-				heroGame = new HeroGame.Player( container, camera, scene, isCamRevers, false );
+				heroGame = new HeroGame.Player( container, camera, scene, isCamRevers, isMapDebug );
 
 				// init load sea3d
-				loadLevel();
+				loadLevel('basic');
 				loadHero('droid');
 
 				
@@ -113,7 +106,7 @@
 
 			}
 
-			function loadLevel(){
+			function loadLevel(name){
 
 			    var loader = new THREE.SEA3D( true );
 			    loader.onComplete = function( e ) {
@@ -122,11 +115,10 @@
 			        var i = loader.meshes.length;
 			        while(i--){
 			            m = loader.meshes[i];
-			            if(m.name=='collision'){// add to minimap
+			            if(m.name=='collision'){// add to minimap scene
 			            	heroGame.miniMap.add(m);
-			            } else { // add to scene
-			            	if(!isCamRevers)m.scale.set(1,1,-1);
-				            //m.position.set(0,0,0);
+			            } else { // add to root scene
+			            	if(!isCamRevers) m.scale.set(1,1,-1);
 				            m.material = new THREE.SphericalShader({ env:environment, color:0x333333, fog:true });
 				            shaders.push( m.material );
 				            scene.add(m);
@@ -135,7 +127,7 @@
 			    }
 			    // force buffer geometry 
 			    loader.parser = THREE.SEA3D.BUFFER;
-			    loader.load( 'models/sea3d/basic.sea' );
+			    loader.load( 'models/sea3d/'+name+'.sea' );
 			}
 
 			function loadHero(name){
@@ -146,29 +138,27 @@
 			    	var tx = model.material.map;
 			    	model.material = new THREE.SphericalShader({ env:environment, map:tx, color:0xFFFFFF, skinning:true, morphTargets:true });
 			    	shaders.push(model.material);
-
+			    	// add to hero
 			    	heroGame.addHero(model, 0.01);
 			    }
-			    // force buffer geometry 
-			    //loader.parser = THREE.SEA3D.BUFFER;
-			    //loader.parser = THREE.SEA3D.DEFAULT;
+			    // force auto geometry ( skinmesh can't be buffer )
 			    loader.parser = THREE.SEA3D.AUTO;
 			    loader.load( 'models/sea3d/'+name+'.sea' );
 			}
 
 
 			function onWindowResize() {
-				wsize = {w:window.innerWidth, h:window.innerHeight} 
 
-				camera.aspect = wsize.w / wsize.h;
+				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 
-				renderer.setSize( wsize.w, wsize.h );
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
 			}
 
 			function initEnvironment(){
 
+				envLists = ['env.jpg','env1.jpg','env2.jpg','env3.jpg','env4.jpg','env5.jpg','env6.jpg','env7.jpg','env8.jpg','env9.jpg'];
 				var env = document.getElementById('envSelector');
 				var canvas = document.createElement( 'canvas' );
 				canvas.width = canvas.height = 64;
@@ -186,10 +176,9 @@
 					nEnv++;
 					if(nEnv==envLists.length) nEnv = 0;
 					envcontext.drawImage(img, 0, 0, 64,64);
-					
 					environment = new THREE.Texture(img);
 					environment.needsUpdate = true;
-
+					// update each material
 					var i = shaders.length;
 		            while(i--)shaders[i].uniforms.env.value = environment;
 				}
