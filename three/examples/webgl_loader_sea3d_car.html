@@ -137,30 +137,50 @@
 			    var loader = new THREE.SEA3D( true );
 			    loader.onComplete = function( e ) {
 			        var m;
-			        // get reference of some loaded mesh
+			        var map = {};
+			        // get reference of loaded mesh and texture
 			        var i = loader.meshes.length;
 			        while(i--){
 			            m = loader.meshes[i];
-			            if(m.name == 'body'){ car = m; }
-			            if(m.name == 'wheel_av_l') wheels[0] = m;
+			            if(m.name == 'body'){ car = m; map['body'] = m.material.map; }
+			            if(m.name == 'wheel_av_l'){ wheels[0] = m;  map['wheel'] = m.material.map;}
 			            if(m.name == 'wheel_av_r') wheels[1] = m;
 			            if(m.name == 'wheel_ar_l') wheels[2] = m;
 			            if(m.name == 'wheel_ar_r') wheels[3] = m;
 			            if(m.name == 'axe_l') wheels[4] = m;
 			            if(m.name == 'axe_r') wheels[5] = m;
 			            if(m.name == 'steeringWheel') wheels[6] = m;
-			            if(m.name == 'doorLeft') doors[0] = m; 
+			            if(m.name == 'doorLeft'){ doors[0] = m; map['door'] = m.material.map;}
 			            if(m.name == 'doorRight') doors[1] = m;
 			            if(m.name == 'MotorAndBorder'){ carHide = m; m.visible = false; }
-			            var tx = m.material.map;
-			            var trans = m.material.transparent;
-			            var side = THREE.FrontSide;
-			            if(m.name == 'glass' || m.name == 'doorGlassRight' || m.name == 'doorGlassLeft' || m.name == 'trunk'){ trans = true; side=THREE.DoubleSide; }
-			            if(tx) m.material = new THREE.SphericalShader({ env:environment, map:tx, transparent:trans, color:0xFFFFFF, side:side });
-			            else m.material = new THREE.SphericalShader({ env:environment, color:0x333333 });
-
-			            shaders[i] = m.material;
+			            if(m.name == 'interior') map['interior'] = m.material.map;
+			            if(m.name == 'headLight') map['headLight'] = m.material.map;
 			        }
+			        
+			        // create new materials
+			        shaders[0] = new THREE.SphericalShader({ env:environment, map:map.body, transparent:false, color:0xFFFFFF, side:THREE.FrontSide });// body
+			        shaders[1] = new THREE.SphericalShader({ env:environment, map:map.door, transparent:false, color:0xFFFFFF, side:THREE.FrontSide });// door
+			        shaders[2] = new THREE.SphericalShader({ env:environment, map:map.body, transparent:true, color:0xFFFFFF, side:THREE.DoubleSide });// glass
+			        shaders[3] = new THREE.SphericalShader({ env:environment, map:map.wheel, transparent:false, color:0xFFFFFF, side:THREE.FrontSide });// wheel
+			        shaders[4] = new THREE.SphericalShader({ env:environment, map:map.interior, transparent:false, color:0xFFFFFF, side:THREE.FrontSide });// interior
+			        shaders[5] = new THREE.SphericalShader({ env:environment, map:map.headLight, transparent:false, color:0xFFFFFF, side:THREE.FrontSide });// headLight
+			        shaders[6] = new THREE.SphericalShader({ env:environment, color:0x333333 });
+
+			        // apply new materials
+			        i = loader.meshes.length;
+			        while(i--){
+			            m = loader.meshes[i];
+			            if(m.name == 'body' || m.name == 'hood' || m.name == 'MotorAndBorder' || m.name == 'bottomCar') m.material = shaders[0];
+			            else if(m.name == 'doorLeft' || m.name == 'doorRight') m.material = shaders[1];
+			            else if(m.name == 'glass' || m.name == 'doorGlassRight' || m.name == 'doorGlassLeft' || m.name == 'trunk') m.material = shaders[2];
+			            else if(m.name == 'wheel_av_l' || m.name == 'wheel_av_r'|| m.name == 'wheel_ar_l'|| m.name == 'wheel_ar_r') m.material = shaders[3];
+			            else if(m.name == 'interior') m.material = shaders[4];
+			            else if(m.name == 'headLight') m.material = shaders[5];
+			            else m.material = shaders[6];
+			        }
+			        
+
+			        console.log(shaders.length);
 
 			        // sea3d export object link, pivot point, material with texture
 			        // i only have to add car all other parts is linked
@@ -207,7 +227,7 @@
 
 			        wheels[4].rotation.y = -st;
 			        wheels[5].rotation.y = -st;
-			        wheels[6].rotation.z = -st * 3;
+			        wheels[6].rotation.z = st * 3;
 		        }
 
 			}
