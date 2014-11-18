@@ -72,13 +72,13 @@
 				clock = new THREE.Clock();
 
 				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 2000 );
-				camera.position.z = -100;
-				camera.position.y = 80;
-				camera.scale.x = -1
+				camera.position.z = -200;
+				camera.position.y = 20;
+				//camera.scale.x = -1
 				//camera.scale.set(-1, 1, 1);
 
 				controls = new THREE.OrbitControls( camera );
-				controls.target.y = 50;
+				controls.target.y = 20;
 
 				controls.noZoom = false;
 				controls.noPan = false;
@@ -88,8 +88,9 @@
 
 				// renderer
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGLRenderer( { antialias: true, precision: "mediump" } );
 				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x333333, 1 );
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
@@ -100,9 +101,33 @@
 				stats.domElement.style.top = '0px';
 				container.appendChild( stats.domElement );
 
+				var tx = THREE.ImageUtils.loadTexture( 'textures/sea3d/pilote.jpg');
+				tx.flipY = false;
+				var tx2 = THREE.ImageUtils.loadTexture( 'textures/sea3d/ship.jpg');
+				tx2.flipY = false;
+				var tx3 = THREE.ImageUtils.loadTexture( 'textures/sea3d/879-normal.jpg');
+				tx3.flipY = false;
+				var tx4 = THREE.ImageUtils.loadTexture( 'textures/sea3d/879-normal.jpg');
+				tx4.flipY = false;
+				shaders[0] = new THREE.SphericalShader({env:environment, map: tx});
+				shaders[1] = new THREE.SphericalShader({env:environment, map: tx2, normal: tx3});
+				shaders[2] = new THREE.SphericalShader({env:environment, opacity:0.3, transparent:true});//, side:THREE.DoubleSide });
+
+				shaders[1].uniforms.normalRepeat.value = 3;
+				//var sph = new THREE.Mesh(new THREE.SphereGeometry(50,30,30), shaders[0]);
+				//scene.add(sph);
+				var mat = new THREE.MeshBasicMaterial({ map:THREE.ImageUtils.loadTexture('textures/sea3d/ground.jpg'),transparent:true, blending:THREE.MultiplyBlending});
+				var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry (500,500), mat);
+				plane.rotation.x = -Math.PI/2;
+				plane.rotation.z = -Math.PI/2;
+				plane.position.y = -50;
+				scene.add(plane);
+
 				// init load sea3d
-				pool = new SEA3D.Pool();
-				pool.load( ['models/sea3d/woman.sea'], initObject );
+				//pool = new SEA3D.Pool();
+				//pool.load( ['models/sea3d/woman.sea'], initObject );
+
+				loadSea3d();
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
@@ -113,68 +138,36 @@
 			var headBones = {};
 			var modelLoaded = false;
 
-			function initObject() {
+			function loadSea3d(){
 
-				
+			    var loader = new THREE.SEA3D( true );
+			    loader.onComplete = function( e ) {
+			        var m, name;
+			        var i = loader.meshes.length;
+			        while(i--){
+			            m = loader.meshes[i];
+			            name = m.name;
+			           // m.material = shaders[0];
+			            if(name == 'sit' || name=='pilote' || name == 'head'){
+			                m.material = shaders[0];
+			            }else if(name=='body'){
+			            	scene.add(m); 
+			            	m.scale.set(1,1,-1);
+			            	m.rotation.y = -Math.PI/2;
+			            	m.material = shaders[1];
+			            }else if(name=='cockpit'){
+			            	m.material = shaders[2];
+			            } else {
+			            	m.material = shaders[1];
+			            }
 
-				var size = 1;
+			        }
+			        
+			    }
+			    // force buffer geometry 
+			    loader.parser = THREE.SEA3D.BUFFER;
+			    loader.load( 'models/sea3d/pilote.sea' );
 
-				console.log(pool.getList());
-				head = pool.getMesh('woman_head');
-				body = pool.getMesh('woman_body');//.clone();
-
-				head.setWeight("neck", 1);
-                head.setWeight("earOut", 0.6);
-                head.setWeight("surprise", 1);
-
-				head.scale.set(size,size,size);
-		        body.scale.set(size,size,size);
-
-		        for(var j=0; j<body.skeleton.bones.length; j++){
-		        	var bone = body.skeleton.bones[j]
-				    var name = bone.name;
-				    bodyBones[name] = bone;
-				    if(name='Bone006')bone.add(head);
-		        }
-
-		        for(var j=0; j<head.skeleton.bones.length; j++){
-		        	var bone = head.skeleton.bones[j]
-				    var name = bone.name;
-				    //headBones[name] = bone;
-				    //bone.matrix.copy(bodyBones[name].matrix)
-				    //bone.matrixWorld.copy(bodyBones[name].matrixWorld)
-				    //if(name='Bone006')bone.matrixWorld = bodyBones[name].matrixWorld.clone() ;
-				    //bone.matrixAutoUpdate = false;
-				   // bone.matrixWorldNeedsUpdate = true;
-				    console.log(name)
-		        }
-		        //head.skeleton = body.skeleton
-
-				scene.add(body);
-				scene.add(head);
-
-				var tx4 = THREE.ImageUtils.loadTexture( 'textures/sea3d/879-normal.jpg');
-				tx4.wrapS = tx4.wrapT = THREE.RepeatWrapping;
-				tx4.flipY = false;
-				shaders[0] = new THREE.SphericalShader({env:environment, skinning:true, normal:tx4});
-				shaders[1] = new THREE.SphericalShader({env:environment, skinning:true, morphTargets:true, normal:tx4});
-
-				shaders[0].uniforms.normalRepeat.value = 6;
-				shaders[1].uniforms.normalRepeat.value = 2;
-
-				body.material = shaders[0];
-				head.material = shaders[1];
-
-				body.animations[0].stop(0);
-				body.animations[1].play(0);
-				body.animations[2].stop(0);
-
-				head.animations[0].stop(0);
-				head.animations[1].play(0);
-				head.animations[2].stop(0);
-
-				//upBone()
-				modelLoaded = true;
 			}
 
 			function onWindowResize() {
@@ -184,44 +177,9 @@
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
-				//controls.handleResize();
-
 			}
 
-			function upBone(){
-				for(var key in headBones){
-					var mtx = bodyBones[key].matrix.clone();
-					headBones[key].matrix.copy(mtx)
-					/*if(key=='Bone006'){
-						var mtx2 = bodyBones[key].matrixWorld.clone();
-						//mtx2.multiply(mtx);
-						//mtx.multiply(mtx2);
-						headBones[key].matrix.copy(mtx2)
-						headBones[key].quaternion.setFromRotationMatrix( mtx );
-						headBones[key].position.setFromMatrixPosition( mtx );
-						//headBones[key].matrixWorldNeedsUpdate = true;
-					}*/
 
-					//var mtx = bodyBones[key].matrixWorld.clone();
-					
-					
-
-					//headBones[key].position.setFromMatrixPosition( mtx );
-					//headBones[key].quaternion.setFromRotationMatrix( mtx );
-					//headBones[key].applyMatrix(bodyBones[key].matrix.clone());
-
-
-					
-					//headBones[key].matrixWorld = mtx;
-					//headBones[key].matrixWorldNeedsUpdate = true;
-					//var mtx = bodyBones[key].matrixWorld;
-					//headBones[key].matrixWorld = mtx.clone();
-					//headBones[key].position.setFromMatrixPosition( mtx );
-					//headBones[key].quaternion.setFromRotationMatrix( mtx );
-					//headBones[key].updateMatrixWorld();
-				}
-				
-			}
 
 			function initEnvironment(){
 

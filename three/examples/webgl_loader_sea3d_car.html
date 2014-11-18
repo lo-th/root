@@ -156,6 +156,7 @@
 			            if(m.name == 'interior') map['interior'] = m.material.map;
 			            if(m.name == 'headLight') map['headLight'] = m.material.map;
 			        }
+
 			        
 			        // create new materials
 			        shaders[0] = new THREE.SphericalShader({ env:environment, map:map.body, transparent:false, color:0xFFFFFF, side:THREE.FrontSide });// body

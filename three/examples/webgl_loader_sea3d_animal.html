@@ -40,7 +40,7 @@
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
 		<script src='js/libs/dat.gui.min.js'></script>
-		<script src="js/shaders/spherical.js"></script>
+		<script src="js/shaders/SphericalShader.js"></script>
 
 		<script>
 
@@ -80,7 +80,7 @@
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				//renderer.setClearColor( 0x333333, 1 );
+				renderer.setClearColor( 0x333333, 1 );
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
@@ -103,17 +103,7 @@
 
 			function createShader(img) {
 
-				var shader = THREE.Spherical;
-
-				var uniforms = THREE.UniformsUtils.merge([
-					shader.uniforms,
-					THREE.UniformsLib[ "common" ],
-				]);
-				material = new THREE.ShaderMaterial({
-			        uniforms: uniforms,
-			        vertexShader: shader.vs,
-			        fragmentShader: shader.fs,
-			        shading: THREE.SmoothShading,
+				material = new THREE.SphericalShader({
 			        skinning : true,
 			        morphTargets : true
 			    });
@@ -123,7 +113,7 @@
 			        material.uniforms.map.value = tx;
 			        material.uniforms.useMap.value = 1.0;
 			    }
-			    material.uniforms.mat.value = THREE.ImageUtils.loadTexture( 'textures/spherical/env.jpg' );
+			    material.uniforms.env.value = THREE.ImageUtils.loadTexture( 'textures/spherical/env.jpg' );
 			    material.uniforms.color.value = new THREE.Color( 0xFFFFFF );
 			    return material;
 
@@ -142,10 +132,6 @@
 				for(var i =0; i<max;i++){
 					body = pool.getMesh('spider_body').clone();
 
-					//head.setWeight("neck", 1);
-	                //head.setWeight("earOut", 0.6);
-
-					//head.scale.set(-size,size,size);
 			        body.scale.set(size,size,-size);
 			        body.position.set(-500+Math.random()*1000,0,-500+Math.random()*1000 );
 			        body.rotation.set(0,0,0);
@@ -191,12 +177,12 @@
 
 			function onWindowResize() {
 
-				//camera.aspect = window.innerWidth / window.innerHeight;
-				//camera.updateProjectionMatrix();
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
-				//renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-				//controls.handleResize();
+				controls.handleResize();
 
 			}
 
