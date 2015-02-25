@@ -697,6 +697,7 @@ HeroGame.Navigation.prototype = {
         var _this = this;
         document.onkeydown = function(e) {
             e = e || window.event;
+            console.log('key')
             switch ( e.keyCode ) {
                 case 38: case 87: case 90: _this.key[0] = 1; break; // up, W, Z
                 case 40: case 83:          _this.key[1] = 1; break; // down, S

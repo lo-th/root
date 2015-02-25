@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html lang="en">
+<head>
+<title>Labs</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=11" />
+<meta http-equiv="Pragma" content="no-cache">
+<style>
+body {
+    background-color:#25292e;
+    color:#d2cec8;
+    font-size: 12px;
+    color: #fff;
+    font-family: Consolas, 'ConsolasRegular', 'Courier New', monospace;
+    overflow: hidden;
+    margin:0; padding: 0;
+}
+#debug{position:absolute; top:10px; left:10px;}
+</style>
+</head>
+<body>
+<div id='debug'>HEllo</div>
+<script src="js/three.min.js"></script>
+<script src="js/sea3d.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/gui.min.js"></script>
+<script src="js/traffic.min.js"></script>
+
+<script>
+var camera, scene, renderer, controls;
+var mesh;
+var grid;
+var pool;
+
+			
+	var world;
+	var debug = document.getElementById('debug');
+	var gui;
+	var lastUpdate;
+	var cars = [];
+	var roads = [];
+	var inter = [];
+
+    var car_geo, car_mat;
+    var inter_geo, road_geo, inter_mat, inter_mat0, road_mat, inter_matx, inter_maty, inter_matz, inter_matw, inter_mate;
+
+    var sets = {timeFactor:5};
+
+
+	window.onload = initObject;
+
+	function init3d(){
+		renderer = new THREE.WebGLRenderer();
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		document.body.appendChild( renderer.domElement );
+
+		//
+		grid = TRAFFIC.settings.gridSize;
+
+		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 4000 );
+		camera.position.z = 200;
+		camera.position.y = 200;
+
+		controls = new THREE.OrbitControls( camera );
+
+		scene = new THREE.Scene();
+
+		car_geo = new THREE.BoxGeometry( 1, 1, 1 );
+		var tx = THREE.ImageUtils.loadTexture( 'car.png' );
+		tx.flipY = false;
+		car_mat = new THREE.MeshBasicMaterial( { map:tx } );
+
+		//inter_geo = new THREE.BoxGeometry( 28, 0.1, 28 );
+		//inter_geo = new THREE.BoxGeometry( grid, 0.1, grid );
+		inter_geo = new THREE.PlaneBufferGeometry( grid, grid );
+		inter_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+
+		road_geo = new THREE.PlaneGeometry( grid, grid );
+		road_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+
+
+
+		inter_mat = new THREE.MeshBasicMaterial( { map:THREE.ImageUtils.loadTexture( 'roadx.png' ) } );
+		inter_matx = new THREE.MeshBasicMaterial( { map:THREE.ImageUtils.loadTexture( 'roadx.png' ) } );
+
+
+		road_mat = new THREE.MeshBasicMaterial( { map:THREE.ImageUtils.loadTexture( 'road.png' ) } );
+
+
+		//var g = new THREE.PlaneGeometry(15*20,15*20, 14,14);
+		var t = (7*4)+1
+		var g = new THREE.PlaneGeometry(grid*t,grid*t, t,t);
+		g.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+		var g_mat = new THREE.MeshBasicMaterial( { color: 0x333333, wireframe:true } );
+
+		var ground = new THREE.Mesh( g, g_mat );
+		scene.add(ground);
+		var d = grid*0.5;
+		ground.position.set(d, -0.2, d);
+
+		
+		window.addEventListener( 'resize', onWindowResize, false );
+	}
+
+	function onWindowResize() {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+	}
+
+	function animate() {
+		requestAnimationFrame( animate );
+		controls.update();
+		renderer.render( scene, camera );
+	}
+
+	function initObject(){
+	    pool = new V.SeaPool()
+	    pool.load('cars', init);
+    }
+
+	function init(){
+		world = new TRAFFIC.World(debug);
+		world.generateMap(2,2,7, 1);
+		world.carsNumber = 100;
+		previousTime = 0;
+		sets.timeFactor = TRAFFIC.settings.defaultTimeFactor;
+
+		gui = new dat.GUI();
+		var guiWorld = gui.addFolder('world');
+		guiWorld.open();
+		guiWorld.add(world, 'save');
+		guiWorld.add(world, 'load');
+		guiWorld.add(world, 'clear');
+		guiWorld.add(world, 'generateMap');
+		//guiVisualizer = gui.addFolder('visualizer');
+		//guiVisualizer.open();
+		//guiVisualizer.add(visualizer, 'running').listen();
+		//guiVisualizer.add(visualizer, 'debug').listen();
+		//guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen();
+		guiWorld.add(sets, 'timeFactor', 0.1, 10).listen();
+		guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen();
+		guiWorld.add(world, 'instantSpeed').step(0.00001).listen();
+		gui.add(TRAFFIC.settings, 'lightsFlipInterval', 0, 50, 0.01).listen();
+
+
+		init3d();
+		animate();
+
+		setInterval(update, 1000/60);
+		//update();
+	}
+
+	function update(){
+		var now = Date.now();
+		var dt = now - lastUpdate;
+		lastUpdate = now;
+		var time = Date.now();
+
+
+		var delta = (time - previousTime) || 0;
+		//if (delta > 1) {
+			if (delta > 100) { delta = 100;  }
+			previousTime = time;
+			world.onTick(sets.timeFactor * delta / 1000);
+			//console.log(dt)
+			//var dt = 0.1;
+			//var dt = Math.random()
+			//world.onTick(0.1);
+
+			var o0, o1, o2, o3, id;
+
+			o0 = world.intersections.all();
+			for (id in o0) {
+				addInter(o0[id]);
+	        }
+	        o1 = world.roads.all();
+	        for (id in o1) {
+	            this.addRoad(o1[id]);
+	            this.addSignals(o1[id]);
+	        }
+	        /*o2 = this.world.roads.all();
+	        for (id in o2) {
+	        	//road = _ref2[id];
+	        	this.drawSignals(road);
+	        }*/
+
+	        // remove car 
+	        var i = world.toRemove.length;
+	        while(i--){ removeCar(world.toRemove[i]); };
+	        world.clearTmpRemove();
+
+			o3 = world.cars.all();
+			for (id in o3) {
+	            addCar(o3[id], id);
+	        }
+        //}
+
+        // window.requestAnimationFrame(update);
+	}
+
+	function addRoad(road){
+		if ((road.source == null) || (road.target == null)) throw Error('invalid road');
+		var id = road.id.substring(4);
+		if(roads[id]==null){
+			//var sourceSide = road.sourceSide;
+		   // var targetSide = road.targetSide
+			
+			var p0 = road.source.rect.center();
+			var p1 = road.target.rect.center();
+			var lngx = ((p1.x-p0.x)/grid);
+			var lngy = ((p1.y-p0.y)/grid);
+			var side = 0;
+			var dir = 1;
+
+			if(lngy!=0) side=1;
+			var i;
+
+			if(side==0){
+				i = Math.abs(lngx)-1;
+				if(lngx<0) dir = -1;
+			}else{
+				i = Math.abs(lngy)-1;
+				if(lngy<0) dir = -1;
+			}
+
+			var g = new THREE.Geometry();
+			var m = new THREE.Matrix4();
+
+			while(i--){
+				if(side==0){
+					m.makeTranslation((p0.x+(grid*dir)+((i*grid)*dir)), 0, p0.y);
+					m.multiply(new THREE.Matrix4().makeRotationY(Math.PI*0.5));
+				}else{ 
+					m.makeTranslation(p0.x, 0, (p0.y+(grid*dir)+((i*grid)*dir)));
+					
+				}
+				g.merge( road_geo, m );
+			}
+
+
+
+			var c = new THREE.Mesh( g, road_mat );
+			scene.add( c );
+
+
+			/*var dir = 0, lng;
+			if(lng1>lng0) dir=1;
+
+			if(dir == 0 ) lng = lng0/14;
+			else lng = lng1/14;*/
+
+			//console.log(lngx, lngy)
+
+    		//c.position.set(p0.x, 0.8,p0.y);
+			roads[id] = c;
+		}
+		/*;
+		var start = sourceSide.source.x;*/
+		//var end = targetSide.target.center();
+		//console.log(sourceSide)
+
+		
+
+		//(sourceSide.source, sourceSide.target, targetSide.source, targetSide.target)
+	}
+
+	function addSignals(cc, id){
+	}
+    
+
+    function addCar(car){
+    	var id = car.id.substring(3);
+    	if(cars[id]==null){
+    		//var c = new THREE.Mesh( car_geo, car_mat );
+    		var c = new THREE.Mesh( pool.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), car_mat );
+    		scene.add( c );
+    		c.position.set(11000, 0,0);
+    		c.scale.set(2, 2, -2);
+    		//c.scale.set(car.length, car.length/2, car.width);
+    		cars[id] = c;
+    	} else {
+    		var p = car.coords;
+    		var r = car.direction;
+    		cars[id].position.set(p.x,0,p.y);
+    		cars[id].rotation.y = -r+(Math.PI*0.5);
+    	}
+    }
+
+    function removeCar(id){
+    	var id = id.substring(3);
+    	if(cars[id]!=null){
+    		scene.remove( cars[id] );
+    		cars[id] = null;
+    	}
+    }
+
+    function addInter(intersection){//intersection
+    	var id = intersection.id.substring(12);
+    	if(inter[id]==null){
+    		inter[id] = new THREE.Mesh( inter_geo, inter_mat );
+    		scene.add( inter[id] );
+    		var type = intersection.roads.length;
+    		// console.log(intersection.inRoads.length)
+    		/*var i = type;
+    		while(i){
+    			var sideId = intersection.roads[i].targetSideId;
+    			console.log(sideId)
+    		}*/
+    		/*switch(type){
+    			case 4: inter[id].material = inter_matx; break;
+    			case 3: inter[id].material = inter_maty; break;
+    			case 2: inter[id].material = inter_matz; break;
+    			case 1: inter[id].material = inter_mate; break;
+    		}*/
+    		var c = intersection.rect.center();
+    		inter[id].position.set(c.x,0,c.y);
+    	} else {
+    		//var c = cc.rect;
+    		var l = intersection.controlSignals.state[0];
+    		//if(l[0]==1)inter[id].material = inter_mat;
+    		//else inter[id].material = inter_mat0;
+
+    	}
+    }
+
+
+
+
+var V = {};
+
+V.SeaPool = function(){
+    this.meshes = {};
+}
+V.SeaPool.prototype = {
+    constructor: V.SeaPool,
+    load:function(name, callback){
+        this.callback = callback || function(){};
+        var list = "";
+        var loader = new THREE.SEA3D( true );
+        loader.onComplete = function( e ) {
+            this.meshes[name] = {};
+            var i = loader.meshes.length, m;
+            while(i--){
+                m = loader.meshes[i];
+                this.meshes[name][m.name] = m;
+                list+=m.name+',';
+            }
+            this.callback();
+        }.bind(this);
+
+        loader.parser = THREE.SEA3D.DEFAULT;
+        loader.load( 'models/'+name+'.sea' );
+        //loader.invertZ = true;
+        //loader.flipZ = true;
+    },
+    getGeometry:function(obj, name){
+        var g = this.meshes[obj][name].geometry;
+        //var mtx = new THREE.Matrix4().makeScale(1, 1, -1);
+        //g.applyMatrix(mtx);
+        return g;
+    }
+}	
+</script>
+</body>
+</html>
