@@ -21,7 +21,7 @@ body {
 </style>
 </head>
 <body>
-<div id='debug'>HEllo</div>
+<div id='debug'>Yoooo</div>
 <script src="js/three.min.js"></script>
 <script src="js/sea3d.min.js"></script>
 <script src="js/OrbitControls.js"></script>
@@ -132,10 +132,10 @@ var pool;
 		gui = new dat.GUI();
 		var guiWorld = gui.addFolder('world');
 		guiWorld.open();
-		guiWorld.add(world, 'save');
-		guiWorld.add(world, 'load');
-		guiWorld.add(world, 'clear');
-		guiWorld.add(world, 'generateMap');
+		//guiWorld.add(world, 'save');
+		//guiWorld.add(world, 'load');
+		//guiWorld.add(world, 'clear');
+		//guiWorld.add(world, 'generateMap');
 		//guiVisualizer = gui.addFolder('visualizer');
 		//guiVisualizer.open();
 		//guiVisualizer.add(visualizer, 'running').listen();
@@ -144,7 +144,7 @@ var pool;
 		guiWorld.add(sets, 'timeFactor', 0.1, 10).listen();
 		guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen();
 		guiWorld.add(world, 'instantSpeed').step(0.00001).listen();
-		gui.add(TRAFFIC.settings, 'lightsFlipInterval', 0, 50, 0.01).listen();
+		guiWorld.add(TRAFFIC.settings, 'lightsFlipInterval', 0, 50, 0.01).listen();
 
 
 		init3d();
