@@ -21,7 +21,7 @@ body {
 </style>
 </head>
 <body>
-<div id='debug'>Yoooo</div>
+<div id='debug'>Traffic Simulator</div>
 <script src="js/three.min.js"></script>
 <script src="js/sea3d.min.js"></script>
 <script src="js/OrbitControls.js"></script>
@@ -60,7 +60,7 @@ var pool;
 		//
 		grid = TRAFFIC.settings.gridSize;
 
-		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 4000 );
+		camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 4000 );
 		camera.position.z = 200;
 		camera.position.y = 200;
 
@@ -123,7 +123,7 @@ var pool;
     }
 
 	function init(){
-		world = new TRAFFIC.World(debug);
+		world = new TRAFFIC.World();
 		world.generateMap(2,2,7, 1);
 		world.carsNumber = 100;
 		previousTime = 0;
