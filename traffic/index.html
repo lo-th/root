@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <style>
 body {
-    background-color:#25292e;
+    background-color:#292929;
     color:#d2cec8;
     font-size: 12px;
     color: #fff;
@@ -52,7 +52,7 @@ var pool;
 	window.onload = initObject;
 
 	function init3d(){
-		renderer = new THREE.WebGLRenderer();
+		renderer = new THREE.WebGLRenderer({precision: "mediump", antialias:true, alpha: true});
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		document.body.appendChild( renderer.domElement );
@@ -94,7 +94,7 @@ var pool;
 		var t = (7*4)+1
 		var g = new THREE.PlaneGeometry(grid*t,grid*t, t,t);
 		g.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
-		var g_mat = new THREE.MeshBasicMaterial( { color: 0x333333, wireframe:true } );
+		var g_mat = new THREE.MeshBasicMaterial( { color: 0x303030, wireframe:true } );
 
 		var ground = new THREE.Mesh( g, g_mat );
 		scene.add(ground);
