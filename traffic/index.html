@@ -43,7 +43,7 @@ var pool;
 	var roads = [];
 	var inter = [];
 
-    var car_geo, car_mat;
+    var car_geo, car_mat = [];
     var inter_geo, road_geo, inter_mat, inter_mat0, road_mat, inter_matx, inter_maty, inter_matz, inter_matw, inter_mate;
 
     var sets = {timeFactor:5};
@@ -69,12 +69,22 @@ var pool;
 		scene = new THREE.Scene();
 
 		car_geo = new THREE.BoxGeometry( 1, 1, 1 );
-		var tx = THREE.ImageUtils.loadTexture( 'car.png' );
-		tx.flipY = false;
-		car_mat = new THREE.MeshBasicMaterial( { map:tx } );
+		var env = THREE.ImageUtils.loadTexture( 'env.jpg');
+        env.mapping = THREE.SphericalReflectionMapping;
 
-		//inter_geo = new THREE.BoxGeometry( 28, 0.1, 28 );
-		//inter_geo = new THREE.BoxGeometry( grid, 0.1, grid );
+        car_mat[0] = new THREE.MeshBasicMaterial( { envMap:env, reflectivity:0.7 } );
+        car_mat[1] = new THREE.MeshBasicMaterial( { envMap:env, reflectivity:0.7 } );
+        car_mat[2] = new THREE.MeshBasicMaterial( { envMap:env, reflectivity:0.7 } );
+		
+		var tx;
+		var img = new Image();
+	    img.onload = function(){
+	        generateRandomColor(img, car_mat[0]);
+	        generateRandomColor(img, car_mat[1]);
+	        generateRandomColor(img, car_mat[2]);
+	    }
+	    img.src = 'cars.png';
+
 		inter_geo = new THREE.PlaneBufferGeometry( grid, grid );
 		inter_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 
@@ -103,6 +113,28 @@ var pool;
 
 		
 		window.addEventListener( 'resize', onWindowResize, false );
+	}
+
+	function generateRandomColor(img, mat){
+		var canvas = document.createElement( 'canvas' );
+		canvas.width = canvas.height = 1024;
+		var ctx = canvas.getContext('2d');
+		i = 16;
+		var n=0,j=0;
+		for(i=0; i<16;i++){
+			ctx.beginPath();
+			if(i!==11 && i!==15) ctx.fillStyle = V.randColor();
+			ctx.rect(n*256, j*256, 256, 256);
+			ctx.fill();
+			n++
+			if(n==4){ n=0; j++; }
+		}
+
+		ctx.drawImage(img, 0, 0, 1024,1024);
+        tx = new THREE.Texture(canvas);
+        tx.needsUpdate = true;
+        tx.flipY = false;
+        mat.map = tx;
 	}
 
 	function onWindowResize() {
@@ -275,8 +307,8 @@ var pool;
     function addCar(car){
     	var id = car.id.substring(3);
     	if(cars[id]==null){
-    		//var c = new THREE.Mesh( car_geo, car_mat );
-    		var c = new THREE.Mesh( pool.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), car_mat );
+    		var r = V.randInt(0,2);
+    		var c = new THREE.Mesh( pool.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), car_mat[r] );
     		scene.add( c );
     		c.position.set(11000, 0,0);
     		c.scale.set(2, 2, -2);
@@ -331,6 +363,10 @@ var pool;
 
 
 var V = {};
+
+V.randColor = function () { return '#'+Math.floor(Math.random()*16777215).toString(16);}
+V.lerp = function (a, b, percent) { return a + (b - a) * percent; }
+V.randInt = function (a, b, n) { return V.lerp(a, b, Math.random()).toFixed(n || 0)*1;}
 
 V.SeaPool = function(){
     this.meshes = {};
