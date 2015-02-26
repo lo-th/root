@@ -123,7 +123,7 @@ var pool;
 		var n=0,j=0;
 		for(i=0; i<16;i++){
 			ctx.beginPath();
-			if(i!==11 && i!==15) ctx.fillStyle = V.randColor();
+			if(i!==11 && i!==15) ctx.fillStyle = V.randCarColor();
 			ctx.rect(n*256, j*256, 256, 256);
 			ctx.fill();
 			n++
@@ -365,9 +365,34 @@ var pool;
 
 var V = {};
 
-V.randColor = function () { return '#'+Math.floor(Math.random()*16777215).toString(16);}
+V.randColor = function () { return '#'+Math.floor(Math.random()*16777215).toString(16); }
+V.randCarColor = function () {
+	var p = V.randInt(0,100), base=0xFFFFFF;
+	var r = V.randInt(0,9);
+	var v = V.randInt(0,9);
+	var b = V.randInt(0,9);
+	var ton = ('0x0'+r+'0'+v+'0'+b)*1;
+
+	if(p<23)base=0xFFFFFF;
+	else if(p<44)base=0x010101;
+	else if(p<62)base=0xA8A9AB;
+	else if(p<76)base=0x6A747D;
+	else if(p<84)base=0xB51F25;
+	else if(p<90)base=0x3B6C8D;
+	else if(p<96)base=0x886431;
+	else if(p<98)base=0xFA8E18;
+	else if(p<99)base=0xC9B574;
+	else base=0x58652D;
+
+	if(p>23)base += ton;
+    else base -= ton;
+    var resl = base.toString(16);
+    if(resl.length<6) resl = '#0'+resl;
+    else resl = '#'+resl;
+	return resl;
+}
 V.lerp = function (a, b, percent) { return a + (b - a) * percent; }
-V.randInt = function (a, b, n) { return V.lerp(a, b, Math.random()).toFixed(n || 0)*1;}
+V.randInt = function (a, b) { return V.lerp(a, b, Math.random()).toFixed(0)*1;}
 
 V.SeaPool = function(){
     this.meshes = {};
