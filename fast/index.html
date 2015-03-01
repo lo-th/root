@@ -30,7 +30,8 @@ var mat = [];
 var geo = [];
 var info = document.getElementById('info');
 
-var cyl = []
+var cyl = [];
+var cir = [];
 
 var LEFT = 20;
 var RIGHT = 620;
@@ -46,8 +47,6 @@ var paddle2;
 var point;
 
 var world;
-var island;
-var simu;
 var r = 0;
 var score = 0;
 
@@ -78,8 +77,6 @@ function init3d(){
     geo[2] = new THREE.SphereGeometry( 1 );
     geo[3] = new THREE.CylinderGeometry( 1, 1, 1, 20 );
 
-
-   
 
     ball = new THREE.Mesh(geo[2],  mat[0]);
     ball.scale.set(6,6,6)
@@ -115,10 +112,7 @@ function animate() {
 function init(){
 	init3d();
 
-	island = new FAST.Island();
-	world = new FAST.World();
-
-	
+	world = new FAST.World(120);
 
 
 	var pt1 = new FAST.V2(LEFT, TOP);
@@ -137,17 +131,11 @@ function init(){
 	paddle1 = new FAST.Line(pt1.x, pt1.y + shrink, pt4.x, pt4.y - shrink);
 	paddle2 = new FAST.Line(pt2.x, pt2.y + shrink, pt3.x, pt3.y - shrink);
 
-	console.log(paddle2.h)
-
-	
-
 	point = new FAST.Point(LEFT + 10, TOP + 10);
 
 	point.velocity.x = 100;
 	point.velocity.y = 90;
 	point.thickness = 3;
-
-	island.points.push(point);
 
 	addCircle(25,CENTER_X,CENTER_Y);
 	addCircle(25,CENTER_X,CENTER_Y+100);
@@ -156,37 +144,36 @@ function init(){
 
 	world.add(paddle1);
 	world.add(paddle2);
-
 	world.add(point);
-
-	world.addIsland(island);
-
-	simu = new FAST.Simulation(world);
 
 	setInterval(update, 1000/120);
 }
 
 function addCircle(r,x,y){
 	var circle = new FAST.Circle(x, y, r);
-	island.circles.push(circle);
+	//circle.velocity.x = 100;
+	//circle.velocity.y = 90;
 	world.add(circle);
+
+	cir.push(circle);
 
 	var c = new THREE.Mesh(geo[3],  mat[3]);
 	c.scale.set(r-3,20,r-3);
     c.position.set(x-CENTER_X, 0, y-CENTER_Y);
     scene.add(c);
+
+    cyl.push(c);
 }
 
 function buildLine(startX, startY, endX, endY){
  	var line = new FAST.Line(startX, startY, endX, endY);
 	line.fixed = true;
-	island.lines.push(line);
 	world.add(line);
 	return line;
 }
 
 function update(){
-	simu.update();
+	world.step();
 
 	var speedUp = 5;
 	point.velocity.x += (point.velocity.x > 0) ? speedUp : -speedUp;
@@ -196,18 +183,21 @@ function update(){
 	point.velocity.x = FAST.clamp(point.velocity.x, -max, max);
 	point.velocity.y = FAST.clamp(point.velocity.y, -max, max);
 
-	if(point.x >= CENTER_X)
-		paddle2.y =  FAST.clamp(point.y - paddle2.center.y, TOP, BOTTOM-paddle2.h);
-	else 
-		paddle1.y =  FAST.clamp(point.y - paddle1.center.y, TOP, BOTTOM-paddle1.h);
+	if(point.x >= CENTER_X) paddle2.y =  FAST.clamp(point.y - paddle2.center.y, TOP, BOTTOM-paddle2.h);
+	else paddle1.y =  FAST.clamp(point.y - paddle1.center.y, TOP, BOTTOM-paddle1.h);
 
-	score += island.collisionsResolvedThisFrame;
+	score += world.island.collisionsResolvedThisFrame;
 
     info.innerHTML = score;
 
     ball.position.set(point.x-CENTER_X, 0, point.y-CENTER_Y);
     pad1.position.set((paddle1.x-5)-CENTER_X, 0, (paddle1.y+30)-CENTER_Y);
     pad2.position.set((paddle2.x+5)-CENTER_X, 0, (paddle2.y+30)-CENTER_Y);
+
+    /*var i = cir.length;
+    while(i--){
+    	cyl[i].position.set(cir[i].x-CENTER_X, 0, cir[i].y-CENTER_Y)
+    }*/
 
     animate();
 }
