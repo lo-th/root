@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<title>FAST v:0.3</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=11" />
+<style>
+* { margin: 0; padding: 0; border: 0; }
+body { 
+background-color: #323436; overflow: hidden; color: #eeeeee; font-family: monospace; font-size: 12px; 
+text-shadow:1px 1px 0px #000;
+width:100%; height:100%;pointer-events:none;
+}
+#info{position: absolute; left:10px; top: 10px; width:300px; height:500px; pointer-events:none;}
+</style>
+</head><body>
+<div id='content'>
+	<div id="info">HELLO</div>
+</div>
+<script src="js/three.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/fast.min.js"></script>
+
+<script>
+var camera, scene, renderer, controls;
+
+var ball, pad1, pad2, zone;
+
+var mat = [];
+var info = document.getElementById('info');
+
+var LEFT = 20;
+var RIGHT = 620;
+var TOP = 90;
+var BOTTOM = 400;
+
+var CENTER_X = LEFT + (RIGHT-LEFT)/2;
+var CENTER_Y = TOP + (BOTTOM-TOP)/2;
+
+var paddle1;
+var paddle2;
+
+var point;
+var plIsland;
+var world;
+var simu;
+var r = 0;
+var score = 0;
+
+window.onload = init;
+
+function init3d(){
+	renderer = new THREE.WebGLRenderer({precision: "mediump", antialias:true, alpha: true});
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+
+	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 4000 );
+	camera.position.z = 300;
+	camera.position.y = 300;
+	controls = new THREE.OrbitControls( camera );
+	scene = new THREE.Scene();
+
+	var env = THREE.ImageUtils.loadTexture( 'env.jpg');
+    env.mapping = THREE.SphericalReflectionMapping;
+
+    mat[0] = new THREE.MeshBasicMaterial( { color:0xFF0000, envMap:env, reflectivity:0.9 } );
+    mat[1] = new THREE.MeshBasicMaterial( { color:0xFFFF00, envMap:env, reflectivity:0.9 } );
+    mat[2] = new THREE.MeshBasicMaterial( { color:0x000000, envMap:env, reflectivity:0.9, opacity:0.1 } );
+
+
+    ball = new THREE.Mesh(new THREE.SphereGeometry(6),  mat[0]);
+    scene.add(ball);
+    pad1 = new THREE.Mesh(new THREE.BoxGeometry(10, 20, 60),  mat[1]);
+    scene.add(pad1);
+    pad2 = new THREE.Mesh(new THREE.BoxGeometry(10, 20, 60),  mat[1]);
+    scene.add(pad2);
+
+    var g = new THREE.PlaneBufferGeometry( 1, 1 );
+    g.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+    zone = new THREE.Mesh(g,  mat[2]);
+    zone.scale.set(600,1,310)
+    zone.position.y = -10
+    scene.add(zone);
+
+	animate();
+	window.addEventListener( 'resize', onWindowResize, false );
+}
+
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+function animate() {
+	//requestAnimationFrame( animate );
+	controls.update();
+	renderer.render( scene, camera );
+}
+
+function init(){
+	init3d();
+
+	var pt1 = new FAST.V2(LEFT, TOP);
+	var pt2 = new FAST.V2(RIGHT, TOP);
+	var pt3 = new FAST.V2(RIGHT, BOTTOM);
+	var pt4 = new FAST.V2(LEFT, BOTTOM);
+
+	plIsland = new FAST.Island();
+
+	var line1 = buildLine(pt1.x, pt1.y, pt2.x, pt2.y);
+	var line2 = buildLine(pt2.x, pt2.y, pt3.x, pt3.y);
+	var line3 = buildLine(pt3.x, pt3.y, pt4.x, pt4.y);
+	var line4 = buildLine(pt4.x, pt4.y, pt1.x, pt1.y);
+
+	var shrink = 125;
+			
+	paddle1 = new FAST.Line(pt1.x, pt1.y + shrink, pt4.x, pt4.y - shrink);
+	paddle2 = new FAST.Line(pt2.x, pt2.y + shrink, pt3.x, pt3.y - shrink);
+
+	console.log(paddle2.h)
+
+	world = new FAST.World();
+
+	point = new FAST.Point(LEFT + 10, TOP + 10);
+
+	point.velocity.x = 100;
+	point.velocity.y = 90;
+	point.thickness = 3;
+
+	plIsland.points.push(point);
+
+	
+	world.add(line1);
+	world.add(line2);
+	world.add(line3);
+	world.add(line4);
+
+	world.add(paddle1);
+	world.add(paddle2);
+
+	world.add(point);
+
+	world.addIsland(plIsland);
+
+	simu = new FAST.Simulation(world);
+
+	setInterval(update, 1000/120);
+}
+
+
+console.log('yoooo')
+
+function buildLine(startX, startY, endX, endY){
+ 	var line = new FAST.Line(startX, startY, endX, endY);
+	line.fixed = true;
+	plIsland.lines.push(line);
+	return line;
+}
+
+function update(){
+	simu.update();
+
+	var speedUp = 5;
+	point.velocity.x += (point.velocity.x > 0) ? speedUp : -speedUp;
+	point.velocity.y += (point.velocity.y > 0) ? speedUp : -speedUp;
+
+	var max = 20000;
+	point.velocity.x = FAST.clamp(point.velocity.x, -max, max);
+	point.velocity.y = FAST.clamp(point.velocity.y, -max, max);
+
+	if(point.x >= CENTER_X)
+		paddle2.y =  FAST.clamp(point.y - paddle2.center.y, TOP, BOTTOM-paddle2.h);
+	else 
+		paddle1.y =  FAST.clamp(point.y - paddle1.center.y, TOP, BOTTOM-paddle1.h);
+
+	score += plIsland.collisionsResolvedThisFrame;
+
+    info.innerHTML = score;
+
+    ball.position.set(point.x-CENTER_X, 0, point.y-CENTER_Y);
+    pad1.position.set((paddle1.x-5)-CENTER_X, 0, (paddle1.y+30)-CENTER_Y);
+    pad2.position.set((paddle2.x+5)-CENTER_X, 0, (paddle2.y+30)-CENTER_Y);
+
+    animate()
+}
+
+</script>
+</body>
+</html>
