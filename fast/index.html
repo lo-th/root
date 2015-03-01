@@ -27,7 +27,10 @@ var camera, scene, renderer, controls;
 var ball, pad1, pad2, zone;
 
 var mat = [];
+var geo = [];
 var info = document.getElementById('info');
+
+var cyl = []
 
 var LEFT = 20;
 var RIGHT = 620;
@@ -41,8 +44,9 @@ var paddle1;
 var paddle2;
 
 var point;
-var plIsland;
+
 var world;
+var island;
 var simu;
 var r = 0;
 var score = 0;
@@ -56,8 +60,7 @@ function init3d(){
 	document.body.appendChild( renderer.domElement );
 
 	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 4000 );
-	camera.position.z = 300;
-	camera.position.y = 300;
+	camera.position.set(0,300, 400);
 	controls = new THREE.OrbitControls( camera );
 	scene = new THREE.Scene();
 
@@ -67,18 +70,28 @@ function init3d(){
     mat[0] = new THREE.MeshBasicMaterial( { color:0xFF0000, envMap:env, reflectivity:0.9 } );
     mat[1] = new THREE.MeshBasicMaterial( { color:0xFFFF00, envMap:env, reflectivity:0.9 } );
     mat[2] = new THREE.MeshBasicMaterial( { color:0x000000, envMap:env, reflectivity:0.9, opacity:0.1 } );
+    mat[3] = new THREE.MeshBasicMaterial( { color:0x00FF00, envMap:env, reflectivity:0.9 } );
+
+    geo[0] = new THREE.PlaneBufferGeometry( 1, 1 );
+    geo[0].applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+    geo[1] = new THREE.BoxGeometry( 1, 1, 1 );
+    geo[2] = new THREE.SphereGeometry( 1 );
+    geo[3] = new THREE.CylinderGeometry( 1, 1, 1, 20 );
 
 
-    ball = new THREE.Mesh(new THREE.SphereGeometry(6),  mat[0]);
+   
+
+    ball = new THREE.Mesh(geo[2],  mat[0]);
+    ball.scale.set(6,6,6)
     scene.add(ball);
-    pad1 = new THREE.Mesh(new THREE.BoxGeometry(10, 20, 60),  mat[1]);
+    pad1 = new THREE.Mesh(geo[1],  mat[1]);
+    pad1.scale.set(10, 20, 60)
     scene.add(pad1);
-    pad2 = new THREE.Mesh(new THREE.BoxGeometry(10, 20, 60),  mat[1]);
+    pad2 = new THREE.Mesh(geo[1],  mat[1]);
+    pad2.scale.set(10, 20, 60)
     scene.add(pad2);
 
-    var g = new THREE.PlaneBufferGeometry( 1, 1 );
-    g.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
-    zone = new THREE.Mesh(g,  mat[2]);
+    zone = new THREE.Mesh(geo[0],  mat[2]);
     zone.scale.set(600,1,310)
     zone.position.y = -10
     scene.add(zone);
@@ -102,13 +115,18 @@ function animate() {
 function init(){
 	init3d();
 
+	island = new FAST.Island();
+	world = new FAST.World();
+
+	
+
+
 	var pt1 = new FAST.V2(LEFT, TOP);
 	var pt2 = new FAST.V2(RIGHT, TOP);
 	var pt3 = new FAST.V2(RIGHT, BOTTOM);
 	var pt4 = new FAST.V2(LEFT, BOTTOM);
 
-	plIsland = new FAST.Island();
-
+	
 	var line1 = buildLine(pt1.x, pt1.y, pt2.x, pt2.y);
 	var line2 = buildLine(pt2.x, pt2.y, pt3.x, pt3.y);
 	var line3 = buildLine(pt3.x, pt3.y, pt4.x, pt4.y);
@@ -121,7 +139,7 @@ function init(){
 
 	console.log(paddle2.h)
 
-	world = new FAST.World();
+	
 
 	point = new FAST.Point(LEFT + 10, TOP + 10);
 
@@ -129,33 +147,41 @@ function init(){
 	point.velocity.y = 90;
 	point.thickness = 3;
 
-	plIsland.points.push(point);
+	island.points.push(point);
 
-	
-	world.add(line1);
-	world.add(line2);
-	world.add(line3);
-	world.add(line4);
+	addCircle(25,CENTER_X,CENTER_Y);
+	addCircle(25,CENTER_X,CENTER_Y+100);
+	addCircle(25,CENTER_X,CENTER_Y-100);
+
 
 	world.add(paddle1);
 	world.add(paddle2);
 
 	world.add(point);
 
-	world.addIsland(plIsland);
+	world.addIsland(island);
 
 	simu = new FAST.Simulation(world);
 
 	setInterval(update, 1000/120);
 }
 
+function addCircle(r,x,y){
+	var circle = new FAST.Circle(x, y, r);
+	island.circles.push(circle);
+	world.add(circle);
 
-console.log('yoooo')
+	var c = new THREE.Mesh(geo[3],  mat[3]);
+	c.scale.set(r-3,20,r-3);
+    c.position.set(x-CENTER_X, 0, y-CENTER_Y);
+    scene.add(c);
+}
 
 function buildLine(startX, startY, endX, endY){
  	var line = new FAST.Line(startX, startY, endX, endY);
 	line.fixed = true;
-	plIsland.lines.push(line);
+	island.lines.push(line);
+	world.add(line);
 	return line;
 }
 
@@ -175,7 +201,7 @@ function update(){
 	else 
 		paddle1.y =  FAST.clamp(point.y - paddle1.center.y, TOP, BOTTOM-paddle1.h);
 
-	score += plIsland.collisionsResolvedThisFrame;
+	score += island.collisionsResolvedThisFrame;
 
     info.innerHTML = score;
 
@@ -183,7 +209,7 @@ function update(){
     pad1.position.set((paddle1.x-5)-CENTER_X, 0, (paddle1.y+30)-CENTER_Y);
     pad2.position.set((paddle2.x+5)-CENTER_X, 0, (paddle2.y+30)-CENTER_Y);
 
-    animate()
+    animate();
 }
 
 </script>
