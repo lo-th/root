@@ -30,7 +30,7 @@ camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0
 cameraCtrl = new THREE.OrbitControls(camera, container);
 cameraCtrl.object.position.y = 100;
 cameraCtrl.update();
-cameraCtrl.target.set(0,50,0)
+//cameraCtrl.target.set(0,50,0)
 
 // ---- renderer
 renderer = new THREE.WebGLRenderer({antialias: true , alpha: false});
@@ -60,6 +60,7 @@ gui_info.add(neuralNet, 'numSignals', 0, neuralNet.limitSignals).name('Signals')
 gui_info.autoListen = false;
 
 var gui_settings = gui.addFolder('Settings');
+gui_settings.add(neuralNet, 'model', neuralNet.ObjectLists );
 gui_settings.add(neuralNet, 'currentMaxSignals', 0, neuralNet.limitSignals).name('Max Signals');
 gui_settings.add(neuralNet.particlePool, 'pSize', 0.2, 2).name('Signal Size');
 gui_settings.add(neuralNet, 'signalMinSpeed', 0.01, 0.1, 0.01).name('Signal Min Speed');
@@ -78,14 +79,20 @@ gui_settings.open();
 function updateNeuralNetworkSettings() {
 	neuralNet.updateSettings();
 }
-
+function updateModel() {
+	neuralNet.changeObject();
+}
+var name;
 for (var i in gui_settings.__controllers) {
-	gui_settings.__controllers[i].onChange(updateNeuralNetworkSettings);
+	name = gui_settings.__controllers[i].property;
+	if(name == 'model') gui_settings.__controllers[i].onChange(updateModel);
+	else gui_settings.__controllers[i].onChange(updateNeuralNetworkSettings);
 }
 
 function updateGuiInfo() {
 	for (var i in gui_info.__controllers) {
-		gui_info.__controllers[i].updateDisplay();
+		name = gui_settings.__controllers[i].property;
+		if(name !== 'model')gui_info.__controllers[i].updateDisplay();
 	}
 }
 

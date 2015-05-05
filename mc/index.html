@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Land v0.1</title>
+<style>
+*{ margin: 0; padding: 0; border: 0; } 
+html{ overflow:hidden; width:100%; height:100%; }
+body { font-family:monospace; background:#222; font-size:12px; color:#fff;}
+#debug { position:absolute; top:10px; left:10px; width:200px; height:40px; pointer-events:none;}
+#canvas { position:absolute; pointer-events:auto; width:100%; height:50%;}
+#canvas2 { position:absolute; pointer-events:auto; top:50%; width:100%; height:50%;border:1px solid #000;}
+.environment{position:absolute; left:10px; bottom:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
+</style>
+<script type="text/javascript" src="js/libs/three.min.js"></script>
+<script type="text/javascript" src="js/libs/seriously.editor.min.js"></script>
+<script type="text/javascript" src="js/libs/tween.min.js"></script>
+<script type="text/javascript" src="js/libs/gui.min.js"></script>
+<script type="text/javascript" src="js/V.3d.js"></script>
+<script type="text/javascript" src="js/V.gui.js"></script>
+<script type="text/javascript" src="js/V.terrain.js"></script>
+<script type="text/javascript" src="js/V.Serious.js"></script>
+</head>
+
+<body>
+<canvas id='canvas'></canvas>
+<!--<canvas id='canvas2'></canvas>-->
+
+<div id='debug'>debug</div>
+<script>
+
+var bgcolor = '663333';
+
+document.body.style.background = '#'+ bgcolor;
+var canvas = document.getElementById('canvas');
+//var canvas2 = document.getElementById('canvas2');
+var debug = document.getElementById('debug');
+var b1 = document.getElementById('b1');
+/*var viewSettings = {
+	preview:false,
+	posY:10,
+}
+var shaderNoiseSettings = {
+	handPower:0.0,
+	noisePower:1.0,
+	animation:false
+};
+var shaderTerrainSettings = {
+	exposure:2.1,
+	brightMax:1.3,
+	shininess:30,
+	reflectTop:0.7,
+	reflectBottom:0.3,
+	normalScale:-2.1,
+	profondeur:-10.0,
+	enableReflection:true,
+	enableOcc:false,
+
+	enableExtraLight:true,
+	enableAmbientLight:true,
+	enablePointLight:false,
+	enableDirectLight:true,
+
+	pointPower:1.0,
+	directPower:0.6,
+	minMix: 1.4
+};
+var filterSettings = {
+	staticImage:false,
+	debug:false,
+	finalBrightness:0.96,
+	finalContrast:1.6,
+	innerBrightness:1.1,
+	innerContrast:0.7,
+	innerBlend:0.5,
+}
+
+// lumieres
+var colorSettings = {
+	diffuse:0xFFFFFF,
+	specular:0xFFFFFF,
+	ambientColor:0xEEEEEE,
+	pointColor:0x975c34,
+	directColor:0xFFFFFF,
+}
+// position des lumieres
+var positionSettings = {
+	pointPositionX:0,
+	pointPositionY:10,
+	pointPositionZ:0,
+
+	directDirectionX:0.2,
+	directDirectionY:0.4,
+	directDirectionZ:-0.8,
+}
+
+*/
+var w = 1000;
+var h = 1000;
+var r = h/w;
+
+//var maxHandDeep = 1.0;
+
+// init vue 3d option camera: horizontal, vertical, distance, focal, environment map
+var v = new V.View(90, 90, 100, 80, 'env0.jpg');
+
+// init terrain 3d
+//var terrain = new V.Terrain( v, { div:[256,256], size:[w*0.1, 0, h*0.1], debug:false, offset:3 });
+
+
+var ball = new THREE.Mesh( new THREE.SphereGeometry(3,12,10), new THREE.MeshBasicMaterial({color:0xFF3300}));
+ball.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0.3,0));
+v.scene.add(ball);
+
+
+var ball2 = new THREE.Mesh( new THREE.SphereGeometry(3,12,10), new THREE.MeshBasicMaterial({color:0xFF3300}));
+ball2.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0.3,0));
+ball2.position.set(20,0,0)
+v.scene.add(ball2);
+
+// div: resolotion du model 3d (nombres de faces)
+// size: taille du terrain [largeur, profondeur , longeur]
+// offset le nombre de repetition des textures
+
+// controle de la profondeur pour la main
+// terrain.showHand(time, delay);
+// time : le temps que la main apparaisse en seconde
+// delay : le temps d'attente avant le depart du tween en seconde
+//terrain.showHand(4, 7);
+// meme chose pour hidehand
+//terrain.hidehand(4, 6);
+
+
+// ajoute le selecteur d'environement 
+// inutile dans la version finale
+//var env = new V.Environment(v);
+
+// init serious video effect
+//var serious = new V.Serious( v, w, h );
+// import de la video
+//serious.importVideo('fingers.mp4');
+
+// gui interface
+// inutile dans la version finale
+//var gui = new V.Gui();
+
+
+loop();
+
+function loop(){
+    requestAnimationFrame( loop );
+
+    TWEEN.update();
+
+    //serious.update();
+    //terrain.setHeight(serious.texture);
+    //terrain.mesh.position.y = -shaderTerrainSettings.profondeur;
+
+    
+    //v.renderer2.setClearColor( ('0x'+bgcolor)*1, 1 );
+    v.render();
+    //terrain.pos.y -=0.001
+    //terrain.update();
+    //ball.position.y = terrain.getz(0,0);
+
+    debug.innerHTML ='THREE ' + v.f[3];
+}
+
+</script>
+</body>
+</html>
