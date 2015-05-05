@@ -110,15 +110,11 @@ var v = new V.View(90, 90, 100, 80, 'env0.jpg');
 //var terrain = new V.Terrain( v, { div:[256,256], size:[w*0.1, 0, h*0.1], debug:false, offset:3 });
 
 
-var ball = new THREE.Mesh( new THREE.SphereGeometry(3,12,10), new THREE.MeshBasicMaterial({color:0xFF3300}));
+var ball = new THREE.Mesh( new THREE.SphereGeometry(0.3,12,10), new THREE.MeshBasicMaterial({color:0xFFFFFF}));
 ball.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0.3,0));
 v.scene.add(ball);
 
 
-var ball2 = new THREE.Mesh( new THREE.SphereGeometry(3,12,10), new THREE.MeshBasicMaterial({color:0xFF3300}));
-ball2.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0.3,0));
-ball2.position.set(20,0,0)
-v.scene.add(ball2);
 
 var neuralNet = new Neuro.NetWork(v);
 var scene_settings = {
