@@ -118,7 +118,7 @@ Neuro.NetWork.prototype = {
         loader.load( '../models/object.sea' );
     },
     extraLoader:function(name){
-    	this.verticesSkipStep = 10;
+    	this.verticesSkipStep = 4;
     	var loader = new THREE.SEA3D( true );
     	var mtx = new THREE.Matrix4().makeScale(70, 70, -70);
 		loader.onComplete =  function (e) {
