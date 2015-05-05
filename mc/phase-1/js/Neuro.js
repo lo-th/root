@@ -31,7 +31,7 @@ Neuro.NetWork = function(parent){
 
 	this.root = parent;
 
-	this.ObjectLists = ['cone', 'sphere', 'cube', 'torus', 'knot', 'brain'];
+	this.ObjectLists = ['cone', 'sphere', 'cube', 'torus', 'knot', 'brain', 'obj1', 'obj2', 'obj3', 'obj4', 'obj5', 'obj6', 'obj7', 'obj8', 'obj9', 'obj10'];
 	this.model = 'cone';
 
 	this.content = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({transparent: true, opacity: 0.00, depthTest: false}));
@@ -117,6 +117,26 @@ Neuro.NetWork.prototype = {
         loader.parser = THREE.SEA3D.DEFAULT;
         loader.load( '../models/object.sea' );
     },
+    extraLoader:function(name){
+    	this.verticesSkipStep = 10;
+    	var loader = new THREE.SEA3D( true );
+    	var mtx = new THREE.Matrix4().makeScale(70, 70, -70);
+		loader.onComplete =  function (e) {
+			var i = loader.meshes.length, name, m, g;
+			while(i--){
+				m = loader.meshes[i];
+				g = m.geometry;
+				g.applyMatrix(mtx);
+				console.log(m.name)
+			}
+			this.neuronsGeom = new THREE.Geometry();
+			this.initNeurons( g.vertices );
+			this.completeObject();
+		}.bind(this);
+
+        loader.parser = THREE.SEA3D.DEFAULT;
+        loader.load( '../models/'+name+'.sea' );
+    },
     clearOld:function(){
     	this.initialized = false;
     	this.content.remove(this.neuronParticles);
@@ -148,9 +168,12 @@ Neuro.NetWork.prototype = {
 
     },
     selectMesh:function(name){
+    	this.verticesSkipStep = 1;
     	var list = [];
     	if(name == 'brain'){
     		list = ['b_frontal', 'b_stem', 'b_cereb'];
+    	}else if(name.substring(0, 3) == 'obj'){
+    		this.extraLoader(name); return;
     	}else{
     		list = [name];
     	}
@@ -174,7 +197,16 @@ Neuro.NetWork.prototype = {
 			//this.root.scene.add(m);
     	}
 
+    	this.completeObject();
 
+
+    	/*this.particlePool.init();
+    	this.applyNeurons();
+		this.initAxons();
+		
+		this.initialized = true;*/
+    },
+    completeObject:function(){
     	this.particlePool.init();
     	this.applyNeurons();
 		this.initAxons();
