@@ -27,9 +27,11 @@ Neuro.LineShader={
 	].join('\n')
 }
 
-Neuro.NetWork = function(parent){
+Neuro.NetWork = function(parent, autoInit){
 
 	this.name = 'neuron';
+
+	this.autoInit = autoInit || false;
 
 	this.root = parent;
 
@@ -85,7 +87,7 @@ Neuro.NetWork.prototype = {
 				this.meshs[m.name] = m;
 			}
 			this.loaded = true;
-			this.init();
+			if(this.autoInit)this.init();
 			//this.initMaterial();
 		}.bind(this);
 

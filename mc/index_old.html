@@ -107,7 +107,7 @@ var c = new V.CamInterface();
 var ball = new THREE.Mesh( new THREE.SphereGeometry(0.3,12,10), new THREE.MeshBasicMaterial({color:0xFFFFFF}));
 ball.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0.3,0));
 //v.scene.add(ball);
-var neuralNet = new Neuro.NetWork(v);
+var neuralNet = new Neuro.NetWork(v, true);
 
 var gui = new dat.GUI();
 //gui.width = 300;

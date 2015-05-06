@@ -125,7 +125,7 @@ V.Terrain.prototype = {
     },
     init:function () {
 
-        this.ratio = this.size[1]/765;
+        this.ratio = -this.size[1]/255;//765;
         this.hfFloatBuffer = new Float32Array(this.div[0]*this.div[1]);
             
         var geo = new THREE.PlaneBufferGeometry(this.size[0], this.size[2], this.div[0]-1, this.div[1]-1);
@@ -557,7 +557,7 @@ V.Terrain.prototype = {
         var colx = Math.floor((x / this.size[0] + .5) * ( this.div[0]));
         var colz = Math.floor((-z / this.size[2] + .5) * ( this.div[1]));
         var pixel = Math.floor(((colz-1)*this.div[0])+colx)*4;
-        var result = this.tmpData[pixel+0]*0.1;// (this.tmpData[pixel+0]+this.tmpData[pixel+1]+this.tmpData[pixel+2])*this.ratio;
+        var result = this.tmpData[pixel+0]*this.ratio;// (this.tmpData[pixel+0]+this.tmpData[pixel+1]+this.tmpData[pixel+2])*this.ratio;
         //console.log(this.tmpData[pixel+0]);
         return result;
     },
