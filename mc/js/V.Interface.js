@@ -131,8 +131,12 @@ V.SceneInterface.prototype = {
     	if(n!==this.current){
     		if(this.current!==-1)scenes[this.current].clearAll();
     		scenes[n].init();
-    	}
-    	//this.show(n);
+    	}else{
+            if(this.current!==-1)scenes[this.current].clearAll();
+            this.current = -1;
+            this.show(-1);
+        }
+    	//
     },
     show:function(n){
     	this.current = n;
