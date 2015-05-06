@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mc v0.2</title>
+<style>
+*{ margin: 0; padding: 0; border: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select:none;} 
+html{ overflow:hidden; width:100%; height:100%; }
+body { font-family:Monospace; background:#000; font-size:12px; color:#fff;}
+#debug { position:absolute; bottom:10px; left:10px; width:100px; height:12px; pointer-events:none;}
+#canvas { position:absolute; pointer-events:auto; width:100%; height:50%;}
+.environment{position:absolute; left:10px; bottom:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
+</style>
+<script type="text/javascript" src="js/libs/three.min.js"></script>
+<script src="js/libs/sea3d.min.js"></script>
+<script type="text/javascript" src="js/libs/seriously.editor.min.js"></script>
+<script type="text/javascript" src="js/libs/tween.min.js"></script>
+<script type="text/javascript" src="js/libs/gui.min.js"></script>
+<script type="text/javascript" src="js/V.3d.js"></script>
+
+<script type="text/javascript" src="js/V.terrain.js"></script>
+<script type="text/javascript" src="js/V.Serious.js"></script>
+<!-- SETTINGS -->
+<script src="js/Settings.js"></script>
+<script src="js/V.Interface.js"></script>
+<script src="js/V.gui.js"></script>
+<!-- TRAFFIC -->
+<script src="js/traffic.min.js"></script>
+<script src="js/Traffic.js"></script>
+<!-- NEURONE -->
+<script src="js/Neuro.js"></script>
+<!-- LANDSCAPE -->
+<script src="js/Landscape.js"></script>
+
+
+
+</head>
+
+<body>
+<canvas id='canvas'></canvas>
+<div id='debug'>debug</div>
+<script>
+
+var canvas = document.getElementById('canvas');
+var debug = document.getElementById('debug');
+//var b1 = document.getElementById('b1');
+/*var viewSettings = {
+	preview:false,
+	posY:10,
+}
+var shaderNoiseSettings = {
+	handPower:0.0,
+	noisePower:1.0,
+	animation:false
+};
+var shaderTerrainSettings = {
+	exposure:2.1,
+	brightMax:1.3,
+	shininess:30,
+	reflectTop:0.7,
+	reflectBottom:0.3,
+	normalScale:-2.1,
+	profondeur:-10.0,
+	enableReflection:true,
+	enableOcc:false,
+
+	enableExtraLight:true,
+	enableAmbientLight:true,
+	enablePointLight:false,
+	enableDirectLight:true,
+
+	pointPower:1.0,
+	directPower:0.6,
+	minMix: 1.4
+};
+var filterSettings = {
+	staticImage:false,
+	debug:false,
+	finalBrightness:0.96,
+	finalContrast:1.6,
+	innerBrightness:1.1,
+	innerContrast:0.7,
+	innerBlend:0.5,
+}
+
+// lumieres
+var colorSettings = {
+	diffuse:0xFFFFFF,
+	specular:0xFFFFFF,
+	ambientColor:0xEEEEEE,
+	pointColor:0x975c34,
+	directColor:0xFFFFFF,
+}
+// position des lumieres
+var positionSettings = {
+	pointPositionX:0,
+	pointPositionY:10,
+	pointPositionZ:0,
+
+	directDirectionX:0.2,
+	directDirectionY:0.4,
+	directDirectionZ:-0.8,
+}
+
+
+var w = 1000;
+var h = 1000;
+var r = h/w;
+*/
+//var maxHandDeep = 1.0;
+
+// init vue 3d option camera: horizontal, vertical, distance, focal, environment map
+var v = new V.View(90, 90, 100, 80, 'env.jpg');
+
+var scenes = [];
+scenes[0] = new Neuro.NetWork(v);
+scenes[1] = new Traffic.NetWork(v);;
+scenes[2] = new Landscape.NetWork(v);
+
+/*var neurone = new Neuro.NetWork(v);
+var traffic = new Traffic.NetWork(v);
+var landscape = new Landscape.NetWork(v);
+*/
+
+var c = new V.Interface();
+// init terrain 3d
+//var terrain = new V.Terrain( v, { div:[256,256], size:[w*0.1, 0, h*0.1], debug:false, offset:3 });
+
+
+var ball = new THREE.Mesh( new THREE.SphereGeometry(0.3,12,10), new THREE.MeshBasicMaterial({color:0xFFFFFF}));
+ball.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0.3,0));
+//v.scene.add(ball);
+
+
+
+
+
+/*var gui = new dat.GUI();
+//gui.width = 300;
+
+var gui_info = gui.addFolder('Info');
+gui_info.add(neuralNet, 'numNeurons').name('Neurons');
+gui_info.add(neuralNet, 'numAxons').name('Axons');
+gui_info.add(neuralNet, 'numSignals', 0, neuralNet.limitSignals).name('Signals');
+gui_info.autoListen = false;
+
+var gui_settings = gui.addFolder('Settings');
+gui_settings.add(neuralNet, 'model', neuralNet.ObjectLists );
+gui_settings.add(neuralNet, 'currentMaxSignals', 0, neuralNet.limitSignals).name('Max Signals');
+gui_settings.add(neuralNet.particlePool, 'pSize', 0.2, 2).name('Signal Size');
+gui_settings.add(neuralNet, 'signalMinSpeed', 0.01, 0.1, 0.01).name('Signal Min Speed');
+gui_settings.add(neuralNet, 'signalMaxSpeed', 0.01, 0.1, 0.01).name('Signal Max Speed');
+gui_settings.add(neuralNet, 'neuronSize', 0, 2).name('Neuron Size');
+gui_settings.add(neuralNet, 'neuronOpacity', 0, 1.0).name('Neuron Opacity');
+gui_settings.add(neuralNet, 'axonOpacityMultiplier', 0.0, 5.0).name('Axon Opacity Mult');
+gui_settings.addColor(neuralNet.particlePool, 'pColor').name('Signal Color');
+gui_settings.addColor(neuralNet, 'neuronColor').name('Neuron Color');
+gui_settings.addColor(neuralNet, 'axonColor').name('Axon Color');
+gui_settings.addColor(scene_settings, 'bgColor').name('Background');
+
+//gui_info.open();
+gui_settings.open();
+
+function updateNeuralNetworkSettings() {
+	neuralNet.updateSettings();
+}
+function updateModel() {
+	neuralNet.changeObject();
+}
+var name;
+for (var i in gui_settings.__controllers) {
+	name = gui_settings.__controllers[i].property;
+	if(name == 'model') gui_settings.__controllers[i].onChange(updateModel);
+	else if(name == 'bgColor') gui_settings.__controllers[i].onChange(function(){v.updateBG()});
+	else gui_settings.__controllers[i].onChange(updateNeuralNetworkSettings);
+}
+
+function updateGuiInfo() {
+	for (var i in gui_info.__controllers) {
+		name = gui_settings.__controllers[i].property;
+		if(name !== 'model')gui_info.__controllers[i].updateDisplay();
+	}
+}*/
+// div: resolotion du model 3d (nombres de faces)
+// size: taille du terrain [largeur, profondeur , longeur]
+// offset le nombre de repetition des textures
+
+// controle de la profondeur pour la main
+// terrain.showHand(time, delay);
+// time : le temps que la main apparaisse en seconde
+// delay : le temps d'attente avant le depart du tween en seconde
+//terrain.showHand(4, 7);
+// meme chose pour hidehand
+//terrain.hidehand(4, 6);
+
+
+// ajoute le selecteur d'environement 
+// inutile dans la version finale
+//var env = new V.Environment(v);
+
+// init serious video effect
+//var serious = new V.Serious( v, w, h );
+// import de la video
+//serious.importVideo('fingers.mp4');
+
+// gui interface
+// inutile dans la version finale
+//var gui = new V.Gui();
+
+
+loop();
+
+function loop(){
+    requestAnimationFrame( loop );
+
+    TWEEN.update();
+
+    var i = scenes.length;
+    while(i--) scenes[i].update();
+
+    /*if (!scene_settings.pause) {
+		neurone.update();
+
+		traffic.update();
+
+
+		//updateGuiInfo();
+	}*/
+
+
+	
+
+    //serious.update();
+    //terrain.setHeight(serious.texture);
+    //terrain.mesh.position.y = -shaderTerrainSettings.profondeur;
+
+    
+    //v.renderer2.setClearColor( ('0x'+bgcolor)*1, 1 );
+    v.render();
+    //terrain.pos.y -=0.001
+    //terrain.update();
+    //ball.position.y = terrain.getz(0,0);
+
+    debug.innerHTML ='THREE ' + v.f[3];
+}
+
+</script>
+</body>
+</html>

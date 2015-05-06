@@ -29,76 +29,51 @@ Neuro.LineShader={
 
 Neuro.NetWork = function(parent){
 
+	this.name = 'neuron';
+
 	this.root = parent;
+
+	this.loaded = false;
+	this.initialized = false;
 
 	this.ObjectLists = ['cone', 'sphere', 'cube', 'torus', 'knot', 'brain', 'obj1', 'obj2', 'obj3', 'obj4', 'obj5', 'obj6', 'obj7', 'obj8', 'obj9', 'obj10'];
 	this.model = 'cone';
 
-	this.content = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({transparent: true, opacity: 0.00, depthTest: false}));
-    this.root.scene.add(this.content);
-
-	this.initialized = false;
-
 	this.meshs = {};
 
 	// settings
-	this.verticesSkipStep = 1//3//2;	//2
-	this.maxAxonDist = 8//8;	//8
-	this.maxConnectionPerNeuron = 6;	//6
+	this.verticesSkipStep = 1;
+	this.maxAxonDist = 8;
+	this.maxConnectionPerNeuron = 6;
 
 	this.currentMaxSignals = 8000;
 	this.limitSignals = 12000;
-	this.particlePool = new Neuro.ParticlePool(this.content, this.limitSignals);	// *************** ParticlePool must bigger than limit Signal ************
 
 	this.signalMinSpeed = 0.035;
 	this.signalMaxSpeed = 0.065;
 
-	// NN component containers
-	this.allNeurons = [];
-	this.allSignals = [];
-	this.allAxons = [];
-
 	// axon
 	this.axonOpacityMultiplier = 1.0;
 	this.axonColor = 0x666666;
-	this.axonGeom = null;//new THREE.BufferGeometry();
-	this.axonPositions = [];
-	this.axonColors = [];
-	this.axonIndices = [];
 	this.axonNextPositionsIndex = 0;
-
-	this.axonShader = Neuro.LineShader;
-
-	
 
 	// neuron
 	this.neuronSize = 0.8;
-	this.spriteTextureNeuron = THREE.ImageUtils.loadTexture( "textures/point.png" );
 	this.neuronColor = 0x666666;
 	this.neuronOpacity = 1.0;
 	this.neuronsGeom = null;
-	this.neuronMaterial = new THREE.PointCloudMaterial({
-		map: this.spriteTextureNeuron,
-		size: this.neuronSize,
-		color: this.neuronColor,
-		alphaTest : 0.6,
-		//blending: THREE.AdditiveBlending,
-		//depthTest: false,
-		transparent: true,
-		//opacity: this.neuronOpacity
-	});
 
 	// info api
 	this.numNeurons = 0;
 	this.numAxons = 0;
 	this.numSignals = 0;
 
-	this.init();
+	this.load();
 }
 
 Neuro.NetWork.prototype = {
 	constructor:Neuro.NetWork,
-    init:function(){
+    load:function(){
     	var loader = new THREE.SEA3D( true );
     	var mtx = new THREE.Matrix4().makeScale(10, 10, -10);
 		loader.onComplete =  function (e) {
@@ -109,14 +84,92 @@ Neuro.NetWork.prototype = {
 				g.applyMatrix(mtx);
 				this.meshs[m.name] = m;
 			}
-			//this.selectMesh('brain');
-			//this.selectMesh('sphere');
-			this.selectMesh('cone');
+			this.loaded = true;
+			this.init();
+			//this.initMaterial();
 		}.bind(this);
 
         loader.parser = THREE.SEA3D.DEFAULT;
         loader.load( 'models/object.sea' );
     },
+    initMaterial:function(){
+    	var tx = THREE.ImageUtils.loadTexture( "textures/point.png" );
+
+    	this.axonShader = Neuro.LineShader;
+		
+    	this.axonMaterial = new THREE.ShaderMaterial( {
+			uniforms:       this.axonShader.uniforms,
+			attributes:     this.axonShader.attributes,
+			vertexShader:   this.axonShader.vs,
+			fragmentShader: this.axonShader.fs,
+			//blending:       THREE.AdditiveBlending,
+			//depthTest:      false,
+			transparent:    true
+		});
+		this.axonMaterial.uniforms.color.value.set(this.axonColor);
+		this.axonMaterial.uniforms.opacityMultiplier.value = this.axonOpacityMultiplier;
+
+    	this.neuronMaterial = new THREE.PointCloudMaterial({
+			map: tx,
+			size: this.neuronSize,
+			color: this.neuronColor,
+			alphaTest : 0.6,
+			//blending: THREE.AdditiveBlending,
+			//depthTest: false,
+			transparent: true,
+			//opacity: this.neuronOpacity
+		});
+
+		this.particulMat = new THREE.PointCloudMaterial({
+			map: tx,
+			size: 0.3,
+			color: 0XFFFFFF,
+			//blending: THREE.AdditiveBlending,
+			//depthTest: false,
+			transparent: true,
+			alphaTest : 0.6
+		});
+
+		/*this.objectMaterial = new THREE.MeshBasicMaterial({
+			transparent: true,
+			opacity: 0.00,
+			depthTest: false,
+			color: 0x0088ff,
+			//blending: THREE.AdditiveBlending
+		});*/
+
+
+    	//this.loaded = true;
+
+    	
+    },
+    clearAll:function(){
+    	this.clearOld();
+    },
+    init:function(){
+    	if (!this.loaded) return;
+
+    	this.root.currentScene = this.name;
+    	if(it!==null)it.run(this.root.currentScene);
+
+    	this.initMaterial();
+
+    	this.allNeurons = [];
+    	this.allSignals = [];
+    	this.allAxons = [];
+    	
+    	this.axonPositions = [];
+    	this.axonColors = [];
+    	this.axonIndices = [];
+
+    	this.content = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({transparent: true, opacity: 0.0}));
+    	this.root.scene.add(this.content);
+
+    	this.particlePool = new Neuro.ParticlePool(this);
+
+    	this.selectMesh('cone');
+    },
+
     extraLoader:function(name){
     	this.verticesSkipStep = 10;
     	var loader = new THREE.SEA3D( true );
@@ -137,6 +190,7 @@ Neuro.NetWork.prototype = {
         loader.parser = THREE.SEA3D.DEFAULT;
         loader.load( 'models/'+name+'.sea' );
     },
+
     clearOld:function(){
     	this.initialized = false;
     	this.content.remove(this.neuronParticles);
@@ -144,7 +198,7 @@ Neuro.NetWork.prototype = {
 
     	this.neuronParticles.geometry.dispose();
     	this.axonMesh.geometry.dispose();
-    	this.axonMesh.material.dispose();
+    	//this.axonMesh.material.dispose();
     	//this.neuronsGeom.dispose();
 
     	this.particlePool.clear();
@@ -162,11 +216,8 @@ Neuro.NetWork.prototype = {
 		this.numNeurons = 0;
 		this.numAxons = 0;
 		this.numSignals = 0;
-
-    	console.log('yooo')
-    	
-
     },
+
     selectMesh:function(name){
     	this.verticesSkipStep = 1;
     	var list = [];
@@ -177,14 +228,6 @@ Neuro.NetWork.prototype = {
     	}else{
     		list = [name];
     	}
-
-    	/*var material = new THREE.MeshBasicMaterial({
-			transparent: true,
-			opacity: 0.00,
-			depthTest: false,
-			color: 0x0088ff,
-			//blending: THREE.AdditiveBlending
-		});*/
 
 		this.neuronsGeom = new THREE.Geometry();
 
@@ -198,13 +241,6 @@ Neuro.NetWork.prototype = {
     	}
 
     	this.completeObject();
-
-
-    	/*this.particlePool.init();
-    	this.applyNeurons();
-		this.initAxons();
-		
-		this.initialized = true;*/
     },
     completeObject:function(){
     	this.particlePool.init();
@@ -250,18 +286,9 @@ Neuro.NetWork.prototype = {
 		this.content.add(this.neuronParticles);
 	},
 	initAxons:function () {
-		this.axonShader = Neuro.LineShader;
+		/*this.axonShader = Neuro.LineShader;
 		this.axonShader.uniforms.color.value.set(this.axonColor);
-		this.axonShader.uniforms.opacityMultiplier.value = this.axonOpacityMultiplier;
-
-		/*this.shaderUniforms = {
-			color:             { type: 'c', value: new THREE.Color( this.axonColor ) },
-			opacityMultiplier: { type: 'f', value: 1.0 }
-		};
-
-		this.shaderAttributes = {
-			opacityAttr:       { type: 'f', value: [] }
-		};*/
+		this.axonShader.uniforms.opacityMultiplier.value = this.axonOpacityMultiplier;*/
 
 		var allNeuronsLength = this.allNeurons.length;
 		for (var j=0; j<allNeuronsLength; j++) {
@@ -304,22 +331,7 @@ Neuro.NetWork.prototype = {
 		this.axonGeom.addAttribute( 'color', new THREE.BufferAttribute(axonColors, 3) );
 		this.axonGeom.computeBoundingSphere();
 
-
-
-		// axons mesh
-		this.shaderMaterial = new THREE.ShaderMaterial( {
-			uniforms:       this.axonShader.uniforms,//this.shaderUniforms,
-			attributes:     this.axonShader.attributes,//this.shaderAttributes,
-			vertexShader:   this.axonShader.vs,
-			fragmentShader: this.axonShader.fs,
-			//blending:       THREE.AdditiveBlending,
-			//depthTest:      false,
-			transparent:    true
-		});
-
-		//var material = new THREE.LineBasicMaterial({ vertexColors: THREE.VertexColors, transparent:true, opacity:0.2});
-
-		this.axonMesh = new THREE.Line(this.axonGeom, this.shaderMaterial, THREE.LinePieces);
+		this.axonMesh = new THREE.Line(this.axonGeom, this.axonMaterial, THREE.LinePieces);
 		//this.axonMesh = new THREE.Line(this.axonGeom, material, THREE.LinePieces);
 		this.axonMesh.frustumCulled = false;
 	   // this.root.scene.add(this.axonMesh);
@@ -435,8 +447,8 @@ Neuro.NetWork.prototype = {
 		this.neuronMaterial.color.setHex(this.neuronColor);
 		this.neuronMaterial.size = this.neuronSize;
 
-		this.axonShader.uniforms.color.value.set(this.axonColor);
-		this.axonShader.uniforms.opacityMultiplier.value = this.axonOpacityMultiplier;
+		this.axonMaterial.uniforms.color.value.set(this.axonColor);
+		this.axonMaterial.uniforms.opacityMultiplier.value = this.axonOpacityMultiplier;
 
 		this.particlePool.updateSettings();
 	}
@@ -537,14 +549,13 @@ Neuro.Particle.prototype.free = function () {
 
 	// Particle Pool ---------------------------------------------------------
 
-Neuro.ParticlePool = function(content, poolSize) {
+Neuro.ParticlePool = function(parent) {
 	//this.root = parent;
 
-	this.content = content;
-
-	this.spriteTextureSignal = THREE.ImageUtils.loadTexture( "textures/point.png" );
-
-	this.poolSize = poolSize;
+	this.content = parent.content;
+	this.poolSize = parent.limitSignals;
+	this.pMat = parent.particulMat;
+	
 	this.pGeom = null;//new THREE.Geometry();
 	this.particles = null; // this.pGeom.vertices;
 
@@ -553,8 +564,10 @@ Neuro.ParticlePool = function(content, poolSize) {
 	this.pColor = 0xFFFFFF;
 	this.pSize = 0.3;
 
+	this.updateSettings();
+
 	// inner particle
-	this.pMat = new THREE.PointCloudMaterial({
+	/*this.pMat = new THREE.PointCloudMaterial({
 		map: this.spriteTextureSignal,
 		size: this.pSize,
 		color: this.pColor,
@@ -562,7 +575,7 @@ Neuro.ParticlePool = function(content, poolSize) {
 		//depthTest: false,
 		transparent: true,
 		alphaTest : 0.6
-	});
+	});*/
 
 	/*for (var ii=0; ii<this.poolSize; ii++) {
 		this.particles[ii] = new Neuro.Particle(this);
@@ -659,7 +672,7 @@ Neuro.ParticlePool.prototype = {
 }
 
 
-// Signal ----------------------------------------------------------------
+// SIGNAL ----------------------------------------------------------------
 
 Neuro.Signal = function (particlePool, minSpeed, maxSpeed) {
 	this.minSpeed = minSpeed;

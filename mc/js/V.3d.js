@@ -37,10 +37,14 @@ V.Main = null;
 
 V.View = function(h,v,d,f, emvmap){
 
+    this.currentScene = '';
+
+    this.bgColor = scene_settings.bgColor;
+
     this.f = [0,0,0,0];
     this.follow = true;
     this.camPreview = true;
-    this.camLimite = true;
+    this.camLimite = false;
     this.currentCamera = 4;
 
     this.dimentions = {w:window.innerWidth,  h:window.innerHeight, r:window.innerWidth/window.innerHeight };
@@ -50,6 +54,8 @@ V.View = function(h,v,d,f, emvmap){
     this.debug = debug;
 
     this.scene = new THREE.Scene();
+    //this.scene.fog = new THREE.FogExp2( 0xefd1b5, 0.0025 );
+    //this.scene.fog = null;//new THREE.Fog(('0x'+bgcolor)*1, 300, 1200);
     
     this.cameraGroup = new THREE.Group();
     this.scene.add(this.cameraGroup);
@@ -69,7 +75,7 @@ V.View = function(h,v,d,f, emvmap){
     this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:canvas, antialias:false, alpha:false });
     this.renderer.setSize( this.dimentions.w, this.dimentions.h );
     this.renderer.setPixelRatio( window.devicePixelRatio );
-    this.renderer.setClearColor( ('0x'+bgcolor)*1, 1 );
+    this.renderer.setClearColor( this.bgColor , 1 );
     this.renderer.autoClear = true;
 
     this.initCamera();
@@ -83,8 +89,8 @@ V.View.prototype = {
     render:function(){
 
        // this.renderer.clear();
+        //this.renderer.setClearColor( scene_settings.bgColor , 1 );
 
-        
         if(this.currentCamera==4 && this.camPreview){
             this.previewGroup.visible = true;
             var i = this.texture.length;
@@ -96,6 +102,7 @@ V.View.prototype = {
         }else{
             this.previewGroup.visible = false;
         }
+
         //this.renderer.clear();
         //this.renderer.setClearColor( ('0x'+bgcolor)*1, 1 );
         this.renderer.render( this.scene, this.cameras[this.currentCamera] );
@@ -104,14 +111,21 @@ V.View.prototype = {
         f[0] = Date.now();
         if (f[0]-1000 > f[1]){ f[1] = f[0]; f[3] = f[2]; f[2] = 0; } f[2]++;
     },
+    updateBG:function(){
+        this.bgColor = scene_settings.bgColor;
+        this.renderer.setClearColor(this.bgColor , 1 );
+    },
     resize:function(){
         this.dimentions.w = window.innerWidth;
         this.dimentions.h = window.innerHeight;
         this.dimentions.r = this.dimentions.w/this.dimentions.h;
         this.renderer.setSize( this.dimentions.w, this.dimentions.h );
         //this.renderer2.setSize( this.dimentions.w, this.dimentions.h );
-        this.nav.camera.aspect = this.dimentions.r;
-        this.nav.camera.updateProjectionMatrix();
+        this.cameras[4].aspect = this.dimentions.r;
+        this.cameras[4].updateProjectionMatrix();
+
+        this.cameras[5].aspect = this.dimentions.r;
+        this.cameras[5].updateProjectionMatrix();
     },
     orbit:function(v, h, d, ref){
         var p = new THREE.Vector3();
@@ -133,7 +147,7 @@ V.View.prototype = {
         var r = 13/5.4;
 
         for(var i=0; i<4; i++){
-            this.cameras[i] =  new THREE.PerspectiveCamera( 19.525, r, 0.1, 200);
+            this.cameras[i] =  new THREE.PerspectiveCamera( 19.525, r, 0.1, 2000);
             look = this.orbit(90, (i*45)+22.5, 10);
             this.cameras[i].position.set(0,0,0);
             this.cameras[i].lookAt(look);
@@ -145,7 +159,7 @@ V.View.prototype = {
 
         this.cameras[4] = this.nav.camera;
 
-        this.cameraTop = new THREE.PerspectiveCamera( 50, this.dimentions.r, 0.1, 20000 );
+        this.cameraTop = new THREE.PerspectiveCamera( 50, this.dimentions.r, 0.1, 2000 );
         this.cameraTop.position.y = 1000;
         this.cameraTop.lookAt(new THREE.Vector3());
         this.cameras[5] = this.cameraTop;
@@ -160,6 +174,7 @@ V.View.prototype = {
 
     },
     initPreview:function(){
+        var decal = 0.1
         var frontGeo = new THREE.PlaneBufferGeometry( 10.8, 5.4 );
         var sideGeo = new THREE.PlaneBufferGeometry( 13, 5.4 );
         this.dummyTexture = new THREE.Texture();
@@ -178,26 +193,25 @@ V.View.prototype = {
             switch(i){
                 case 0: // left
                 this.screen[i] = new THREE.Mesh( sideGeo, this.mat[i] );
-                this.screen[i].position.set(-10.8, 0, 6.5);
+                this.screen[i].position.set(-10.8-(decal+(decal*0.5)), 0, 6.5);
                 this.screen[i].rotation.y = V.PI90;
                 break;
                 case 1: // front left
                 this.screen[i] = new THREE.Mesh( frontGeo, this.mat[i] );
-                this.screen[i].position.x = -5.4;
+                this.screen[i].position.x = -5.4-(decal*0.5);
                 break;
                 case 2: // front right
                 this.screen[i] = new THREE.Mesh( frontGeo, this.mat[i] );
-                this.screen[i].position.x = 5.4;
+                this.screen[i].position.x = 5.4+(decal*0.5);
                 break;
                 case 3: // right
                 this.screen[i] = new THREE.Mesh( sideGeo, this.mat[i] );
-                this.screen[i].position.set(10.8, 0, 6.5);
+                this.screen[i].position.set(10.8+(decal+(decal*0.5)), 0, 6.5);
                 this.screen[i].rotation.y = -V.PI90;
                 break;
             }
             this.previewGroup.add( this.screen[i] );
         }
-
         this.previewGroup.rotation.y = V.PI;
         this.previewGroup.rotation.x = -20*V.ToRad;
         this.previewGroup.position.set(0,12,26);
@@ -220,7 +234,7 @@ V.Nav = function(parent, h, v, d, f){
 	this.cursor = new V.Cursor();
     this.lockView = false;
 
-	this.camera = new THREE.PerspectiveCamera( f||40, this.root.dimentions.r, 0.1, 200 );
+	this.camera = new THREE.PerspectiveCamera( f||40, this.root.dimentions.r, 0.1, 2000 );
     //this.helper = new THREE.CameraHelper( this.camera );
     //this.root.scene.add(this.helper) 
     this.root.scene.add(this.camera)

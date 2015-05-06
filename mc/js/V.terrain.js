@@ -15,6 +15,8 @@ V.Terrain = function(Parent, obj){
     this.div = obj.div || [256,256];
     //this.div = obj.div || [512,512];
     this.size = obj.size || [50, 10, 50];
+
+    this.r = 1;
     //this.size = obj.size || [256, 30, 256];
     this.isAutoMove = obj.AutoMove || false;
     this.isMove = obj.Move || false;
@@ -181,61 +183,61 @@ V.Terrain.prototype = {
         this.tween = new TWEEN.Tween( {it:0.0} )
             .to( {it:maxHandDeep} , time*1000 || 1000 )
             .easing( TWEEN.Easing.Linear.None )
-            .onUpdate( function () { terrain.setHandPower(this.it) } )
+            .onUpdate( function () { this.setHandPower(this.it) } )
             .delay( delay*1000 || 0 ).start();
     },
     hideHand:function(time, delay){
         this.tween = new TWEEN.Tween( {it:maxHandDeep} )
             .to( {it:0.0} , time*1000 || 1000 )
             .easing( TWEEN.Easing.Linear.None )
-            .onUpdate( function () { terrain.setHandPower(this.it) } )
+            .onUpdate( function () { this.setHandPower(this.it) } )
             .delay( delay*1000 || 0 ).start();
     },
     setHandPower: function(v){
         shaderNoiseSettings[ 'handPower' ] = v;
-        terrain.noiseShader.uniforms[ 'handPower' ].value = v;//shaderNoiseSettings[ 'handPower' ];
-        terrain.terrainShader.uniforms[ 'handPower' ].value = v;
+        this.noiseShader.uniforms[ 'handPower' ].value = v;//shaderNoiseSettings[ 'handPower' ];
+        this.terrainShader.uniforms[ 'handPower' ].value = v;
     },
     matChanger: function(){
         for (var e in shaderTerrainSettings) {
-            if (e in terrain.terrainShader.uniforms)
-                terrain.terrainShader.uniforms[ e ].value = shaderTerrainSettings[ e ];
+            if (e in this.terrainShader.uniforms)
+                this.terrainShader.uniforms[ e ].value = shaderTerrainSettings[ e ];
         }
 
         for (var e in shaderNoiseSettings) {
-            if (e in terrain.noiseShader.uniforms)
-                terrain.noiseShader.uniforms[ e ].value = shaderNoiseSettings[ e ];
-                if(e=='handPower')terrain.terrainShader.uniforms[ e ].value = shaderNoiseSettings[ e ];
+            if (e in this.noiseShader.uniforms)
+                this.noiseShader.uniforms[ e ].value = shaderNoiseSettings[ e ];
+                if(e=='handPower')this.terrainShader.uniforms[ e ].value = shaderNoiseSettings[ e ];
         }
     },
     upColor : function(name){
-        if(terrain.terrainShader.uniforms[name])terrain.terrainShader.uniforms[name].value.setHex('0x'+colorSettings[name].toString(16));
+        if(this.terrainShader.uniforms[name])this.terrainShader.uniforms[name].value.setHex('0x'+colorSettings[name].toString(16));
     },
     moveLight : function(name){
-        if(terrain.terrainShader.uniforms[name]){
-            terrain.terrainShader.uniforms[name].value.set(positionSettings[name+'X'], positionSettings[name+'Y'], positionSettings[name+'Z']);
+        if(this.terrainShader.uniforms[name]){
+            this.terrainShader.uniforms[name].value.set(positionSettings[name+'X'], positionSettings[name+'Y'], positionSettings[name+'Z']);
         }
     },
     applyBaseSetting: function(){
         // color
         for (var e in colorSettings) {
-             if(terrain.terrainShader.uniforms[e])terrain.terrainShader.uniforms[e].value.setHex('0x'+colorSettings[e].toString(16));
+             if(this.terrainShader.uniforms[e])this.terrainShader.uniforms[e].value.setHex('0x'+colorSettings[e].toString(16));
         }
         // position
         for (var e in positionSettings) {
-            if(e=='pointPositionX') terrain.terrainShader.uniforms.pointPosition.value.x = positionSettings[e];
-            if(e=='pointPositionY') terrain.terrainShader.uniforms.pointPosition.value.y = positionSettings[e];
-            if(e=='pointPositionZ') terrain.terrainShader.uniforms.pointPosition.value.z = positionSettings[e];
+            if(e=='pointPositionX') this.terrainShader.uniforms.pointPosition.value.x = positionSettings[e];
+            if(e=='pointPositionY') this.terrainShader.uniforms.pointPosition.value.y = positionSettings[e];
+            if(e=='pointPositionZ') this.terrainShader.uniforms.pointPosition.value.z = positionSettings[e];
 
-            if(e=='directDirectionX') terrain.terrainShader.uniforms.directDirection.value.x = positionSettings[e];
-            if(e=='directDirectionY') terrain.terrainShader.uniforms.directDirection.value.y = positionSettings[e];
-            if(e=='directDirectionZ') terrain.terrainShader.uniforms.directDirection.value.z = positionSettings[e];
+            if(e=='directDirectionX') this.terrainShader.uniforms.directDirection.value.x = positionSettings[e];
+            if(e=='directDirectionY') this.terrainShader.uniforms.directDirection.value.y = positionSettings[e];
+            if(e=='directDirectionZ') this.terrainShader.uniforms.directDirection.value.z = positionSettings[e];
         }
 
     },
     animation:function(){
-        if(shaderNoiseSettings.animation) terrain.animDeltaDir=1;
-        else {terrain.animDeltaDir=0; terrain.animDelta =0;}
+        if(shaderNoiseSettings.animation) this.animDeltaDir=1;
+        else {this.animDeltaDir=0; this.animDelta =0;}
     },
     
     start:function() {
@@ -334,9 +336,9 @@ V.Terrain.prototype = {
         //this.terrainShader.uniforms[ 'shininess' ].value = 30;
 
         //this.terrainShader.uniforms[ 'profondeur' ].value = this.size[1];
-        this.terrainShader.uniforms[ 'uRepeatOverlay' ].value.set( this.mapOffset, this.mapOffset*r );
+        this.terrainShader.uniforms[ 'uRepeatOverlay' ].value.set( this.mapOffset, this.mapOffset*this.r );
 
-        this.terrainShader.uniforms[ 'fogcolor' ].value = new THREE.Color( ('0x'+bgcolor)*1 );
+        this.terrainShader.uniforms[ 'fogcolor' ].value = new THREE.Color( this.main.bgColor );
         
 
          if(this.debug){
