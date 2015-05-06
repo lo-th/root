@@ -40,6 +40,7 @@ V.View = function(h,v,d,f, emvmap){
     this.currentScene = '';
 
     this.bgColor = scene_settings.bgColor;
+    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat };
 
     this.f = [0,0,0,0];
     this.follow = true;
@@ -93,7 +94,7 @@ V.View.prototype = {
 
         if(this.currentCamera==4 && this.camPreview){
             this.previewGroup.visible = true;
-            var i = this.texture.length;
+            var i = this.mat.length;
             while(i--){
                 this.mat[i].map = this.dummyTexture;
                 this.renderer.render( this.scene, this.cameras[i], this.texture[i], true );
@@ -126,6 +127,8 @@ V.View.prototype = {
 
         this.cameras[5].aspect = this.dimentions.r;
         this.cameras[5].updateProjectionMatrix();
+
+        this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
     },
     orbit:function(v, h, d, ref){
         var p = new THREE.Vector3();
@@ -179,7 +182,7 @@ V.View.prototype = {
         var sideGeo = new THREE.PlaneBufferGeometry( 13, 5.4 );
         this.dummyTexture = new THREE.Texture();
 
-        var txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat };
+       
         var resolution = {w:1000, h:600};
 
         this.texture = [];
@@ -188,7 +191,7 @@ V.View.prototype = {
 
         var i = 4;
         while(i--){
-            this.texture[i] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, txtSetting );
+            this.texture[i] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, this.txtSetting );
             this.mat[i] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
             switch(i){
                 case 0: // left
@@ -215,6 +218,8 @@ V.View.prototype = {
         this.previewGroup.rotation.y = V.PI;
         this.previewGroup.rotation.x = -20*V.ToRad;
         this.previewGroup.position.set(0,12,26);
+
+        this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
     }
        
 }
