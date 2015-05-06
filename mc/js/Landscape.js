@@ -9,6 +9,7 @@ Landscape.NetWork = function(parent){
 
 	this.initialized = false;
 	this.loaded = false;
+	this.lastTime = 0;
 
 	this.load();
 
@@ -35,23 +36,17 @@ Landscape.NetWork.prototype = {
 
 		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 12, 1 );
 		this.coneGeometry.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
-		this.mat = new THREE.MeshBasicMaterial({color:0xFFF000, wireframe:true})
+		this.mat = new THREE.MeshBasicMaterial({color:0xFFF000, wireframe:true});
 
 		this.obj = [];
 		var m;
-		var s = 10;
 		var i = 100;
 		while(i--){
-			s = V.randInt(10, 30);
-			m = new THREE.Mesh( this.coneGeometry, this.mat );
-			m.scale.set(s,s,s);
-			m.position.set(V.randInt(-400, 400), 0, V.randInt(-400, 400));
-
+			m = new Landscape.Entity(this.coneGeometry, this.mat);
+			m.terra = this.terrain;
 			this.content.add(m);
-
 			this.obj[i] = m;
 		}
-
 	},
 	clearAll:function(){
 		this.initialized = false;
@@ -65,12 +60,73 @@ Landscape.NetWork.prototype = {
 	},
 	update:function(){
 		if (!this.initialized) return;
+
+		var currentTime = Date.now();
+        var timeDelta = currentTime - this.lastTime;
+
 		this.terrain.pos.y -=0.001
         this.terrain.update();
         var i = this.obj.length;
         while(i--){
         	//
-        	this.obj[i].position.y = this.terrain.getz(this.obj[i].position.x,this.obj[i].position.z);
+        	//this.obj[i].timeDelta = timeDelta;
+        	this.obj[i].travel();
+        	//this.obj[i].position.y = this.terrain.getz(this.obj[i].position.x,this.obj[i].position.z);
         }
+
+        this.lastTime = currentTime;
 	}
+}
+
+
+// ENTITY
+
+Landscape.Entity = function(geo, mat){
+	THREE.Mesh.call(this, geo, mat);
+	this.limit = {x:800, y:800};
+	this.terra = null;
+
+	var s = V.randInt(10, 30);
+	this.radius = s;
+	this.scale.set(s,s,s);
+	this.position.set(V.randInt(-400, 400), 0, V.randInt(-400, 400));
+	this.angle = Math.PI * 2 * Math.random();
+	this.velocity = V.randInt(1, 6);
+	this.pos = new THREE.Vector3();
+	
+	//console.log(this.velocity)
+}
+Landscape.Entity.prototype = Object.create(THREE.Mesh.prototype);
+Landscape.Entity.prototype.travel = function () {
+	//timeDelta = timeDelta || 0.1
+	    var x = this.position.x+(this.limit.x*0.5);
+        var y = this.position.z+(this.limit.y*0.5);
+        var angle = this.angle;
+        var velocity = this.velocity;
+        
+        var nextX = x + Math.cos(angle) * velocity;// * (this.timeDelta / 1000);
+        var nextY = y + Math.sin(angle) * velocity;// * (this.timeDelta / 1000);
+        
+        if (nextX + this.radius * 2 > this.limit.x){
+            if ((angle >= 0 && angle < Math.PI / 2)) angle = Math.PI - angle;
+            else if (angle > Math.PI / 2 * 3) angle = angle - (angle - Math.PI / 2 * 3) * 2
+        }
+        if (nextX < 0){
+            if ((angle > Math.PI / 2 && angle < Math.PI)) angle = Math.PI - angle;
+            else if (angle > Math.PI && angle < Math.PI / 2 * 3) angle = angle + (Math.PI / 2 * 3 - angle) * 2;
+        }
+        if (nextY + this.radius * 2 > this.limit.y){
+            if ((angle > 0 && angle < Math.PI)) angle = Math.PI * 2 - angle;
+        }
+        if (nextY < 0){
+            if ((angle > Math.PI && angle < Math.PI * 2)) angle = angle - (angle - Math.PI) * 2;
+        }
+        
+        this.angle = angle;
+        var nx = nextX-(this.limit.x*0.5);
+        var nz = nextY-(this.limit.y*0.5);
+        var ny = this.terra.getz(nx,nz)
+
+        this.pos.set(nx,ny, nz);
+        this.position.lerp(this.pos, 0.3);
 }
