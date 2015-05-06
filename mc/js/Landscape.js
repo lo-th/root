@@ -52,16 +52,16 @@ Landscape.NetWork.prototype = {
 			this.obj[i] = m;
 		}
 
-
-
-		
-
 	},
 	clearAll:function(){
 		this.initialized = false;
 		this.terrain.clear();
+		var i = this.content.children.length;
+		while(i--){
+		    this.content.remove(this.content.children[i]);
+		}
 		this.root.scene.remove(this.content);
-
+		this.obj = [];
 	},
 	update:function(){
 		if (!this.initialized) return;

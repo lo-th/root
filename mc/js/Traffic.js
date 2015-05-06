@@ -50,7 +50,7 @@ Traffic.NetWork.prototype = {
 		this.initialized = true;
 	},
 	clearAll:function(){
-		
+
 		this.initialized = false;
 
 		var obj, i;
@@ -58,6 +58,7 @@ Traffic.NetWork.prototype = {
 		while(i--){
 		    this.content.remove(this.content.children[i]);
 		}
+		this.root.scene.remove(this.content);
 		this.world.clear();
 	},
 	update:function(){
