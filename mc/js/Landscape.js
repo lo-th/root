@@ -34,9 +34,9 @@ Landscape.NetWork.prototype = {
 		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:6 });
 		this.initialized = true;
 
-		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 12, 1 );
+		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1 );
 		this.coneGeometry.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
-		this.mat = new THREE.MeshBasicMaterial({color:0xFFF000, wireframe:true});
+		this.mat = new THREE.MeshBasicMaterial({color:0xFF00FF, wireframe:true});
 
 		this.obj = [];
 		var m;
@@ -61,20 +61,17 @@ Landscape.NetWork.prototype = {
 	update:function(){
 		if (!this.initialized) return;
 
-		var currentTime = Date.now();
-        var timeDelta = currentTime - this.lastTime;
+		//var currentTime = Date.now();
+        //var timeDelta = currentTime - this.lastTime;
 
-		this.terrain.pos.y -=0.001
+		this.terrain.pos.y -= 0.001;
         this.terrain.update();
         var i = this.obj.length;
         while(i--){
-        	//
-        	//this.obj[i].timeDelta = timeDelta;
         	this.obj[i].travel();
-        	//this.obj[i].position.y = this.terrain.getz(this.obj[i].position.x,this.obj[i].position.z);
         }
 
-        this.lastTime = currentTime;
+        //this.lastTime = currentTime;
 	}
 }
 
@@ -83,22 +80,21 @@ Landscape.NetWork.prototype = {
 
 Landscape.Entity = function(geo, mat){
 	THREE.Mesh.call(this, geo, mat);
-	this.limit = {x:800, y:800};
+	this.limit = {x:900, y:900};
 	this.terra = null;
 
 	var s = V.randInt(10, 30);
 	this.radius = s;
 	this.scale.set(s,s,s);
-	this.position.set(V.randInt(-400, 400), 0, V.randInt(-400, 400));
+	var x = V.randInt(-(this.limit.x*0.5), (this.limit.x*0.5));
+	var z = V.randInt(-(this.limit.y*0.5), (this.limit.y*0.5));
+	this.position.set(x, -1000, z);
 	this.angle = Math.PI * 2 * Math.random();
 	this.velocity = V.randInt(1, 6);
 	this.pos = new THREE.Vector3();
-	
-	//console.log(this.velocity)
 }
 Landscape.Entity.prototype = Object.create(THREE.Mesh.prototype);
 Landscape.Entity.prototype.travel = function () {
-	//timeDelta = timeDelta || 0.1
 	    var x = this.position.x+(this.limit.x*0.5);
         var y = this.position.z+(this.limit.y*0.5);
         var angle = this.angle;
