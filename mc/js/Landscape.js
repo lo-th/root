@@ -35,7 +35,7 @@ Landscape.NetWork.prototype = {
 
 		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 12, 1 );
 		this.coneGeometry.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
-		this.mat = new THREE.MeshBasicMaterial({color:0xFFF000})
+		this.mat = new THREE.MeshBasicMaterial({color:0xFFF000, wireframe:true})
 
 		this.obj = [];
 		var m;
