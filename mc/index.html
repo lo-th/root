@@ -2,14 +2,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Land v0.1</title>
+<title>Mc v0.1</title>
 <style>
-*{ margin: 0; padding: 0; border: 0; } 
+*{ margin: 0; padding: 0; border: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select:none;} 
 html{ overflow:hidden; width:100%; height:100%; }
-body { font-family:monospace; background:#222; font-size:12px; color:#fff;}
-#debug { position:absolute; top:10px; left:10px; width:200px; height:40px; pointer-events:none;}
+body { font-family:Monospace; background:#222; font-size:12px; color:#fff;}
+#debug { position:absolute; bottom:10px; left:10px; width:100px; height:12px; pointer-events:none;}
 #canvas { position:absolute; pointer-events:auto; width:100%; height:50%;}
-#canvas2 { position:absolute; pointer-events:auto; top:50%; width:100%; height:50%;border:1px solid #000;}
 .environment{position:absolute; left:10px; bottom:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
 </style>
 <script type="text/javascript" src="js/libs/three.min.js"></script>
@@ -18,6 +17,7 @@ body { font-family:monospace; background:#222; font-size:12px; color:#fff;}
 <script type="text/javascript" src="js/libs/tween.min.js"></script>
 <script type="text/javascript" src="js/libs/gui.min.js"></script>
 <script type="text/javascript" src="js/V.3d.js"></script>
+<script type="text/javascript" src="js/V.Interface.js"></script>
 <script type="text/javascript" src="js/V.gui.js"></script>
 <script type="text/javascript" src="js/V.terrain.js"></script>
 <script type="text/javascript" src="js/V.Serious.js"></script>
@@ -26,8 +26,6 @@ body { font-family:monospace; background:#222; font-size:12px; color:#fff;}
 
 <body>
 <canvas id='canvas'></canvas>
-<!--<canvas id='canvas2'></canvas>-->
-
 <div id='debug'>debug</div>
 <script>
 
@@ -105,6 +103,8 @@ var r = h/w;
 
 // init vue 3d option camera: horizontal, vertical, distance, focal, environment map
 var v = new V.View(90, 90, 100, 80, 'env0.jpg');
+
+var c = new V.CamInterface();
 
 // init terrain 3d
 //var terrain = new V.Terrain( v, { div:[256,256], size:[w*0.1, 0, h*0.1], debug:false, offset:3 });

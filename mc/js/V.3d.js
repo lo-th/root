@@ -37,20 +37,18 @@ V.Main = null;
 
 V.View = function(h,v,d,f, emvmap){
 
-
+    this.f = [0,0,0,0];
     this.follow = true;
     this.camPreview = true;
-
+    this.camLimite = true;
     this.currentCamera = 4;
-
-    this.emvmap = emvmap || 'env0.jpg';
 
     this.dimentions = {w:window.innerWidth,  h:window.innerHeight, r:window.innerWidth/window.innerHeight };
 
 	this.canvas = canvas;
-    //this.canvas2 = canvas2;
+
     this.debug = debug;
-    //this.info = info;
+
     this.scene = new THREE.Scene();
     
     this.cameraGroup = new THREE.Group();
@@ -59,156 +57,24 @@ V.View = function(h,v,d,f, emvmap){
     this.previewGroup = new THREE.Group();
     this.cameraGroup.add(this.previewGroup);
 
-
-    //console.log(this.cameraGroup.up)
-   
-    //this.cameraGroup.up.set(0,0,1)
-
-    
-
     this.clock = new THREE.Clock();
-
     
     this.nav = new V.Nav(this,h,v,d,f);
 
-    
-
-    this.environment = THREE.ImageUtils.loadTexture( 'textures/'+ this.emvmap);
-    this.environment.mapping = THREE.SphericalReflectionMapping;
+    if(emvmap!==null){
+        this.environment = THREE.ImageUtils.loadTexture( 'textures/'+ emvmap);
+        this.environment.mapping = THREE.SphericalReflectionMapping;
+    }
 
     this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:canvas, antialias:false, alpha:false });
     this.renderer.setSize( this.dimentions.w, this.dimentions.h );
     this.renderer.setPixelRatio( window.devicePixelRatio );
     this.renderer.setClearColor( ('0x'+bgcolor)*1, 1 );
-    this.renderer.autoClear =true;
+    this.renderer.autoClear = true;
 
-    var look = new THREE.Vector3();
-    var look2 = new THREE.Vector3();
-    var baseposition = new THREE.Vector3(0,1,0);
-
-    this.cameras = [];
-    this.camerasHelper = [];
+    this.initCamera();
+    this.initPreview();
     
-
-    var fox = 13/10;
-    var foy = 13/10;
-
-    var r = 13/5.4;
-
-
-
-    for(var i=0; i<4; i++){
-        //this.cameras[i] = new THREE.OrthographicCamera( -fox, fox, foy, -foy, 0.1, 100 );
-        //this.cameras[i] =  new THREE.PerspectiveCamera( 13, this.dimentions.r, 0.1, 1000 )
-       // this.cameras[i] =  new THREE.PerspectiveCamera( 26.8, this.dimentions.r, 0.1, 100 )
-        this.cameras[i] =  new THREE.PerspectiveCamera( 19.525, r, 0.1, 200)
-
-        
-        //this.cameras[i].position.z = 40;
-        //this.cameras[i].position.copy(baseposition);
-        //this.cameras[i].rotation.y = (i*45)*V.ToRad;
-        //look = this.orbit(90, i*45, 10, baseposition);
-        look = this.orbit(90, (i*45)+22.5, 10);
-       // look = this.orbit(90, (i*45), 10, baseposition);
-        //look2 = this.orbit(90, i*45, 2, baseposition);
-       
-        this.cameras[i].position.set(0,0,0);
-        this.cameras[i].lookAt(look);
-        //this.cameras[i].position.y = 0;//viewSettings.posY;
-
-        this.camerasHelper[i] = new THREE.CameraHelper( this.cameras[i] ); 
-        
-
-        this.cameraGroup.add(this.cameras[i]);
-        this.scene.add( this.camerasHelper[i] );
-       // this.cameraGroup.position.copy(baseposition);
-    }
-
-    this.cameras[4] = this.nav.camera;
-
-
-
-    this.scene2 = new THREE.Scene();
-    this.cameraTop = new THREE.PerspectiveCamera( 50, this.dimentions.r, 0.1, 20000 );
-    this.cameraTop.position.y = 1000;
-    this.cameraTop.lookAt(new THREE.Vector3());
-    this.cameras[5] = this.cameraTop;
-
-    /*this.renderer2 = new THREE.WebGLRenderer({ precision:"mediump", canvas:canvas2, antialias:false, alpha:false });
-    this.renderer2.setSize( this.dimentions.w, this.dimentions.h );
-    this.renderer2.setPixelRatio( window.devicePixelRatio );
-    this.renderer2.setClearColor( ('0x'+bgcolor)*1, 1 );
-    this.renderer2.autoClear = true;*/
-
-    //var frontGeo = new THREE.PlaneGeometry( 21.6, 5.4 );
-    var frontGeo = new THREE.PlaneBufferGeometry( 10.8, 5.4 );
-    var sideGeo = new THREE.PlaneBufferGeometry( 13, 5.4 );
-
-
-    var txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat }
-    this.texture = [];
-    var resolution = {w:1000, h:600}
-    this.dummyTexture = new THREE.Texture();
-    this.texture[0] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, txtSetting );
-    this.texture[1] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, txtSetting );
-    this.texture[2] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, txtSetting );
-    this.texture[3] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, txtSetting );
-
-    this.mat = [];
-    /*this.mat[0] = new THREE.MeshBasicMaterial( { map: this.texture[0] } );
-    this.mat[1] = new THREE.MeshBasicMaterial( { map: this.texture[1] } );
-    this.mat[2] = new THREE.MeshBasicMaterial( { map: this.texture[2] } );
-    this.mat[3] = new THREE.MeshBasicMaterial( { map: this.texture[3] } );*/
-
-    this.mat[0] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
-    this.mat[1] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
-    this.mat[2] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
-    this.mat[3] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
-
-    /*this.mat[0] = new THREE.MeshBasicMaterial( { color:0XFFFF00 } );
-    this.mat[1] = new THREE.MeshBasicMaterial( { color:0XFF00ff } );
-    this.mat[2] = new THREE.MeshBasicMaterial( { color:0X00ff00 } );
-    this.mat[3] = new THREE.MeshBasicMaterial( { color:0XFF0000 } );*/
-
-
-    this.previewGroup.rotation.y = V.PI;
-    this.previewGroup.rotation.x = -20*V.ToRad;
-    this.previewGroup.position.set(0,12,26)
-    
-
-    this.screen = [];
-    this.screen[0] = new THREE.Mesh( sideGeo, this.mat[0] );
-    this.screen[1] = new THREE.Mesh( frontGeo, this.mat[1] );
-    this.screen[2] = new THREE.Mesh( frontGeo, this.mat[2] );
-    this.screen[3] = new THREE.Mesh( sideGeo, this.mat[3] );
-
-    var i = this.screen.length;
-    while(i--){
-        this.previewGroup.add( this.screen[i] );
-        if(i==2)this.screen[i].position.x = 5.4;
-        if(i==1)this.screen[i].position.x = -5.4;
-        if(i==3){
-            this.screen[i].position.x = 10.8;
-            this.screen[i].position.z = 6.5;
-            this.screen[i].rotation.y = -V.PI90
-        }
-        if(i==0){
-            this.screen[i].position.x = -10.8;
-            this.screen[i].position.z = 6.5;
-            this.screen[i].rotation.y = V.PI90
-        }
-    }
-
-    // side 1024x768
-    // front  1920x768px
-
-    //this.renderer.gammaInput = true;
-    //this.renderer.gammaOutput = true;
-
-
-
-    this.f = [0,0,0,0];
-
 	window.onresize = function(e) {this.resize(e)}.bind(this);
 }
 
@@ -220,6 +86,7 @@ V.View.prototype = {
 
         
         if(this.currentCamera==4 && this.camPreview){
+            this.previewGroup.visible = true;
             var i = this.texture.length;
             while(i--){
                 this.mat[i].map = this.dummyTexture;
@@ -232,18 +99,10 @@ V.View.prototype = {
         //this.renderer.clear();
         //this.renderer.setClearColor( ('0x'+bgcolor)*1, 1 );
         this.renderer.render( this.scene, this.cameras[this.currentCamera] );
-        //    this.renderer.render( this.scene, this.nav.camera );
-        //this.renderer.clear();
-        //
-        //this.renderer.render( this.scene2, this.nav.camera )
-
-        //this.renderer2.render( this.scene2, this.camera2 );
 
         var f = this.f;
         f[0] = Date.now();
         if (f[0]-1000 > f[1]){ f[1] = f[0]; f[3] = f[2]; f[2] = 0; } f[2]++;
-
-        //this.debug.innerHTML ='THREE ' + f[3];
     },
     resize:function(){
         this.dimentions.w = window.innerWidth;
@@ -264,6 +123,84 @@ V.View.prototype = {
         p.z = d * Math.sin(phi) * Math.sin(theta);
         if(ref)p.add(ref);
         return p
+    },
+    initCamera:function(){
+        var look = new THREE.Vector3();
+        this.cameras = [];
+        this.camerasHelper = [];
+        var fox = 13/10;
+        var foy = 13/10;
+        var r = 13/5.4;
+
+        for(var i=0; i<4; i++){
+            this.cameras[i] =  new THREE.PerspectiveCamera( 19.525, r, 0.1, 200);
+            look = this.orbit(90, (i*45)+22.5, 10);
+            this.cameras[i].position.set(0,0,0);
+            this.cameras[i].lookAt(look);
+            this.camerasHelper[i] = new THREE.CameraHelper( this.cameras[i] ); 
+            
+            this.cameraGroup.add(this.cameras[i]);
+            this.scene.add( this.camerasHelper[i] );
+        }
+
+        this.cameras[4] = this.nav.camera;
+
+        this.cameraTop = new THREE.PerspectiveCamera( 50, this.dimentions.r, 0.1, 20000 );
+        this.cameraTop.position.y = 1000;
+        this.cameraTop.lookAt(new THREE.Vector3());
+        this.cameras[5] = this.cameraTop;
+
+        this.camHelper();
+    },
+    camHelper:function(){
+        var i = this.camerasHelper.length;
+        while(i--){
+            this.camerasHelper[i].visible = this.camLimite;
+        }
+
+    },
+    initPreview:function(){
+        var frontGeo = new THREE.PlaneBufferGeometry( 10.8, 5.4 );
+        var sideGeo = new THREE.PlaneBufferGeometry( 13, 5.4 );
+        this.dummyTexture = new THREE.Texture();
+
+        var txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat };
+        var resolution = {w:1000, h:600};
+
+        this.texture = [];
+        this.mat = [];
+        this.screen = [];
+
+        var i = 4;
+        while(i--){
+            this.texture[i] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, txtSetting );
+            this.mat[i] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
+            switch(i){
+                case 0: // left
+                this.screen[i] = new THREE.Mesh( sideGeo, this.mat[i] );
+                this.screen[i].position.set(-10.8, 0, 6.5);
+                this.screen[i].rotation.y = V.PI90;
+                break;
+                case 1: // front left
+                this.screen[i] = new THREE.Mesh( frontGeo, this.mat[i] );
+                this.screen[i].position.x = -5.4;
+                break;
+                case 2: // front right
+                this.screen[i] = new THREE.Mesh( frontGeo, this.mat[i] );
+                this.screen[i].position.x = 5.4;
+                break;
+                case 3: // right
+                this.screen[i] = new THREE.Mesh( sideGeo, this.mat[i] );
+                this.screen[i].position.set(10.8, 0, 6.5);
+                this.screen[i].rotation.y = -V.PI90;
+                break;
+            }
+            this.previewGroup.add( this.screen[i] );
+        }
+
+        this.previewGroup.rotation.y = V.PI;
+        this.previewGroup.rotation.x = -20*V.ToRad;
+        this.previewGroup.position.set(0,12,26);
     }
        
 }
