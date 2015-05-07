@@ -8,10 +8,10 @@
 html{ overflow:hidden; width:100%; height:100%; }
 body { font-family:Monospace; background:#000; font-size:12px; color:#fff;}
 #debug { position:absolute; bottom:10px; left:10px; width:500px; height:12px; pointer-events:none;}
-#canvas { position:absolute; pointer-events:auto; width:100%; height:50%;}
+#three_canvas { position:absolute; pointer-events:auto; width:100%; height:100%;}
 .environment{position:absolute; left:10px; bottom:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
 </style>
-<script type="text/javascript" src="js/libs/three.min.js"></script>
+<script type="text/javascript" src="js/libs/three.js"></script>
 <script src="js/libs/sea3d.min.js"></script>
 <script type="text/javascript" src="js/libs/seriously.editor.min.js"></script>
 <script type="text/javascript" src="js/libs/tween.min.js"></script>
@@ -38,15 +38,18 @@ body { font-family:Monospace; background:#000; font-size:12px; color:#fff;}
 </head>
 
 <body>
-<canvas id='canvas'></canvas>
+<canvas id='three_canvas'></canvas>
 <div id='debug'>debug</div>
 <script>
 
-var canvas = document.getElementById('canvas');
+//var canvas = document.getElementById('three_canvas');
 var debug = document.getElementById('debug');
+
+var isWithEffect = false;
 
 var v = new V.View(90, 90, 100, 80, 'env.jpg');
 var it = new V.Interface(v);
+var s = null;
 
 //
 
@@ -54,11 +57,16 @@ var scenes = [];
 scenes[0] = new Neuro.NetWork(v);
 scenes[1] = new Traffic.NetWork(v);
 scenes[2] = new Landscape.NetWork(v);
-//scenes[3] = new SimpleTest.NetWork(v);
+scenes[3] = new SimpleTest.NetWork(v);
 it.init();
 
-//var s = new Serious.Editor(v.canvas);
-//v.setSeriously(s);
+function startEffect(){
+	if(s==null) s = new Serious.Editor();
+	v.setSeriously(s);
+}
+function stopEffect(){
+	v.stopSeriously();
+}
 
 loop();
 

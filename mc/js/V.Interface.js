@@ -2,6 +2,7 @@
 V.Interface = function(root){
 	this.cam = new V.CamInterface();
 	this.scene = new V.SceneInterface(root);
+    this.effect = new V.EffectInterface(root);
 }
 V.Interface.prototype = {
     constructor: V.Interface,
@@ -15,6 +16,8 @@ V.Interface.prototype = {
     	this.scene.run(name);
     }
 }
+
+// CAMERA
 
 V.CamInterface = function(){
 	this.content = document.createElement( 'div' );
@@ -96,6 +99,7 @@ V.CamInterface.prototype = {
     }
 }
 
+// SCENE
 
 V.SceneInterface = function(root){
     this.root = root;
@@ -147,5 +151,37 @@ V.SceneInterface.prototype = {
     		this.b[i].style.background = 'none';
     		if(n==i)this.b[i].style.background = '#FF00FF';
     	}
+    }
+}
+
+// EFFECT
+
+V.EffectInterface = function(root){
+    this.root = root;
+    this.content = document.createElement( 'div' );
+    this.content.style.cssText ='position:absolute; left:5px; top:160px; width:160px;';
+    this.content.innerHTML = 'Effects<br>';
+    document.body.appendChild( this.content );
+    
+    var b = document.createElement('div');
+    b.style.cssText = 'display:block; text-align:center; width:120px; height:14px; cursor:pointer; border:1px solid #888; margin-top:4px;';
+    b.innerHTML = 'Active effect';
+    b.onclick = function(e){ this.select(); }.bind(this);
+    this.content.appendChild( b );
+    this.b = b;
+}
+
+V.EffectInterface.prototype = {
+    constructor: V.EffectInterface,
+    select:function(){
+        if(isWithEffect){
+            isWithEffect = false;
+            stopEffect();
+            this.b.style.background = 'none';
+        }else{
+            isWithEffect = true;
+            startEffect();
+            this.b.style.background = '#FF00FF';
+        }
     }
 }

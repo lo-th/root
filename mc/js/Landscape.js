@@ -32,7 +32,7 @@ Landscape.NetWork.prototype = {
 	    var h = 1000;
 	    var r = h/w;
 		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:6 });
-		this.initialized = true;
+		//this.initialized = true;
 
 		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1 );
 		this.coneGeometry.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
@@ -47,6 +47,9 @@ Landscape.NetWork.prototype = {
 			this.content.add(m);
 			this.obj[i] = m;
 		}
+
+		this.initialized = true;
+		
 	},
 	clearAll:function(){
 		this.initialized = false;

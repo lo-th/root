@@ -7,7 +7,7 @@
 
 V.Terrain = function(Parent, obj){
     this.tween = null;
-    this.main = Parent;
+    this.root = Parent;
     this.debug = obj.debug || false;
 
     obj = obj || {};
@@ -151,10 +151,10 @@ V.Terrain.prototype = {
         this.container = new THREE.Group();
         this.container.add(this.mesh);
 
-        this.main.scene.add(this.container);
+        this.root.scene.add(this.container);
 
-        this.W = this.main.dimentions.w || 512;
-        this.H = this.main.dimentions.h || 512;
+        this.W = this.root.dimentions.w || 512;
+        this.H = this.root.dimentions.h || 512;
 
        // this.start();
         this.load();
@@ -301,7 +301,7 @@ V.Terrain.prototype = {
         }*/
 
         //this.terrainShader.uniforms[ 'combine' ].value = THREE.MixOperation;
-        this.terrainShader.uniforms[ 'env' ].value = this.main.environment;//THREE.ImageUtils.loadTexture( './images/spherical/e_chrome.jpg');
+        this.terrainShader.uniforms[ 'env' ].value = this.root.environment;//THREE.ImageUtils.loadTexture( './images/spherical/e_chrome.jpg');
         //this.terrainShader.uniforms[ 'tCube' ].value = this.main.sky;
         //this.terrainShader.uniforms[ 'reflectTop' ].value = 0.6;
         //this.terrainShader.uniforms[ 'reflectBottom' ].value = 0.2;
@@ -338,7 +338,7 @@ V.Terrain.prototype = {
         //this.terrainShader.uniforms[ 'profondeur' ].value = this.size[1];
         this.terrainShader.uniforms[ 'uRepeatOverlay' ].value.set( this.mapOffset, this.mapOffset*this.r );
 
-        this.terrainShader.uniforms[ 'fogcolor' ].value = new THREE.Color( this.main.bgColor );
+        this.terrainShader.uniforms[ 'fogcolor' ].value = new THREE.Color( this.root.bgColor );
         
 
          if(this.debug){
@@ -509,7 +509,7 @@ V.Terrain.prototype = {
     update:function () {
         if ( this.fullLoaded ) {
 
-            var delta = this.main.clock.getDelta();
+            var delta = this.root.clock.getDelta();
             //
 
             if (  this.updateNoise ) {
@@ -523,15 +523,15 @@ V.Terrain.prototype = {
                 this.terrainShader.uniforms.uOffset.value.set(this.mapOffset*this.pos.x, this.mapOffset*this.pos.y);
 
                 this.quadTarget.material =  this.mlib.heightmap;
-                this.main.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.heightMap, true );
+                this.root.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.heightMap, true );
 
                  if(this.isWithDepthTest){
-                    var gl = this.main.renderer.getContext();
+                    var gl = this.root.renderer.getContext();
                     gl.readPixels( 0, 0, this.div[0], this.div[1], gl.RGBA, gl.UNSIGNED_BYTE, this.tmpData );
                 }
 
                 this.quadTarget.material =  this.mlib.normal;
-                this.main.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.normalMap, true );
+                this.root.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.normalMap, true );
 
                 /*for ( var i = 0; i < this.vlength; i ++ ) {
                     this.mlib.terrain.attributes.speed.value[ i ] = 10.0;
@@ -539,7 +539,7 @@ V.Terrain.prototype = {
                 this.mlib.terrain.attributes.speed.needsUpdate = true;*/
 
                 this.quadTarget.material =  this.mlib.specular;
-                this.main.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.specularMap, true );
+                this.root.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.specularMap, true );
             }
         }
 

@@ -58,7 +58,7 @@ V.View = function(h,v,d,f, emvmap){
 
     this.dimentions = {w:window.innerWidth,  h:window.innerHeight, r:window.innerWidth/window.innerHeight };
 
-	this.canvas = canvas;
+	this.canvas = document.getElementById('three_canvas');//canvas;
 
     this.debug = debug;
 
@@ -87,7 +87,7 @@ V.View = function(h,v,d,f, emvmap){
     }
 
     //this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:false, alpha:false, stencil:false });
-    this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:false, alpha:false, preserveDrawingBuffer: true});
+    this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:false, alpha:false});//, preserveDrawingBuffer: true});
     //this.renderer = new THREE.WebGLRenderer({ canvas:canvas});
     this.renderer.setSize( this.dimentions.w, this.dimentions.h );
     this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -102,7 +102,7 @@ V.View = function(h,v,d,f, emvmap){
     this.texture = [];
     this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat };
     
-    this.initPreview();
+    //this.initPreview();
     
 	window.onresize = function(e) {this.resize(e)}.bind(this);
 }
@@ -177,45 +177,50 @@ V.View.prototype = {
         
     },
     getInfo:function(){
-        //var r = this.renderer.info;
+        var r = this.renderer.info;
         this.info = 'fps:' + this.f[3];
-        //this.info += ' Memory:{p:'+r.memory.programs+' g:'+r.memory.geometries+' t:'+r.memory.textures+'}';
-        //this.info += ' Render:{c:'+r.render.calls+' v:'+ r.render.vertices+' f:'+r.render.faces+ ' p:'+r.render.points+'}';
+        this.info += ' Memory:{p:'+r.memory.programs+' g:'+r.memory.geometries+' t:'+r.memory.textures+'}';
+        this.info += ' Render:{c:'+r.render.calls+' v:'+ r.render.vertices+' f:'+r.render.faces+ ' p:'+r.render.points+'}';
+    },
+    stopSeriously:function(){
+        this.seriouseffect = false;
     },
     setSeriously:function(ed){
         //this.changeSource = true;
-        this.seriousEditor = ed;
-        //console.log(this.seriousEditor.seriously)
-        //this.renderer.setRenderTarget(null);
-        //this.renderer = new THREE.WebGLRenderer({canvas:this.canvas, antialias:false, alpha:false });
-        this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
-        this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.texture[4]});
-        this.seriousEditor.root_source = this.ssource.name;
+        if(this.seriousEditor==null){
+            this.seriousEditor = ed;
+            //console.log(this.seriousEditor.seriously)
+            //this.renderer.setRenderTarget(null);
+            //this.renderer = new THREE.WebGLRenderer({canvas:this.canvas, antialias:false, alpha:false });
+            this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+            this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.texture[4]});
+            this.seriousEditor.root_source = this.ssource.name;
 
-        this.sfilter = this.seriousEditor.add('ascii');
-        this.sfilter2 = this.seriousEditor.add('tvglitch');
-        this.sfilter3 = this.seriousEditor.add('pixelate');
-        this.starget = this.seriousEditor.add('canvas-3D', {canvas:this.canvas});
+            this.sfilter = this.seriousEditor.add('ascii');
+            this.sfilter2 = this.seriousEditor.add('tvglitch');
+            this.sfilter3 = this.seriousEditor.add('pixelate');
+            this.starget = this.seriousEditor.add('canvas-3D', {canvas:this.canvas});
 
-        this.seriousEditor.root_target = this.starget.name;
+            this.seriousEditor.root_target = this.starget.name;
 
-        this.seriousEditor.current_source_node = this.starget.name;
-
-
-        
-
-        //this.sfilter.source = this.ssource;
-
-        //this.ssource.tt = this.sfilter.name;
-
-        //this.currentSource =  this.sfilter.name;
+            this.seriousEditor.current_source_node = this.starget.name;
 
 
-        this.starget.source = this.ssource;//this.sfilter;
-        this.currentSource =  this.starget.name;
+            
 
-        this.starget.width = this.dimentions.w;
-        this.starget.height = this.dimentions.h;
+            //this.sfilter.source = this.ssource;
+
+            //this.ssource.tt = this.sfilter.name;
+
+            //this.currentSource =  this.sfilter.name;
+
+
+            this.starget.source = this.ssource;//this.sfilter;
+            this.currentSource =  this.starget.name;
+
+            this.starget.width = this.dimentions.w;
+            this.starget.height = this.dimentions.h;
+        }
 
         //console.log(this.ssource);
 
