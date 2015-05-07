@@ -1,7 +1,7 @@
 
-V.Interface = function(){
+V.Interface = function(root){
 	this.cam = new V.CamInterface();
-	this.scene = new V.SceneInterface();
+	this.scene = new V.SceneInterface(root);
 }
 V.Interface.prototype = {
     constructor: V.Interface,
@@ -97,7 +97,8 @@ V.CamInterface.prototype = {
 }
 
 
-V.SceneInterface = function(){
+V.SceneInterface = function(root){
+    this.root = root;
 	this.content = document.createElement( 'div' );
 	this.content.style.cssText ='position:absolute; left:5px; top:60px; width:160px;';
 	this.content.innerHTML = 'Scenes<br>';
@@ -130,13 +131,14 @@ V.SceneInterface.prototype = {
     	var n = e.target.name * 1;
     	if(n!==this.current){
     		if(this.current!==-1)scenes[this.current].clearAll();
-    		scenes[n].init();
+
+            this.root.initScene = scenes[n];
+    		//scenes[n].init();
     	}else{
             if(this.current!==-1)scenes[this.current].clearAll();
             this.current = -1;
             this.show(-1);
         }
-    	//
     },
     show:function(n){
     	this.current = n;

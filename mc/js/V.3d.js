@@ -37,14 +37,22 @@ V.Main = null;
 
 V.View = function(h,v,d,f, emvmap){
 
+    this.info = '';
+    this.initScene = null;
+
+    this.seriouseffect = false;
+    this.seriousEditor = null;
+
+    this.changeSource = false;
+
     this.currentScene = '';
 
     this.bgColor = scene_settings.bgColor;
-    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat };
+    
 
     this.f = [0,0,0,0];
     this.follow = true;
-    this.camPreview = true;
+    this.camPreview = false;
     this.camLimite = false;
     this.currentCamera = 4;
 
@@ -65,6 +73,11 @@ V.View = function(h,v,d,f, emvmap){
     this.cameraGroup.add(this.previewGroup);
 
     this.clock = new THREE.Clock();
+
+    //this.mat = new THREE.MeshBasicMaterial({color:0xFFFFFF, wireframe:true});
+    //this.geo = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1 )
+
+    
     
     this.nav = new V.Nav(this,h,v,d,f);
 
@@ -73,13 +86,22 @@ V.View = function(h,v,d,f, emvmap){
         this.environment.mapping = THREE.SphericalReflectionMapping;
     }
 
-    this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:canvas, antialias:false, alpha:false });
+    //this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:false, alpha:false, stencil:false });
+    this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:false, alpha:false, preserveDrawingBuffer: true});
+    //this.renderer = new THREE.WebGLRenderer({ canvas:canvas});
     this.renderer.setSize( this.dimentions.w, this.dimentions.h );
     this.renderer.setPixelRatio( window.devicePixelRatio );
     this.renderer.setClearColor( this.bgColor , 1 );
-    this.renderer.autoClear = true;
+    //this.renderer.autoClear = false;//true;
+
+   // console.log(this.renderer)
 
     this.initCamera();
+
+
+    this.texture = [];
+    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat };
+    
     this.initPreview();
     
 	window.onresize = function(e) {this.resize(e)}.bind(this);
@@ -88,14 +110,52 @@ V.View = function(h,v,d,f, emvmap){
 V.View.prototype = {
     constructor: V.View,
     render:function(){
+        if(this.changeSource) return;
 
-       // this.renderer.clear();
-        //this.renderer.setClearColor( scene_settings.bgColor , 1 );
+        
+
+        
+        // this.renderer.render( this.scene, this.cameras[this.currentCamera] );
+        if(this.initScene!==null){
+            //this.renderer.resetGLState();
+            //this.renderer.render( this.scene, this.cameras[this.currentCamera] );
+            this.initScene.init();
+            this.initScene=null;
+           // console.log(this.renderer)
+        }
+
+        this.renderer.setClearColor( this.bgColor , 1 );
+
+       
+
+
+        if(this.seriouseffect){
+            //this.renderer.resetGLState();
+            this.renderer.setRenderTarget(null);
+            this.renderer.render( this.scene, this.cameras[this.currentCamera], this.texture[4], true);
+            
+            
+            this.ssource.update();
+            this.seriousEditor.render();
+
+            //this.renderer.clearTarget(this.texture[4]);
+            //this.renderer.clear();
+
+
+        }else{
+            this.renderer.render( this.scene, this.cameras[this.currentCamera] );
+        }
+
+        
+
+        
+
 
         if(this.currentCamera==4 && this.camPreview){
             this.previewGroup.visible = true;
             var i = this.mat.length;
             while(i--){
+                //if(this.seriouseffect)this.renderer.setRenderTarget(null);
                 this.mat[i].map = this.dummyTexture;
                 this.renderer.render( this.scene, this.cameras[i], this.texture[i], true );
                 this.mat[i].map = this.texture[i];
@@ -104,13 +164,69 @@ V.View.prototype = {
             this.previewGroup.visible = false;
         }
 
-        //this.renderer.clear();
-        //this.renderer.setClearColor( ('0x'+bgcolor)*1, 1 );
-        this.renderer.render( this.scene, this.cameras[this.currentCamera] );
 
+
+
+        
         var f = this.f;
         f[0] = Date.now();
         if (f[0]-1000 > f[1]){ f[1] = f[0]; f[3] = f[2]; f[2] = 0; } f[2]++;
+
+        this.getInfo();
+
+        
+    },
+    getInfo:function(){
+        //var r = this.renderer.info;
+        this.info = 'fps:' + this.f[3];
+        //this.info += ' Memory:{p:'+r.memory.programs+' g:'+r.memory.geometries+' t:'+r.memory.textures+'}';
+        //this.info += ' Render:{c:'+r.render.calls+' v:'+ r.render.vertices+' f:'+r.render.faces+ ' p:'+r.render.points+'}';
+    },
+    setSeriously:function(ed){
+        //this.changeSource = true;
+        this.seriousEditor = ed;
+        //console.log(this.seriousEditor.seriously)
+        //this.renderer.setRenderTarget(null);
+        //this.renderer = new THREE.WebGLRenderer({canvas:this.canvas, antialias:false, alpha:false });
+        this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+        this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.texture[4]});
+        this.seriousEditor.root_source = this.ssource.name;
+
+        this.sfilter = this.seriousEditor.add('ascii');
+        this.sfilter2 = this.seriousEditor.add('tvglitch');
+        this.sfilter3 = this.seriousEditor.add('pixelate');
+        this.starget = this.seriousEditor.add('canvas-3D', {canvas:this.canvas});
+
+        this.seriousEditor.root_target = this.starget.name;
+
+        this.seriousEditor.current_source_node = this.starget.name;
+
+
+        
+
+        //this.sfilter.source = this.ssource;
+
+        //this.ssource.tt = this.sfilter.name;
+
+        //this.currentSource =  this.sfilter.name;
+
+
+        this.starget.source = this.ssource;//this.sfilter;
+        this.currentSource =  this.starget.name;
+
+        this.starget.width = this.dimentions.w;
+        this.starget.height = this.dimentions.h;
+
+        //console.log(this.ssource);
+
+        
+
+        this.seriouseffect = true;
+        this.camPreview = false;
+
+        this.resize();
+        //this.changeSource = false;
+        
     },
     updateBG:function(){
         this.bgColor = scene_settings.bgColor;
@@ -128,7 +244,32 @@ V.View.prototype = {
         this.cameras[5].aspect = this.dimentions.r;
         this.cameras[5].updateProjectionMatrix();
 
-        this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+        if(this.seriouseffect){
+           //var tmpsrc = this.ssource.tt;
+            
+            // this.changeSource = true;
+            this.ssource.destroy();
+            this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+            this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.texture[4]});
+
+            //console.log('yooo',this.ssource)
+
+            //this.seriousEditor.seriously.texture = this.texture[4];
+            //this.ssource.initialized = true;
+            //this.ssource.allowRefresh = true;
+            //this.ssource.setReady()
+
+            this.starget.width = this.dimentions.w;
+            this.starget.height = this.dimentions.h;
+
+           // this.changeSource = false;
+           //this.sfilter.source = this.ssource;
+           //this.starget.source = this.sfilter;
+
+           this.seriousEditor.byNAME(this.seriousEditor.current_source_node).source = this.ssource;
+        }
+
+        
     },
     orbit:function(v, h, d, ref){
         var p = new THREE.Vector3();
@@ -180,12 +321,13 @@ V.View.prototype = {
         var decal = 0.1
         var frontGeo = new THREE.PlaneBufferGeometry( 10.8, 5.4 );
         var sideGeo = new THREE.PlaneBufferGeometry( 13, 5.4 );
-        this.dummyTexture = new THREE.Texture();
+        this.dummyTexture = new THREE.WebGLRenderTarget( 2, 2, this.txtSetting );//new THREE.Texture();
+        this.renderer.render( this.scene, this.cameras[this.currentCamera], this.dummyTexture, true);
 
        
         var resolution = {w:1000, h:600};
 
-        this.texture = [];
+        
         this.mat = [];
         this.screen = [];
 
@@ -193,6 +335,7 @@ V.View.prototype = {
         while(i--){
             this.texture[i] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, this.txtSetting );
             this.mat[i] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
+            //this.mat[i] = new THREE.MeshBasicMaterial( { map: this.texture[i] } );
             switch(i){
                 case 0: // left
                 this.screen[i] = new THREE.Mesh( sideGeo, this.mat[i] );
@@ -218,8 +361,9 @@ V.View.prototype = {
         this.previewGroup.rotation.y = V.PI;
         this.previewGroup.rotation.x = -20*V.ToRad;
         this.previewGroup.position.set(0,12,26);
+        this.previewGroup.visible = false;
 
-        this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+        
     }
        
 }
