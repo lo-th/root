@@ -57,6 +57,44 @@ Traffic.NetWork.prototype = {
         var g = this.meshes[obj][name].geometry;
         return g;
     },
+    getHighGeometry:function(obj, ref){
+    	var name = ref.m;
+    	var num = name.substring(3,name.length);
+    	console.log(num)
+    	var g = new THREE.Geometry();
+    	var body = this.meshes[obj]['m'+name].geometry;
+    	var bottom = this.meshes[obj]['down'+num].geometry;
+    	var wheel;
+
+    	g.merge( body );
+        g.merge( bottom );
+
+    	switch(ref.wRadius){
+    		case 0.36: wheel = this.meshes[obj]['w001'].geometry; break;
+    		case 0.40: wheel = this.meshes[obj]['w002'].geometry; break;
+    		case 0.46: wheel = this.meshes[obj]['w003'].geometry; break;
+    		case 0.57: wheel = this.meshes[obj]['w004'].geometry; break;
+    		case 0.64: wheel = this.meshes[obj]['w005'].geometry; break;
+    	}
+    	var i = ref.nWheels;
+    	var mz2 = 0;
+    	if(i>4) mz2 = ref.wPos[3]*2;
+    	var m = new THREE.Matrix4();
+    	var mx = ref.wPos[0]*2;
+    	var mz = ref.wPos[2]*2;
+    	var my = ref.wRadius*2;
+    	while(i--){
+    		if(i==0) m.makeTranslation(mx, my, mz);
+    		if(i==1) m.makeTranslation(-mx, my, mz);
+    		if(i==2) m.makeTranslation(mx, my, -mz);
+    		if(i==3) m.makeTranslation(-mx, my, -mz);
+    		if(i==4) m.makeTranslation(mx, my, -mz2);
+    		if(i==5) m.makeTranslation(-mx, my, -mz2);
+    		
+    		g.merge( wheel, m );
+    	}
+        return g;
+    },
 
     
 
@@ -328,7 +366,9 @@ Traffic.NetWork.prototype = {
     	if(this.cars[id]==null){
     		var r = this.randInt(0,2);
     		var cubic = this.randInt(0,3);
-    		var c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
+    		//var c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
+    		
+    		var c = new THREE.Mesh( this.getHighGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type]), this.car_mat[r] );
     		c.position.set(8000, 0,0);
     		//c.scale.set(2, 2, -2);
 
