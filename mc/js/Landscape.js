@@ -31,7 +31,7 @@ Landscape.NetWork.prototype = {
 		var w = 1000;
 	    var h = 1000;
 	    var r = h/w;
-		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:6 });
+		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:4 });
 		//this.initialized = true;
 
 		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1 );

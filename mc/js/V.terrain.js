@@ -76,7 +76,7 @@ V.Terrain = function(Parent, obj){
     this.textures = [];
 
     //this.maps = ['fog_mask.png', 'nes_top.png', 'nes_bottom.png', 'nes_top_n.png', 'nes_bottom_n.png', 'nes_top_occ.png', 'nes_bottom_occ.png'];
-    this.maps = ['fog_mask.png', 'nes_top.png', 'nes_dense.png', 'nes_top_n.png', 'nes_dense_n.png', 'nes_top_occ.png', 'nes_dense_occ.png', 'gg1.jpg'];
+    this.maps = ['fog_mask.png', 'tx1.png', 'tx2.png', 'tx1_n.png', 'tx2_n.png', 'gg1.jpg'];
 
     this.fullLoaded = false;
     this.timerTest = null;
@@ -307,7 +307,7 @@ V.Terrain.prototype = {
         //this.terrainShader.uniforms[ 'reflectBottom' ].value = 0.2;
         //this.terrainShader.uniforms[ 'enableReflection' ].value = true;
 
-        this.deepMap= this.textures[7];
+        this.deepMap = this.textures[5];
         this.noiseShader.uniforms.heightMap.value = this.deepMap;
         this.terrainShader.uniforms.heightMap.value = this.deepMap;
 
@@ -322,8 +322,8 @@ V.Terrain.prototype = {
         this.terrainShader.uniforms[ 'tDetail' ].value = this.textures[3];
         this.terrainShader.uniforms[ 'tDetail2' ].value = this.textures[4];
 
-        this.terrainShader.uniforms[ 'occ1' ].value = this.textures[5];
-        this.terrainShader.uniforms[ 'occ2' ].value = this.textures[6];
+        //this.terrainShader.uniforms[ 'occ1' ].value = this.textures[5];
+        //this.terrainShader.uniforms[ 'occ2' ].value = this.textures[6];
 
         this.terrainShader.uniforms[ 'enableDiffuse1' ].value = true;
         this.terrainShader.uniforms[ 'enableDiffuse2' ].value = true;
@@ -1162,7 +1162,7 @@ uniforms:{
 
                 // OCCLUSION MAP
 
-                'if( enableOcc ) {',
+                /*'if( enableOcc ) {',
                     'vec4 colOcc1 = texture2D( occ1, uvOverlay );',
                     'vec4 colOcc2 = texture2D( occ2, uvOverlay );',
                     //"occTex = gl_FragColor.xyz * mix ( colOcc1, colOcc2, displace ).xyz;",
@@ -1172,7 +1172,7 @@ uniforms:{
 
                     'diffuseColor.xyz *= occTex*0.8;',
                     //'gl_FragColor.xyz = mix( gl_FragColor.xyz, occTex, 1.0 -displaceBase.x );',
-                '}',
+                '}',*/
 
 
 

@@ -87,12 +87,12 @@ V.View = function(h,v,d,f, emvmap){
     }
 
     //this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:false, alpha:false, stencil:false });
-    this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:false, alpha:false});//, preserveDrawingBuffer: true});
+    this.renderer = new THREE.WebGLRenderer({ precision:"mediump", canvas:this.canvas, antialias:true, alpha:false});//, preserveDrawingBuffer: true});
     //this.renderer = new THREE.WebGLRenderer({ canvas:canvas});
     this.renderer.setSize( this.dimentions.w, this.dimentions.h );
     this.renderer.setPixelRatio( window.devicePixelRatio );
     this.renderer.setClearColor( this.bgColor , 1 );
-    //this.renderer.autoClear = false;//true;
+    this.renderer.autoClear = true;
 
    // console.log(this.renderer)
 
@@ -100,7 +100,7 @@ V.View = function(h,v,d,f, emvmap){
 
 
     this.texture = [];
-    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat };
+    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat, stencilBuffer:false};//, depthBuffer:false };
     
     //this.initPreview();
     
@@ -110,7 +110,7 @@ V.View = function(h,v,d,f, emvmap){
 V.View.prototype = {
     constructor: V.View,
     render:function(){
-        if(this.changeSource) return;
+        //if(this.changeSource) return;
 
         
 
@@ -124,25 +124,31 @@ V.View.prototype = {
            // console.log(this.renderer)
         }
 
-        this.renderer.setClearColor( this.bgColor , 1 );
+        
 
        
 
 
-        if(this.seriouseffect){
+        //if(this.seriouseffect){
             //this.renderer.resetGLState();
-            this.renderer.setRenderTarget(null);
-            this.renderer.render( this.scene, this.cameras[this.currentCamera], this.texture[4], true);
-            
+            /*this.renderer.setRenderTarget(null);
+            this.renderer.render( this.scene, this.cameras[this.currentCamera], this.textureSerious, true);
             
             this.ssource.update();
-            this.seriousEditor.render();
+            this.seriousEditor.render();*/
 
             //this.renderer.clearTarget(this.texture[4]);
+            //
+
+
+        //}else{
+        //    this.renderer.render( this.scene, this.cameras[this.currentCamera] );
+        //}
+
+
+        if(!this.seriouseffect){
             //this.renderer.clear();
-
-
-        }else{
+            this.renderer.setClearColor( this.bgColor , 1 );
             this.renderer.render( this.scene, this.cameras[this.currentCamera] );
         }
 
@@ -184,21 +190,38 @@ V.View.prototype = {
     },
     stopSeriously:function(){
         this.seriouseffect = false;
+        this.seriousEditor.seriously.stop();
     },
     setSeriously:function(ed){
         //this.changeSource = true;
         if(this.seriousEditor==null){
+
             this.seriousEditor = ed;
+
+            
+            
             //console.log(this.seriousEditor.seriously)
             //this.renderer.setRenderTarget(null);
             //this.renderer = new THREE.WebGLRenderer({canvas:this.canvas, antialias:false, alpha:false });
-            this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
-            this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.texture[4]});
+            //this.textureSerious = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+            //this.renderer.render( this.scene, this.cameras[this.currentCamera], this.textureSerious, true);
+
+            this.textureSerious = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+           // this.renderer.render( this.scene, this.cameras[this.currentCamera], this.textureSerious, true);
+            this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.textureSerious});
+
+            
+
+            //this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.textureSerious});
+            this.ssource.update();
+
             this.seriousEditor.root_source = this.ssource.name;
 
             this.sfilter = this.seriousEditor.add('ascii');
             this.sfilter2 = this.seriousEditor.add('tvglitch');
             this.sfilter3 = this.seriousEditor.add('pixelate');
+
+
             this.starget = this.seriousEditor.add('canvas-3D', {canvas:this.canvas});
 
             this.seriousEditor.root_target = this.starget.name;
@@ -216,20 +239,37 @@ V.View.prototype = {
 
 
             this.starget.source = this.ssource;//this.sfilter;
-            this.currentSource =  this.starget.name;
+            //this.currentSource =  this.starget.name;
 
-            this.starget.width = this.dimentions.w;
-            this.starget.height = this.dimentions.h;
+            //this.starget.width = this.dimentions.w;
+            //this.starget.height = this.dimentions.h;
+           
+
+            //console.log(this.starget)
+
+            //this.ssource.update();
+            //this.seriousEditor.render();
         }
+
+        
+        this.seriouseffect = true;
+        this.camPreview = false
+
+        this.seriousEditor.seriously.go(function (now) {
+
+            this.renderer.setRenderTarget(null);
+            this.renderer.setClearColor( this.bgColor , 1 );
+            this.renderer.render( this.scene, this.cameras[this.currentCamera], this.textureSerious, true);        
+            this.ssource.update();
+        }.bind(this));
+
+        this.resize();
 
         //console.log(this.ssource);
 
         
 
-        this.seriouseffect = true;
-        this.camPreview = false;
-
-        this.resize();
+       // 
         //this.changeSource = false;
         
     },
@@ -254,8 +294,8 @@ V.View.prototype = {
             
             // this.changeSource = true;
             this.ssource.destroy();
-            this.texture[4] = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
-            this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.texture[4]});
+            this.textureSerious = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+            this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.textureSerious});
 
             //console.log('yooo',this.ssource)
 
@@ -367,8 +407,6 @@ V.View.prototype = {
         this.previewGroup.rotation.x = -20*V.ToRad;
         this.previewGroup.position.set(0,12,26);
         this.previewGroup.visible = false;
-
-        
     }
        
 }

@@ -31,6 +31,8 @@ SimpleTest.NetWork.prototype = {
 		this.content = new THREE.Group();
 	    this.root.scene.add(this.content);
 
+
+
 	
 
 	    //this.content = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({transparent: true, opacity: 0.0}));
@@ -40,9 +42,21 @@ SimpleTest.NetWork.prototype = {
     	this.geo.applyMatrix(mtx);
     	//var env = this.root.environment;
     	//var mm = new THREE.MeshBasicMaterial({map:env, wireframe:true, fog:false, transparent: true });
-    	this.mat = new THREE.MeshNormalMaterial({ shading: THREE.SmoothShading });
+    	this.mat = new THREE.MeshNormalMaterial({ shading: THREE.SmoothShading, lights:false });
+    	//console.log(this.mat.program)
 
-    	console.log( this.mat.id )
+    	/*var map = THREE.ImageUtils.loadTexture('textures/street.jpg');
+				map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
+				map.minFilter = THREE.LinearFilter;
+				map.anisotropy = 16;
+
+    	this.mat = new THREE.MeshLambertMaterial({
+					ambient: 0xbbbbbb,
+					map: map,
+					side: THREE.DoubleSide
+				});*/
+
+    	//console.log( this.mat.id )
 	    //this.mat = new THREE.MeshBasicMaterial({color:0xFF00FF, envMap:env, reflectivity:0.9});
 	    //this.geo = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1 );//
 
