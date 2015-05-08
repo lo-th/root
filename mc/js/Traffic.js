@@ -13,11 +13,54 @@ Traffic.NetWork = function(parent){
 	this.timeFactor = 5;
 
 	this.meshes = {};
+
+	this.maps = ['cars.png', 'street.jpg', 'road.png'];
+	this.mapLoad = 0;
+	this.imgs = [];
+
 	this.load();
 }
 
 Traffic.NetWork.prototype = {
 	constructor:Traffic.NetWork,
+	load:function(){
+    	var name = 'cars';
+        var loader = new THREE.SEA3D( true );
+        var mtx = new THREE.Matrix4().makeScale(2,2,-2);
+        loader.onComplete = function( e ) {
+            this.meshes[name] = {};
+            var i = loader.meshes.length, m;
+            while(i--){
+                m = loader.meshes[i];
+                g = m.geometry;
+				g.applyMatrix(mtx);
+                this.meshes[name][m.name] = m;
+            }
+            this.loadImages();
+        }.bind(this);
+
+        loader.parser = THREE.SEA3D.DEFAULT;
+        loader.load( 'models/cars.sea' );
+    },
+    loadImages:function(){
+        var PATH = 'textures/';
+        var img = new Image();
+        img.onload = function(){
+        	this.imgs[this.mapLoad] = img;
+        	this.mapLoad++;
+        	if(this.mapLoad == this.maps.length) this.loaded = true;
+        	else this.loadImages();
+        }.bind(this);
+        img.src = PATH+this.maps[this.mapLoad];
+    },
+    getGeometry:function(obj, name){
+        var g = this.meshes[obj][name].geometry;
+        return g;
+    },
+
+    
+
+
 	init:function(){
 		if (!this.loaded) return;
 
@@ -39,6 +82,8 @@ Traffic.NetWork.prototype = {
 
 		this.initGeometry();
 
+		this.generateMaterial();
+
 		this.cars = [];
 		this.roads = [];
 		this.inter = [];
@@ -53,13 +98,59 @@ Traffic.NetWork.prototype = {
 
 		this.initialized = false;
 
-		var obj, i;
+		this.world.clear();
+
 		var i = this.content.children.length;
-		while(i--){
-		    this.content.remove(this.content.children[i]);
+		while(i--){ 
+			if(this.content.children[i].geometry) this.content.children[i].geometry.dispose();
+			this.content.remove(this.content.children[i]);
 		}
 		this.root.scene.remove(this.content);
-		this.world.clear();
+
+		this.cars = null;
+		this.roads = null;
+		this.inter = null;
+		this.streets = null;
+
+		this.inter_geo.dispose();
+		this.road_geo.dispose();
+		this.street_geo.dispose();
+
+		// del material
+
+		this.inter_mat.dispose();
+	    this.road_mat.dispose();
+	    this.inter_mat = null;
+	    this.road_mat = null;
+
+	    i = this.street_mat.length;
+	    while(i--) this.street_mat[i].dispose();
+	    this.street_mat = null;
+
+	    i = this.car_mat.length;
+	    while(i--) this.car_mat[i].dispose();
+	    this.car_mat = null;
+
+	    this.grid_mat.dispose();
+	    this.grid_mat = null;
+
+	    this.box_car_mat.dispose();
+	    this.box_car_mat = null;
+
+	    // del texture
+
+	    i = this.car_txt.length;
+	    while(i--) this.car_txt[i].dispose();
+	    this.car_txt = null;
+
+    	i = this.street_txt.length;
+    	while(i--) this.street_txt[i].dispose();
+	    this.street_txt = null;
+
+    	i = this.road_txt.length;
+    	while(i--) this.road_txt[i].dispose();
+	    this.road_txt = null;
+
 	},
 	update:function(){
 		if (!this.initialized) return;
@@ -102,10 +193,43 @@ Traffic.NetWork.prototype = {
 		for (id in o3) {
             this.addCar(o3[id], id);
         }
-
 	},
 
 	// MATERIALS
+
+    generateMaterial:function(){
+    	this.car_txt = [];
+    	this.street_txt = [];
+    	this.road_txt = [];
+    	this.generateRandomColors(this.imgs[0]);
+    	this.generateStreet(this.imgs[1]);
+    	this.generateRoad(this.imgs[2]);
+
+    	var env = this.root.environment;
+
+		// road material
+		this.inter_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[1], transparent:true, opacity:0.6} );
+	    this.road_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[0], transparent:true, opacity:0.6 } );
+
+	    // street material
+	    this.street_mat = [];
+	    var i = 16;
+	    while(i--) this.street_mat[i] = new THREE.MeshBasicMaterial( { map:this.street_txt[i], transparent:true, opacity:0.6} );
+
+	    // cars material
+		this.car_mat = []
+		i = 3;
+		while(i--) this.car_mat[i] = new THREE.MeshBasicMaterial( { map:this.car_txt[i], envMap:env, reflectivity:0.9 } );
+
+		// grid mat
+		this.grid_mat = new THREE.MeshBasicMaterial( { color: 0x303030, wireframe:true, fog:false } );
+
+		// box car mat 
+		this.box_car_mat = new THREE.LineBasicMaterial( { color: 0XFF00FF } );
+
+    },
+
+    // GEOMETRY
 
 	initGeometry:function(){
 		this.inter_geo = new THREE.PlaneBufferGeometry( this.grid, this.grid );
@@ -114,48 +238,8 @@ Traffic.NetWork.prototype = {
 		this.road_geo = new THREE.PlaneGeometry( this.grid, this.grid );
 		this.road_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 
-		this.street_geo = new THREE.PlaneGeometry( (this.grid*5) + (this.grid*0.5), (this.grid*5) + (this.grid*0.5) );
 		this.street_geo = new THREE.PlaneGeometry( (this.grid*6) , (this.grid*6)  );
 		this.street_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
-	},
-
-
-	// MATERIALS
-
-	initMaterial:function(){
-		var env = this.root.environment;
-
-		
-
-		// cars material
-		this.car_mat = []
-		this.car_mat[0] = new THREE.MeshBasicMaterial( { envMap:env, reflectivity:0.9 } );
-        this.car_mat[1] = new THREE.MeshBasicMaterial( { envMap:env, reflectivity:0.9 } );
-        this.car_mat[2] = new THREE.MeshBasicMaterial( { envMap:env, reflectivity:0.9 } );
-
-		var img = new Image();
-	    img.onload = function(){
-	        this.generateRandomColor(img, this.car_mat[0]);
-	        this.generateRandomColor(img, this.car_mat[1]);
-	        this.generateRandomColor(img, this.car_mat[2]);
-	    }.bind(this);
-	    img.src = 'textures/cars.png';
-
-	    // street material
-	    this.street_mat = [];
-		for(var i=0; i<16;i++){
-			this.street_mat[i] = new THREE.MeshBasicMaterial( { color:0xFFFFFF, transparent:true, opacity:0.6} );///, blending:THREE.MultiplyBlending } );
-		}
-	    var img2 = new Image();
-	    img2.onload = function(){
-	    	this.generateStreet(img2);
-	    }.bind(this);
-	    img2.src = 'textures/street.jpg';
-
-	    this.inter_mat = new THREE.MeshBasicMaterial( { map:THREE.ImageUtils.loadTexture( 'textures/roadx.png' ), transparent:true, opacity:0.6} );
-	    this.road_mat = new THREE.MeshBasicMaterial( { map:THREE.ImageUtils.loadTexture( 'textures/road.png' ), transparent:true, opacity:0.6 } );
-
-	    this.loaded = true;
 	},
 
 	// GRID
@@ -164,8 +248,7 @@ Traffic.NetWork.prototype = {
 		var t = (7*4)+1
 		var g = new THREE.PlaneGeometry(this.grid*t,this.grid*t, t,t);
 		g.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
-		var g_mat = new THREE.MeshBasicMaterial( { color: 0x303030, wireframe:true, fog:false } );
-		var ground = new THREE.Mesh( g, g_mat );
+		var ground = new THREE.Mesh( g, this.grid_mat );
 		this.content.add(ground);
 		var d = this.grid*0.5;
 		ground.position.set(d, -0.2, d);
@@ -195,10 +278,7 @@ Traffic.NetWork.prototype = {
 				z++;
 				x = -2
 			}
-
 		}
-
-
 	},
 
 	addSignals:function (cc, id){
@@ -247,18 +327,16 @@ Traffic.NetWork.prototype = {
     	var id = car.id.substring(3);
     	if(this.cars[id]==null){
     		var r = this.randInt(0,2);
-    		var cubic = this.randInt(0,1);
+    		var cubic = this.randInt(0,3);
     		var c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
-    		c.position.set(11000, 0,0);
-    		c.scale.set(2, 2, -2);
+    		c.position.set(8000, 0,0);
+    		//c.scale.set(2, 2, -2);
 
-    		if(cubic){
+    		if(cubic==3){
     			var b = new THREE.BoxHelper(c);
-    			b.material.color.set(0XFF00FF)
+    			b.material = this.box_car_mat;
     			this.content.add( b );
     			c.visible = false;
-
-    			//this.cars[id] = c;
     		} 
     		//else{
     		    this.content.add( c );
@@ -297,55 +375,74 @@ Traffic.NetWork.prototype = {
     },
 
 
-    //________________________________________________________________
+    // TEXTURE GENERATOR
+
     generateStreet:function(img){
-    	
-		//var tx;
 		var x = 0;
 		var y = 0;
 		for(var i=0; i<16;i++){
 			var canvas = document.createElement( 'canvas' );
-		canvas.width = canvas.height = 256;
-		var ctx = canvas.getContext('2d');
-			/*ctx.beginPath();
-			ctx.fillStyle = this.randCarColor();ctx.fill();*/
-			//ctx.rect(0, 0, 256, 256);
-			
+			canvas.width = canvas.height = 256;
+			var ctx = canvas.getContext('2d');
+
 			ctx.drawImage(img, x*256, y*256, 256,256, 0, 0, 256, 256);
 			var tx = new THREE.Texture(canvas);
 			tx.magFilter = THREE.NearestFilter;
 			tx.minFilter = THREE.LinearMipMapLinearFilter;
 			tx.needsUpdate = true;
-			this.street_mat[i].map = tx;
-			this.street_mat[i].needsUpdate = true;
+			this.street_txt[i] = tx;
 			x++
 			if(x==4){ x=0; y++; }
-			//this.street_mat[i] = new THREE.MeshBasicMaterial( { map:tx } );
+			canvas = null;
+			ctx = null;
+		}
+    },
+
+    generateRoad:function(img){
+		var x = 0;
+		for(var i=0; i<2;i++){
+			var canvas = document.createElement( 'canvas' );
+			canvas.width = canvas.height = 128;
+			var ctx = canvas.getContext('2d');
+			ctx.drawImage(img, x*128, 0, 128,128, 0, 0, 128, 128);
+			var tx = new THREE.Texture(canvas);
+			tx.magFilter = THREE.NearestFilter;
+			tx.minFilter = THREE.LinearMipMapLinearFilter;
+			tx.needsUpdate = true;
+			this.road_txt[i] = tx;
+			x++;
+			canvas = null;
+			ctx = null;
 		}
 
     },
 	
-	generateRandomColor:function(img, mat){
-		var canvas = document.createElement( 'canvas' );
-		canvas.width = canvas.height = 1024;
-		var ctx = canvas.getContext('2d');
-		i = 16;
-		var n=0,j=0;
-		for(i=0; i<16;i++){
-			ctx.beginPath();
-			if(i!==11 && i!==15) ctx.fillStyle = this.randCarColor();
-			ctx.rect(n*256, j*256, 256, 256);
-			ctx.fill();
-			n++
-			if(n==4){ n=0; j++; }
-		}
-		ctx.drawImage(img, 0, 0, 1024,1024);
-        tx = new THREE.Texture(canvas);
-        tx.needsUpdate = true;
-        tx.flipY = false;
-        mat.map = tx;
-        mat.needsUpdate = true;
+	generateRandomColors:function(img){
+		for(var i=0; i<3;i++){
+			var canvas = document.createElement( 'canvas' );
+			canvas.width = canvas.height = 1024;
+			var ctx = canvas.getContext('2d');
+			var x=0,y=0;
+			for(var j=0; j<16;j++){
+				ctx.beginPath();
+				if(j!==11 && j!==15) ctx.fillStyle = this.randCarColor();
+				ctx.rect(x*256,y*256,256,256);
+				ctx.fill();
+				x++
+				if(x==4){ x=0; y++; }
+			}
+			ctx.drawImage(img, 0, 0, 1024,1024);
+	        tx = new THREE.Texture(canvas);
+	        tx.needsUpdate = true;
+	        tx.flipY = false;
+	        tx.magFilter = THREE.NearestFilter;
+			tx.minFilter = THREE.LinearMipMapLinearFilter;
+	        this.car_txt[i] = tx;
+	        canvas = null;
+			ctx = null;
+	    }
 	},
+
 	lerp : function (a, b, percent) { return a + (b - a) * percent; },
 	randInt : function (a, b) { return this.lerp(a, b, Math.random()).toFixed(0)*1;},
 	randColor : function () { return '#'+Math.floor(Math.random()*16777215).toString(16); },
@@ -382,39 +479,5 @@ Traffic.NetWork.prototype = {
 	    if(resl.length<6) resl = '#0'+resl;
 	    else resl = '#'+resl;
 		return resl;
-	},
-
-
-	// LOADING
-
-
-	// load model
-    load:function(){
-    	var name = 'cars';
-        var list = "";
-        var loader = new THREE.SEA3D( true );
-        loader.onComplete = function( e ) {
-            this.meshes[name] = {};
-            var i = loader.meshes.length, m;
-            while(i--){
-                m = loader.meshes[i];
-                this.meshes[name][m.name] = m;
-                list+=m.name+',';
-            }
-           
-
-            this.initMaterial();
-            //this.init();
-        }.bind(this);
-
-        loader.parser = THREE.SEA3D.DEFAULT;
-        loader.load( 'models/cars.sea' );
-    },
-    getGeometry:function(obj, name){
-        var g = this.meshes[obj][name].geometry;
-        //var mtx = new THREE.Matrix4().makeScale(1, 1, -1);
-        //g.applyMatrix(mtx);
-        return g;
-    },
-	
+	}
 }

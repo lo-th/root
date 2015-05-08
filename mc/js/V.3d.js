@@ -101,9 +101,7 @@ V.View = function(h,v,d,f, emvmap){
 
 
     
-    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat, stencilBuffer:false};//, depthBuffer:false };
-   
-    
+    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat};//, stencilBuffer:false, depthBuffer:false };
 	window.onresize = function(e) {this.resize(e)}.bind(this);
 }
 
@@ -145,18 +143,14 @@ V.View.prototype = {
         //    this.renderer.render( this.scene, this.cameras[this.currentCamera] );
         //}
 
-
+        // normal render
         if(!this.seriouseffect){
             //this.renderer.clear();
             this.renderer.setClearColor( this.bgColor , 1 );
             this.renderer.render( this.scene, this.cameras[this.currentCamera] );
         }
 
-        
-
-        
-
-
+        // preview
         if(this.currentCamera==4 && this.camPreview){
             if(!this.previewReady) this.initPreview();
             else {
@@ -174,22 +168,14 @@ V.View.prototype = {
         }
 
 
-
-
-        
-        var f = this.f;
-        f[0] = Date.now();
-        if (f[0]-1000 > f[1]){ f[1] = f[0]; f[3] = f[2]; f[2] = 0; } f[2]++;
-
         this.getInfo();
-
-        
     },
     getInfo:function(){
+        var f = this.f;
         var r = this.renderer.info;
-        this.info = 'fps:' + this.f[3];
-        this.info += ' Memory:{p:'+r.memory.programs+' g:'+r.memory.geometries+' t:'+r.memory.textures+'}';
-        this.info += ' Render:{c:'+r.render.calls+' v:'+ r.render.vertices+' f:'+r.render.faces+ ' p:'+r.render.points+'}';
+        f[0] = Date.now();
+        if (f[0]-1000 > f[1]){ f[1] = f[0]; f[3] = f[2]; f[2] = 0; } f[2]++;    
+        this.info = 'fps:' + f[3] + ' Memory:{p:'+r.memory.programs+' g:'+r.memory.geometries+' t:'+r.memory.textures+'}' + ' Render:{c:'+r.render.calls+' v:'+ r.render.vertices+' f:'+r.render.faces+ ' p:'+r.render.points+'}';
     },
     stopSeriously:function(){
         this.seriouseffect = false;
@@ -265,6 +251,7 @@ V.View.prototype = {
             this.renderer.setClearColor( this.bgColor , 1 );
             this.renderer.render( this.scene, this.cameras[this.currentCamera], this.textureSerious, true);        
             this.ssource.update();
+
         }.bind(this));
 
         this.resize();
