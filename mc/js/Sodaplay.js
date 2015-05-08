@@ -1,6 +1,6 @@
-var Neuro={};
+var Sodaplay={};
 
-Neuro.LineShader={
+Sodaplay.LineShader={
 	attributes:{
 		//opacityAttr:{ type: 'f', value: [] }
 	},	
@@ -27,9 +27,9 @@ Neuro.LineShader={
 	].join('\n')
 }
 
-Neuro.NetWork = function(parent, autoInit){
+Sodaplay.NetWork = function(parent, autoInit){
 
-	this.name = 'neuron';
+	this.name = 'sodaplay';
 
 	this.autoInit = autoInit || false;
 
@@ -73,8 +73,8 @@ Neuro.NetWork = function(parent, autoInit){
 	this.load();
 }
 
-Neuro.NetWork.prototype = {
-	constructor:Neuro.NetWork,
+Sodaplay.NetWork.prototype = {
+	constructor:Sodaplay.NetWork,
     load:function(){
     	var loader = new THREE.SEA3D( true );
     	var mtx = new THREE.Matrix4().makeScale(10, 10, -10);
@@ -97,7 +97,7 @@ Neuro.NetWork.prototype = {
     initMaterial:function(){
     	var tx = THREE.ImageUtils.loadTexture( "textures/point.png" );
 
-    	this.axonShader = Neuro.LineShader;
+    	this.axonShader = Sodaplay.LineShader;
 		
     	this.axonMaterial = new THREE.ShaderMaterial( {
 			uniforms:       this.axonShader.uniforms,
@@ -167,7 +167,7 @@ Neuro.NetWork.prototype = {
     	this.content = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({transparent: true, opacity: 0.0}));
     	this.root.scene.add(this.content);
 
-    	this.particlePool = new Neuro.ParticlePool(this);
+    	this.particlePool = new Sodaplay.ParticlePool(this);
 
     	this.selectMesh('cone');
     },
@@ -277,7 +277,7 @@ Neuro.NetWork.prototype = {
 			//else 
 			pos.set(pp[i].x, pp[i].y, pp[i].z);
 			//var pos = inputVertices[i];
-			var n = new Neuro.Neuron(pos.x, pos.y, pos.z);
+			var n = new Sodaplay.Neuron(pos.x, pos.y, pos.z);
 			this.allNeurons.push(n);
 			this.neuronsGeom.vertices.push(n);
 		}
@@ -459,7 +459,7 @@ Neuro.NetWork.prototype = {
 
 
 // Connection ------------------------------------------------------------
-Neuro.Connection = function (axon, startingPoint) {
+Sodaplay.Connection = function (axon, startingPoint) {
 	this.axon = axon;
 	this.startingPoint = startingPoint;
 }
@@ -467,7 +467,7 @@ Neuro.Connection = function (axon, startingPoint) {
 
 // Axon ------------------------------------------------------------------
 
-Neuro.Axon = function(neuronA, neuronB) {
+Sodaplay.Axon = function(neuronA, neuronB) {
 	this.neuronA = neuronA;
 	this.neuronB = neuronB;
 	this.cpLength = neuronA.distanceTo(neuronB) / THREE.Math.randFloat(1.5, 4.0);
@@ -478,10 +478,10 @@ Neuro.Axon = function(neuronA, neuronB) {
 	this.geom.vertices = this.getSpacedPoints(0);
 }
 
-Neuro.Axon.prototype = Object.create(THREE.LineCurve3.prototype);
+Sodaplay.Axon.prototype = Object.create(THREE.LineCurve3.prototype);
 
 // generate uniformly distribute vector within x-theta cone from arbitrary vector v1, v2
-Neuro.Axon.prototype.getControlPoint = function (v1, v2) {
+Sodaplay.Axon.prototype.getControlPoint = function (v1, v2) {
 	var dirVec = new THREE.Vector3().copy(v2).sub(v1).normalize();
 	var northPole = new THREE.Vector3(0, 0, 1);	// this is original axis where point get sampled
 	var axis = new THREE.Vector3().crossVectors(northPole, dirVec).normalize();	// get axis of rotation from original axis to dirVec
@@ -538,20 +538,20 @@ Neuro.AxonCurved.prototype.getControlPoint = function (v1, v2) {
 
 // Particle --------------------------------------------------------------
 
-Neuro.Particle = function (particlePool) {
+Sodaplay.Particle = function (particlePool) {
 	this.particlePool = particlePool;
 	this.available = true;
 	THREE.Vector3.call(this, particlePool.offScreenPos.x, particlePool.offScreenPos.y, particlePool.offScreenPos.z);
 }
-Neuro.Particle.prototype = Object.create(THREE.Vector3.prototype);
-Neuro.Particle.prototype.free = function () {
+Sodaplay.Particle.prototype = Object.create(THREE.Vector3.prototype);
+Sodaplay.Particle.prototype.free = function () {
 	this.available = true;
 	this.set(this.particlePool.offScreenPos.x, this.particlePool.offScreenPos.y, this.particlePool.offScreenPos.z);
 };
 
 	// Particle Pool ---------------------------------------------------------
 
-Neuro.ParticlePool = function(parent) {
+Sodaplay.ParticlePool = function(parent) {
 	//this.root = parent;
 
 	this.content = parent.content;
@@ -618,8 +618,8 @@ Neuro.ParticlePool = function(parent) {
 	//this.root.scene.add(this.pMesh_outer);
 	content.add(this.pMesh_outer);*/
 }
-Neuro.ParticlePool.prototype = {
-	constructor:Neuro.ParticlePool,
+Sodaplay.ParticlePool.prototype = {
+	constructor:Sodaplay.ParticlePool,
 	getParticle : function () {
 		for (var ii=0; ii<this.poolSize; ii++) {
 			var p = this.particles[ii];
@@ -657,7 +657,7 @@ Neuro.ParticlePool.prototype = {
     	this.pGeom = new THREE.Geometry();
     	this.particles = this.pGeom.vertices;
     	for (var ii=0; ii<this.poolSize; ii++) {
-			this.particles[ii] = new Neuro.Particle(this);
+			this.particles[ii] = new Sodaplay.Particle(this);
 		}
 		this.pMesh = new THREE.PointCloud(this.pGeom, this.pMat);
 		this.pMesh.sortParticles = true;
@@ -676,7 +676,7 @@ Neuro.ParticlePool.prototype = {
 
 // SIGNAL ----------------------------------------------------------------
 
-Neuro.Signal = function (particlePool, minSpeed, maxSpeed) {
+Sodaplay.Signal = function (particlePool, minSpeed, maxSpeed) {
 	this.minSpeed = minSpeed;
 	this.maxSpeed = maxSpeed;
 	this.speed = THREE.Math.randFloat(this.minSpeed, this.maxSpeed);
@@ -688,15 +688,15 @@ Neuro.Signal = function (particlePool, minSpeed, maxSpeed) {
 	THREE.Vector3.call(this);
 
 }
-Neuro.Signal.prototype = Object.create(THREE.Vector3.prototype);
-Neuro.Signal.prototype.setConnection = function (Connection) {
+Sodaplay.Signal.prototype = Object.create(THREE.Vector3.prototype);
+Sodaplay.Signal.prototype.setConnection = function (Connection) {
 	this.startingPoint = Connection.startingPoint;
 	this.axon = Connection.axon;
 	if (this.startingPoint === 'A') this.t = 0;
 	else if (this.startingPoint === 'B') this.t = 1;
 
 };
-Neuro.Signal.prototype.travel = function () {
+Sodaplay.Signal.prototype.travel = function () {
 
 	var pos;
 	if (this.startingPoint === 'A') {
@@ -724,7 +724,7 @@ Neuro.Signal.prototype.travel = function () {
 
 // NEURON ----------------------------------------------------------------
 
-Neuro.Neuron = function (x, y, z) {
+Sodaplay.Neuron = function (x, y, z) {
 	this.connection = [];
 	this.recievedSignal = false;
 	this.lastSignalRelease = 0;
@@ -734,23 +734,23 @@ Neuro.Neuron = function (x, y, z) {
 	this.prevReleaseAxon = null;
 	THREE.Vector3.call(this, x, y, z);
 }
-Neuro.Neuron.prototype = Object.create(THREE.Vector3.prototype);
-Neuro.Neuron.prototype.connectNeuronTo = function (neuronB) {
+Sodaplay.Neuron.prototype = Object.create(THREE.Vector3.prototype);
+Sodaplay.Neuron.prototype.connectNeuronTo = function (neuronB) {
 	var neuronA = this;
 	// create axon and establish connection
-	var axon = new Neuro.Axon(neuronA, neuronB);
-	neuronA.connection.push( new Neuro.Connection(axon, 'A') );
-	neuronB.connection.push( new Neuro.Connection(axon, 'B') );
+	var axon = new Sodaplay.Axon(neuronA, neuronB);
+	neuronA.connection.push( new Sodaplay.Connection(axon, 'A') );
+	neuronB.connection.push( new Sodaplay.Connection(axon, 'B') );
 	return axon;
 };
-Neuro.Neuron.prototype.createSignal = function (particlePool, minSpeed, maxSpeed) {
+Sodaplay.Neuron.prototype.createSignal = function (particlePool, minSpeed, maxSpeed) {
 	this.firedCount += 1;
 	this.recievedSignal = false;
 	var signals = [];
 	// create signal to all connected axons
 	for (var i=0; i<this.connection.length; i++) {
 		if (this.connection[i].axon !== this.prevReleaseAxon) {
-			var c = new Neuro.Signal(particlePool, minSpeed, maxSpeed);
+			var c = new Sodaplay.Signal(particlePool, minSpeed, maxSpeed);
 			c.setConnection(this.connection[i]);
 			signals.push(c);
 		}
