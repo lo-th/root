@@ -71,6 +71,7 @@ V.View = function(h,v,d,f, emvmap){
 
     this.previewGroup = new THREE.Group();
     this.cameraGroup.add(this.previewGroup);
+    this.previewReady = false;
 
     this.clock = new THREE.Clock();
 
@@ -99,10 +100,9 @@ V.View = function(h,v,d,f, emvmap){
     this.initCamera();
 
 
-    this.texture = [];
-    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat, stencilBuffer:false};//, depthBuffer:false };
     
-    //this.initPreview();
+    this.txtSetting = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat, stencilBuffer:false};//, depthBuffer:false };
+   
     
 	window.onresize = function(e) {this.resize(e)}.bind(this);
 }
@@ -158,13 +158,16 @@ V.View.prototype = {
 
 
         if(this.currentCamera==4 && this.camPreview){
-            this.previewGroup.visible = true;
-            var i = this.mat.length;
-            while(i--){
-                //if(this.seriouseffect)this.renderer.setRenderTarget(null);
-                this.mat[i].map = this.dummyTexture;
-                this.renderer.render( this.scene, this.cameras[i], this.texture[i], true );
-                this.mat[i].map = this.texture[i];
+            if(!this.previewReady) this.initPreview();
+            else {
+                this.previewGroup.visible = true;
+                var i = this.mat.length;
+                while(i--){
+                    //if(this.seriouseffect)this.renderer.setRenderTarget(null);
+                    this.mat[i].map = this.dummyTexture;
+                    this.renderer.render( this.scene, this.cameras[i], this.texture[i], true );
+                    this.mat[i].map = this.texture[i];
+                }
             }
         }else{
             this.previewGroup.visible = false;
@@ -207,6 +210,7 @@ V.View.prototype = {
             //this.renderer.render( this.scene, this.cameras[this.currentCamera], this.textureSerious, true);
 
             this.textureSerious = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+            this.textureSerious.generateMipmaps = false;
            // this.renderer.render( this.scene, this.cameras[this.currentCamera], this.textureSerious, true);
             this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.textureSerious});
 
@@ -295,6 +299,7 @@ V.View.prototype = {
             // this.changeSource = true;
             this.ssource.destroy();
             this.textureSerious = new THREE.WebGLRenderTarget( this.dimentions.w, this.dimentions.h, this.txtSetting );
+            this.textureSerious.generateMipmaps = false;
             this.ssource = this.seriousEditor.add('texture', {id:0, texture:this.textureSerious});
 
             //console.log('yooo',this.ssource)
@@ -366,19 +371,17 @@ V.View.prototype = {
         var decal = 0.1
         var frontGeo = new THREE.PlaneBufferGeometry( 10.8, 5.4 );
         var sideGeo = new THREE.PlaneBufferGeometry( 13, 5.4 );
-        this.dummyTexture = new THREE.WebGLRenderTarget( 2, 2, this.txtSetting );//new THREE.Texture();
-        this.renderer.render( this.scene, this.cameras[this.currentCamera], this.dummyTexture, true);
-
-       
+        this.dummyTexture = THREE.ImageUtils.loadTexture( 'textures/dummy.png');
         var resolution = {w:1000, h:600};
 
-        
         this.mat = [];
         this.screen = [];
+        this.texture = [];
 
         var i = 4;
         while(i--){
             this.texture[i] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, this.txtSetting );
+            this.texture[i].generateMipmaps = false;
             this.mat[i] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
             //this.mat[i] = new THREE.MeshBasicMaterial( { map: this.texture[i] } );
             switch(i){
@@ -407,6 +410,7 @@ V.View.prototype = {
         this.previewGroup.rotation.x = -20*V.ToRad;
         this.previewGroup.position.set(0,12,26);
         this.previewGroup.visible = false;
+        this.previewReady = true;
     }
        
 }
