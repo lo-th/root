@@ -8,19 +8,23 @@ Landscape.NetWork = function(parent){
 	this.root = parent;
 
 	this.initialized = false;
-	this.loaded = false;
+	//this.loaded = false;
 	this.lastTime = 0;
 
-	this.load();
+	var w = 1000;
+    var h = 1000;
+    var r = h/w;
+	this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:4 });
+	this.terrain.load();
 
 }
 Landscape.NetWork.prototype = {
 	constructor:Landscape.NetWork,
-	load:function(){
+	/*load:function(){
 		this.loaded = true;
-	},
+	},*/
 	init:function(){
-		if (!this.loaded) return;
+		if (!this.terrain.loaded) return;
 
 		this.root.currentScene = this.name;
 		it.run(this.root.currentScene);
@@ -29,11 +33,13 @@ Landscape.NetWork.prototype = {
 	    this.root.scene.add(this.content);
 
 	    var i = 0, j = 0;
-		var w = 1000;
+		/*var w = 1000;
 	    var h = 1000;
 	    var r = h/w;
-		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:4 });
+		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:4 });*/
 		//this.initialized = true;
+
+		this.terrain.init();
 
 		// define material
 		this.materials = [];
@@ -83,10 +89,10 @@ Landscape.NetWork.prototype = {
 	clearAll:function(){
 		this.initialized = false;
 		this.terrain.clear();
+
+		// remove object
 		var i = this.content.children.length;
-		while(i--){
-		    this.content.remove(this.content.children[i]);
-		}
+		while(i--) this.content.remove(this.content.children[i]);
 		this.root.scene.remove(this.content);
 
 		// reset geometry
@@ -97,9 +103,7 @@ Landscape.NetWork.prototype = {
 		i = this.materials.length;
 		while(i--)this.materials[i].dispose();
 
-		//this.mat.dispose();
-
-		this.obj = [];
+		this.obj = null;
 	},
 	update:function(){
 		if (!this.initialized) return;

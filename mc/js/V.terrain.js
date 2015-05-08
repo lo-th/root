@@ -88,7 +88,9 @@ V.Terrain = function(Parent, obj){
 
     this.deepMap = null;
 
-    this.init();
+    this.loaded = false;
+
+    //this.init();
 
 }
 
@@ -111,17 +113,33 @@ V.Terrain.prototype = {
                 this.textures[i].format = THREE.RGBFormat;
                 this.textures[i].wrapS = this.textures[i].wrapT = THREE.RepeatWrapping;
             }
-            this.start();
+            //this.start();
+            this.loaded = true;
         }
     },
     clear:function () {
+        this.sceneRenderTarget.remove( this.cameraOrtho );
+        this.sceneRenderTarget.remove( this.quadTarget );
+        this.quadTarget.geometry.dispose();
+
+        this.sceneRenderTarget = null;
+        this.cameraOrtho = null;
+        this.quadTarget = null;
+
+
         this.container.remove(this.mesh);
-        //this.mesh.material.dispose();
         this.mesh.geometry.dispose();
 
-        this.mlib[ 'heightmap' ].dispose();
-        this.mlib[ 'normal' ].dispose();
-        this.mlib[ 'terrain' ].dispose();
+        for(var o in this.mlib)this.mlib[o].dispose();
+        this.mlib = {};
+
+        this.heightMap.dispose();
+        this.normalMap.dispose();
+        this.specularMap.dispose();
+        this.heightMap = null;
+        this.normalMap = null;
+        this.specularMap = null;
+        this.tmpData = null;
     },
     init:function () {
 
@@ -131,9 +149,6 @@ V.Terrain.prototype = {
         var geo = new THREE.PlaneBufferGeometry(this.size[0], this.size[2], this.div[0]-1, this.div[1]-1);
 
        
-
-        
-
         this.mesh = new THREE.Mesh( geo, new THREE.MeshBasicMaterial( { color:0xFF5555 } ) );
         this.mesh.rotation.x = -Math.PI / 2;
         //this.mesh.position.y = -this.size[1];
@@ -156,8 +171,8 @@ V.Terrain.prototype = {
         this.W = this.root.dimentions.w || 512;
         this.H = this.root.dimentions.h || 512;
 
-       // this.start();
-        this.load();
+        this.start();
+        //this.load();
 
         if(this.debug){
             var geod = new THREE.PlaneBufferGeometry(this.size[0]*0.25, this.size[2]*0.25);
@@ -419,7 +434,7 @@ V.Terrain.prototype = {
     setTerrainShaderValue:function(name, value){
         this.terrainShader.uniforms[ name ].value = value;
     },
-    generateData : function (width, height, color) {
+    /*generateData : function (width, height, color) {
         var size = width * height;
         
         var data = new Uint8Array(size*4);
@@ -442,7 +457,7 @@ V.Terrain.prototype = {
             }
         }
         this.tmpData = data;
-    },
+    },*/
     setHeight:function(heightMap){
         if ( this.fullLoaded && !this.hset) {
             this.noiseShader.uniforms.heightMap.value = heightMap;
@@ -542,7 +557,6 @@ V.Terrain.prototype = {
                 this.root.renderer.render( this.sceneRenderTarget, this.cameraOrtho, this.specularMap, true );
             }
         }
-
 
 
     },

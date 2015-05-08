@@ -383,7 +383,6 @@ V.View.prototype = {
             this.texture[i] = new THREE.WebGLRenderTarget( resolution.w, resolution.h, this.txtSetting );
             this.texture[i].generateMipmaps = false;
             this.mat[i] = new THREE.MeshBasicMaterial( { map: this.dummyTexture } );
-            //this.mat[i] = new THREE.MeshBasicMaterial( { map: this.texture[i] } );
             switch(i){
                 case 0: // left
                 this.screen[i] = new THREE.Mesh( sideGeo, this.mat[i] );
@@ -433,7 +432,7 @@ V.Nav = function(parent, h, v, d, f){
 	this.camera = new THREE.PerspectiveCamera( f||40, this.root.dimentions.r, 0.1, 2000 );
     //this.helper = new THREE.CameraHelper( this.camera );
     //this.root.scene.add(this.helper) 
-    this.root.scene.add(this.camera)
+    //this.root.scene.add(this.camera)
 	this.mouse3d = new THREE.Vector3();
 	this.selectName = '';
 
