@@ -4,7 +4,7 @@ V.Interface = function(root){
 	this.scene = new V.SceneInterface(root, this);
     this.effect = new V.EffectInterface(root);
     this.logo = document.createElement('div');
-    this.logo.style.cssText = 'position:absolute; left:50%; top:50%; width:128px; height:128px; margin-left:-64px; margin-top:-64px; pointer-events:none; transform: scale(0.5,0.5);';
+    this.logo.style.cssText = 'position:absolute; left:50%; top:50%; width:256px; height:256px; margin-left:-128px; margin-top:-128px; pointer-events:none; transform:scale(0.5,0.5);';
     this.logo.innerHTML =  V.LogoMc();
     document.body.appendChild( this.logo );
 

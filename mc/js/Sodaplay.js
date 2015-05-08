@@ -95,7 +95,7 @@ Sodaplay.NetWork.prototype = {
         loader.load( 'models/object.sea' );
     },
     initMaterial:function(){
-    	var tx = THREE.ImageUtils.loadTexture( "textures/point.png" );
+    	this.tx = THREE.ImageUtils.loadTexture( "textures/point.png" );
 
     	this.axonShader = Sodaplay.LineShader;
 		
@@ -112,7 +112,7 @@ Sodaplay.NetWork.prototype = {
 		this.axonMaterial.uniforms.opacityMultiplier.value = this.axonOpacityMultiplier;
 
     	this.neuronMaterial = new THREE.PointCloudMaterial({
-			map: tx,
+			map: this.tx,
 			size: this.neuronSize,
 			color: this.neuronColor,
 			alphaTest : 0.6,
@@ -123,7 +123,7 @@ Sodaplay.NetWork.prototype = {
 		});
 
 		this.particulMat = new THREE.PointCloudMaterial({
-			map: tx,
+			map: this.tx,
 			size: 0.3,
 			color: 0XFFFFFF,
 			//blending: THREE.AdditiveBlending,
@@ -131,6 +131,8 @@ Sodaplay.NetWork.prototype = {
 			transparent: true,
 			alphaTest : 0.6
 		});
+
+		this.hidenObject = new THREE.MeshBasicMaterial({transparent: true, opacity: 0.0})
 
 		/*this.objectMaterial = new THREE.MeshBasicMaterial({
 			transparent: true,
@@ -147,6 +149,20 @@ Sodaplay.NetWork.prototype = {
     },
     clearAll:function(){
     	this.clearOld();
+
+    	this.root.scene.remove(this.content);
+    	this.content.geometry.dispose();
+    	this.content = null;
+
+    	// del material
+    	this.axonMaterial.dispose();
+    	this.neuronMaterial.dispose();
+    	this.particulMat.dispose();
+    	this.hidenObject.dispose();
+
+    	this.tx.dispose();
+
+    	this.axonShader = null;
     },
     init:function(){
     	if (!this.loaded) return;
@@ -164,7 +180,7 @@ Sodaplay.NetWork.prototype = {
     	this.axonColors = [];
     	this.axonIndices = [];
 
-    	this.content = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({transparent: true, opacity: 0.0}));
+    	this.content = new THREE.Mesh(new THREE.PlaneGeometry(1,1), this.hidenObject );
     	this.root.scene.add(this.content);
 
     	this.particlePool = new Sodaplay.ParticlePool(this);
