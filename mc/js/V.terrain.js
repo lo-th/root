@@ -75,7 +75,6 @@ V.Terrain = function(Parent, obj){
 
     this.textures = [];
 
-    //this.maps = ['fog_mask.png', 'nes_top.png', 'nes_bottom.png', 'nes_top_n.png', 'nes_bottom_n.png', 'nes_top_occ.png', 'nes_bottom_occ.png'];
     this.maps = ['fog_mask.png', 'tx1.png', 'tx2.png', 'tx1_n.png', 'tx2_n.png', 'gg1.jpg'];
 
     this.fullLoaded = false;

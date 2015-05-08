@@ -8,7 +8,7 @@
 html{ overflow:hidden; width:100%; height:100%; }
 body { font-family:Monospace; background:#222; font-size:12px; color:#fff;}
 #debug { position:absolute; bottom:10px; left:10px; width:100px; height:12px; pointer-events:none;}
-#canvas { position:absolute; pointer-events:auto; width:100%; height:50%;}
+#three_canvas { position:absolute; pointer-events:auto; width:100%; height:50%;}
 .environment{position:absolute; left:10px; bottom:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
 </style>
 <script type="text/javascript" src="js/libs/three.min.js"></script>
@@ -25,12 +25,12 @@ body { font-family:Monospace; background:#222; font-size:12px; color:#fff;}
 </head>
 
 <body>
-<canvas id='canvas'></canvas>
+<canvas id='three_canvas'></canvas>
 <div id='debug'>debug</div>
 <script>
 var bgcolor = '2A2A2A';
 document.body.style.background = '#'+ bgcolor;
-var canvas = document.getElementById('canvas');
+//var canvas = document.getElementById('three_canvas');
 //var canvas2 = document.getElementById('canvas2');
 var debug = document.getElementById('debug');
 var b1 = document.getElementById('b1');
