@@ -365,25 +365,30 @@ Traffic.NetWork.prototype = {
     	var id = car.id.substring(3);
     	if(this.cars[id]==null){
     		var r = this.randInt(0,2);
-    		var cubic = this.randInt(0,3);
+    		var cubic = this.randInt(0,2);
     		//var c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
     		
-    		var c = new THREE.Mesh( this.getHighGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type]), this.car_mat[r] );
-    		c.position.set(8000, 0,0);
+    		var c;
+
+    		
+    		
     		//c.scale.set(2, 2, -2);
 
-    		if(cubic==3){
+    		if(cubic==2){
+    			c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
     			var b = new THREE.BoxHelper(c);
     			b.material = this.box_car_mat;
     			this.content.add( b );
     			c.visible = false;
-    		} 
-    		//else{
+    		}else{
+    			c = new THREE.Mesh( this.getHighGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type]), this.car_mat[r] );
+    		}
     		    this.content.add( c );
     		    this.cars[id] = c;
     		//}
     		
     		//c.scale.set(car.length, car.length/2, car.width);
+    		c.position.set(8000, 0,0);
     		this.cars[id] = c;
     	} else {
     		var p = car.coords;
