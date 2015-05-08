@@ -34,9 +34,19 @@ Landscape.NetWork.prototype = {
 		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:4 });
 		//this.initialized = true;
 
-		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1 );
+		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1, false);
 		this.coneGeometry.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
-		this.mat = new THREE.MeshBasicMaterial({color:0xFF00FF, wireframe:true});
+		//this.mat = new THREE.MeshBasicMaterial({color:0xFF00FF, wireframe:true});
+
+		//var materials = [ new THREE.MeshBasicMaterial({ color:0xFF00FF, overdraw: true } ), new THREE.MeshBasicMaterial({ color:0xFFFFFF, overdraw: true } ) ];
+		var materials = [ new THREE.MeshBasicMaterial({ color:0xFF00FFe } ), new THREE.MeshBasicMaterial({ color:0xFFFFFF } ) ];
+		for(var z = 0; z < this.coneGeometry.faces.length; z++){ 
+			console.log(this.coneGeometry.faces[z])
+			if(this.coneGeometry.faces[z].c==22)this.coneGeometry.faces[z].materialIndex = 1;
+			else this.coneGeometry.faces[z].materialIndex = 0;
+		}
+		this.mat = new THREE.MeshFaceMaterial(materials);
+
 
 		this.obj = [];
 		var m;
