@@ -49,10 +49,11 @@ Landscape.NetWork.prototype = {
 		// define geometry
 		this.coneGeometry = [];
 		i = 20;
-		var g;
+		var g, h;
 		while(i--){
-			g =  new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1, false);
-			g.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
+			h =  V.rand(0.5, 1);
+			g =  new THREE.CylinderGeometry( V.rand(0.2, 0.5), 0, 1, 10, 1, false);
+			g.applyMatrix(new THREE.Matrix4().makeTranslation( 0, h*0.5, 0 ));
 			j = g.faces.length;
 			while(j--){
 				if(g.faces[j].c==22) g.faces[i].materialIndex = 0;
