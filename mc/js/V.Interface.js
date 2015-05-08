@@ -45,7 +45,7 @@ V.CamInterface.prototype = {
     	var b;
     	for(var i=0; i<6; i++){
     		b = document.createElement('div');
-    		b.style.cssText = 'display:inline-block; text-align:center; width:14px; height:14px; cursor:pointer; border:1px solid #888; margin-right:4px;';
+    		b.style.cssText = 'display:inline-block; text-align:center; width:14px; height:14px; cursor:pointer; border:1px solid #888; margin-right:4px; margin-top:4px;';
     		if(i==3)b.style.marginRight = '8px';
     		//if(i==5)b.style.display = 'block';
     		b.innerHTML = i;
@@ -115,7 +115,7 @@ V.SceneInterface = function(root, tt){
     this.root = root;
     this.pp = tt;
 	this.content = document.createElement( 'div' );
-	this.content.style.cssText ='position:absolute; left:5px; top:60px; width:160px;';
+	this.content.style.cssText ='position:absolute; left:5px; top:65px; width:160px;';
 	this.content.innerHTML = 'Scenes<br>';
 	document.body.appendChild( this.content );
 	this.b = [];
@@ -148,6 +148,7 @@ V.SceneInterface.prototype = {
     		if(this.current!==-1)scenes[this.current].clearAll();
 
             this.root.initScene = scenes[n];
+            gui.show(n)
     		//scenes[n].init();
     	}else{
             if(this.current!==-1)scenes[this.current].clearAll();
@@ -173,7 +174,7 @@ V.SceneInterface.prototype = {
 V.EffectInterface = function(root){
     this.root = root;
     this.content = document.createElement( 'div' );
-    this.content.style.cssText ='position:absolute; left:5px; top:160px; width:160px;';
+    this.content.style.cssText ='position:absolute; left:5px; top:155px; width:160px;';
     this.content.innerHTML = 'Effects<br>';
     document.body.appendChild( this.content );
     
