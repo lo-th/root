@@ -28,31 +28,49 @@ Landscape.NetWork.prototype = {
 		this.content = new THREE.Group();
 	    this.root.scene.add(this.content);
 
+	    var i = 0, j = 0;
 		var w = 1000;
 	    var h = 1000;
 	    var r = h/w;
 		this.terrain = new V.Terrain( this.root, { div:[256,256], size:[w, 100, h], debug:false, offset:4 });
 		//this.initialized = true;
 
-		this.coneGeometry = new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1, false);
-		this.coneGeometry.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
-		//this.mat = new THREE.MeshBasicMaterial({color:0xFF00FF, wireframe:true});
-
-		//var materials = [ new THREE.MeshBasicMaterial({ color:0xFF00FF, overdraw: true } ), new THREE.MeshBasicMaterial({ color:0xFFFFFF, overdraw: true } ) ];
-		var materials = [ new THREE.MeshBasicMaterial({ color:0xFF00FFe } ), new THREE.MeshBasicMaterial({ color:0xFFFFFF } ) ];
-		for(var z = 0; z < this.coneGeometry.faces.length; z++){ 
-			console.log(this.coneGeometry.faces[z])
-			if(this.coneGeometry.faces[z].c==22)this.coneGeometry.faces[z].materialIndex = 1;
-			else this.coneGeometry.faces[z].materialIndex = 0;
+		// define material
+		this.materials = [];
+		i = 21;
+		while(i--){
+			if(i==0) this.materials[i] = new THREE.MeshBasicMaterial({ color:0xFFFFFF });
+			else{ 
+				this.materials[i] = new THREE.MeshBasicMaterial({ color:0xFFFFFF });
+				this.materials[i].color.setHSL((Math.floor(Math.random() * 360)*0.01),1,0.8)
+			}
 		}
-		this.mat = new THREE.MeshFaceMaterial(materials);
+
+		// define geometry
+		this.coneGeometry = [];
+		i = 20;
+		var g;
+		while(i--){
+			g =  new THREE.CylinderGeometry( 0.4, 0, 1, 10, 1, false);
+			g.applyMatrix(new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ));
+			j = g.faces.length;
+			while(j--){
+				if(g.faces[j].c==22) g.faces[i].materialIndex = 0;
+				else g.faces[j].materialIndex = i+1;
+			}
+			this.coneGeometry[i] = g;
+		}
+
+
+		this.mat = new THREE.MeshFaceMaterial(this.materials);
 
 
 		this.obj = [];
-		var m;
-		var i = 100;
+		var m, n;
+		i = 100;
 		while(i--){
-			m = new Landscape.Entity(this.coneGeometry, this.mat);
+			n = V.randInt(0, 19);
+			m = new Landscape.Entity(this.coneGeometry[n], this.mat);
 			m.terra = this.terrain;
 			this.content.add(m);
 			this.obj[i] = m;
@@ -69,6 +87,17 @@ Landscape.NetWork.prototype = {
 		    this.content.remove(this.content.children[i]);
 		}
 		this.root.scene.remove(this.content);
+
+		// reset geometry
+		i = this.coneGeometry.length;
+		while(i--)this.coneGeometry[i].dispose();
+
+		// reset material
+		i = this.materials.length;
+		while(i--)this.materials[i].dispose();
+
+		//this.mat.dispose();
+
 		this.obj = [];
 	},
 	update:function(){

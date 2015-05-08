@@ -31,7 +31,7 @@ V.lerp = function (a, b, percent) { return a + (b - a) * percent; }
 V.rand = function (a, b, n) { return V.lerp(a, b, Math.random()).toFixed(n || 3)*1;}
 V.randInt = function (a, b, n) { return V.lerp(a, b, Math.random()).toFixed(n || 0)*1;}
 V.randColor = function () { return '#'+Math.floor(Math.random()*16777215).toString(16);}
-
+V.randTColor = function () { return '0x'+Math.floor(Math.random()*16777215).toString(16);}
 V.MeshList = [ 'plane', 'sphere', 'skull', 'skullhigh', 'head', 'woman', 'babe'];
 V.Main = null;
 
