@@ -281,8 +281,8 @@ Traffic.NetWork.prototype = {
     	var env = this.root.environment;
 
 		// road material
-		this.inter_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[1], transparent:true} );//, opacity:0.8 } );
-	    this.road_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[0], transparent:true} );//, opacity:0.8 } );
+		this.inter_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[1]} );//, transparent:true, opacity:0.8 } );
+	    this.road_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[0]} );//, transparent:true, opacity:0.8 } );
 
 	    // street material
 	    this.street_mat = [];
