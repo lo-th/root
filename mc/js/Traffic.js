@@ -98,7 +98,9 @@ Traffic.NetWork.prototype = {
     		
     		g.merge( wheel, m );
     	}
-        return g;
+    	var buffgeo = new THREE.BufferGeometry().fromGeometry( g );
+		g.dispose();
+        return buffgeo;
     },
 
     
@@ -301,6 +303,8 @@ Traffic.NetWork.prototype = {
 
 		//this.street_geo = new THREE.PlaneGeometry( (this.grid*6) , (this.grid*6)  );
 		//this.street_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+
+		this.generateCarGeometry();
 	},
 
 	addBackGround:function(){
@@ -414,10 +418,13 @@ Traffic.NetWork.prototype = {
 			m.makeTranslation((x*posdd)+dc,  0,(z*posdd)+dc);
 			m.multiply(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 			g.merge( mg, m );
+			mg.dispose();
 
 			x++;
 			if(x==2){ z++; x = -2 }
 		}
+		//var buffgeo = new THREE.BufferGeometry().fromGeometry( g );
+		//g.dispose();
 
 		i = 9;
 		x=-1;
@@ -470,12 +477,26 @@ Traffic.NetWork.prototype = {
 				}
 				g.merge( this.road_geo, m );
 			}
-			var c = new THREE.Mesh( g, this.road_mat );
+			var buffgeo = new THREE.BufferGeometry().fromGeometry( g );
+			g.dispose();
+			var c = new THREE.Mesh( buffgeo, this.road_mat );
 			c.position.add(this.decal);
 			this.content.add( c );
 			this.roads[id] = c;
 		}
 	},
+	generateCarGeometry : function(){
+		this.carLow = [];
+		this.carHigh = [];
+
+		var i = 14;
+		while(i--){
+			this.carLow[i] = this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[i].m);
+		    this.carHigh[i] = this.getHighGeometry('cars', TRAFFIC.TYPE_OF_CARS[i]);
+		}
+
+	},
+
 	addCar : function (car){
     	var id = car.id.substring(3);
     	if(this.cars[id]==null){
@@ -485,18 +506,22 @@ Traffic.NetWork.prototype = {
     		
     		var c;
 
+    		//console.log(car.type)
+
     		
     		
     		//c.scale.set(2, 2, -2);
 
     		if(cubic==2){
-    			c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
+    			//c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
+    			c = new THREE.Mesh( this.carLow[car.type], this.car_mat[r] );
     			var b = new THREE.BoxHelper(c);
     			b.material = this.box_car_mat;
     			this.content.add( b );
     			c.visible = false;
     		}else{
-    			c = new THREE.Mesh( this.getHighGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type]), this.car_mat[r] );
+    			//c = new THREE.Mesh( this.getHighGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type]), this.car_mat[r] );
+    			c = new THREE.Mesh( this.carHigh[car.type], this.car_mat[r] );
     		}
     		    this.content.add( c );
     		    this.cars[id] = c;
