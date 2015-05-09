@@ -53,6 +53,8 @@ Traffic.NetWork.prototype = {
         }.bind(this);
         img.src = PATH+this.maps[this.mapLoad];
     },
+
+
     getGeometry:function(obj, name){
         var g = this.meshes[obj][name].geometry;
         return g;
@@ -115,20 +117,24 @@ Traffic.NetWork.prototype = {
 		this.content = new THREE.Group();
 	    this.root.scene.add(this.content);
 
+	    this.grid = TRAFFIC.settings.gridSize;
+
+	    this.initGeometry();
+		this.generateMaterial();
+
 		this.world = new TRAFFIC.World();
-		this.world.generateMap(2,2,7, 1);
+		//this.world.generateMap(2,2,7,1);
+		// full map
+		//this.world.generateMap(6,6,7,1);
+
+		this.world.generateMap(4,4,7,1);
 		this.world.carsNumber = 100;
 		this.previousTime = 0;
 		this.lastUpdate = 0;
-
-		this.grid = TRAFFIC.settings.gridSize;
-
+		
 		this.decal = new THREE.Vector3(-this.grid*0.5, -7 , -this.grid*0.5);
 
-		this.initGeometry();
-
-		this.generateMaterial();
-
+		
 		this.cars = [];
 		this.roads = [];
 		this.inter = [];
@@ -140,8 +146,6 @@ Traffic.NetWork.prototype = {
 
 		this.initialized = true;
 	},
-
-
 
 
 	clearAll:function(){
@@ -181,14 +185,14 @@ Traffic.NetWork.prototype = {
 	    while(i--) this.car_mat[i].dispose();
 	    this.car_mat = null;
 
-	    this.grid_mat.dispose();
-	    this.grid_mat = null;
+	    //this.grid_mat.dispose();
+	    //this.grid_mat = null;
 
 	    this.box_car_mat.dispose();
 	    this.box_car_mat = null;
 
-	    this.back_mat.dispose();
-	    this.back_mat = null;
+	    //this.back_mat.dispose();
+	    //this.back_mat = null;
 
 	    // del texture
 
@@ -280,13 +284,13 @@ Traffic.NetWork.prototype = {
 		while(i--) this.car_mat[i] = new THREE.MeshBasicMaterial( { map:this.car_txt[i], envMap:env, reflectivity:0.5 } );
 
 		// grid mat
-		this.grid_mat = new THREE.MeshBasicMaterial( { color: 0x303030, wireframe:true, fog:false } );
+		//this.grid_mat = new THREE.MeshBasicMaterial( { color: 0x303030, wireframe:true, fog:false } );
 
 		// box car mat 
 		this.box_car_mat = new THREE.LineBasicMaterial( { color: 0XFF00FF } );
 
 
-		this.back_mat = new THREE.MeshBasicMaterial( { color: 0XFF00FF } );
+		//this.back_mat = new THREE.MeshBasicMaterial( { color: 0XFF00FF } );
 
     },
 
@@ -477,6 +481,7 @@ Traffic.NetWork.prototype = {
 				}
 				g.merge( this.road_geo, m );
 			}
+			g.mergeVertices();
 			var buffgeo = new THREE.BufferGeometry().fromGeometry( g );
 			g.dispose();
 			var c = new THREE.Mesh( buffgeo, this.road_mat );
@@ -505,12 +510,6 @@ Traffic.NetWork.prototype = {
     		//var c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
     		
     		var c;
-
-    		//console.log(car.type)
-
-    		
-    		
-    		//c.scale.set(2, 2, -2);
 
     		if(cubic==2){
     			//c = new THREE.Mesh( this.getGeometry('cars', TRAFFIC.TYPE_OF_CARS[car.type].m), this.car_mat[r] );
