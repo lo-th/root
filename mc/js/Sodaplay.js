@@ -1,3 +1,10 @@
+/**   _     _   _     
+*    | |___| |_| |__
+*    | / _ \  _|    |
+*    |_\___/\__|_||_|
+*    @author LoTh / http://lo-th.github.io/labs/
+*/
+
 var Sodaplay={};
 
 Sodaplay.LineShader={

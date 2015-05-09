@@ -1,3 +1,10 @@
+/**   _     _   _     
+*    | |___| |_| |__
+*    | / _ \  _|    |
+*    |_\___/\__|_||_|
+*    @author LoTh / http://lo-th.github.io/labs/
+*/
+
 var Traffic = {};
 
 
@@ -134,7 +141,7 @@ Traffic.NetWork.prototype = {
 		//this.world.generateMap(6,6,7,1);
 
 		this.world.generateMap(4,4,7,1);
-		this.world.carsNumber = 100;
+		this.world.carsNumber = 150;
 		this.previousTime = 0;
 		this.lastUpdate = 0;
 		
@@ -274,20 +281,20 @@ Traffic.NetWork.prototype = {
     	var env = this.root.environment;
 
 		// road material
-		this.inter_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[1], transparent:true, opacity:0.6 } );
-	    this.road_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[0], transparent:true, opacity:0.6 } );
+		this.inter_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[1], transparent:true} );//, opacity:0.8 } );
+	    this.road_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[0], transparent:true} );//, opacity:0.8 } );
 
 	    // street material
 	    this.street_mat = [];
 	    var i = 16;
-	    while(i--) this.street_mat[i] = new THREE.MeshBasicMaterial( { map:this.street_txt[i], transparent:true, opacity:0.6} );
+	    while(i--) this.street_mat[i] = new THREE.MeshBasicMaterial( { map:this.street_txt[i]} );//, transparent:true, opacity:0.8} );
 
 	    this.stx_mat = new THREE.MeshFaceMaterial(this.street_mat);
 
 	    // cars material
 		this.car_mat = []
 		i = 3;
-		while(i--) this.car_mat[i] = new THREE.MeshBasicMaterial( { map:this.car_txt[i], envMap:env, reflectivity:0.5 } );
+		while(i--) this.car_mat[i] = new THREE.MeshBasicMaterial( { map:this.car_txt[i], envMap:env, reflectivity:0.3 } );
 
 		// grid mat
 		//this.grid_mat = new THREE.MeshBasicMaterial( { color: 0x303030, wireframe:true, fog:false } );
@@ -667,18 +674,11 @@ Traffic.NetWork.prototype = {
 
 V.SimpleBox = function ( min, max ) {
 	THREE.BufferGeometry.call( this );
-	//var geometry = new THREE.BufferGeometry();
 	this.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( 72 ), 3 ) );
-
-	//THREE.Line.call( this, geometry, mat, THREE.LinePieces );
-
 	this.makeBox( min, max );
 }
-
-//V.SimpleBox.prototype = Object.create( THREE.Line.prototype );
 V.SimpleBox.prototype = Object.create( THREE.BufferGeometry.prototype );
 V.SimpleBox.prototype.constructor = V.SimpleBox;
-
 V.SimpleBox.prototype.makeBox = function ( min, max ) {
 	var vertices = this.attributes.position.array;
 	vertices[  0 ] = max.x; vertices[  1 ] = max.y; vertices[  2 ] = max.z;
