@@ -14,7 +14,7 @@ Traffic.NetWork = function(parent){
 
 	this.meshes = {};
 
-	this.maps = ['cars.png', 'street.jpg', 'road.png'];
+	this.maps = ['cars.png', 'street.jpg', 'road.png', 'carstop.png'];
 	this.mapLoad = 0;
 	this.imgs = [];
 
@@ -242,7 +242,7 @@ Traffic.NetWork.prototype = {
     	this.car_txt = [];
     	this.street_txt = [];
     	this.road_txt = [];
-    	this.generateRandomColors(this.imgs[0]);
+    	this.generateRandomColors(this.imgs[0], this.imgs[3]);
     	this.generateStreet(this.imgs[1]);
     	this.generateRoad(this.imgs[2]);
 
@@ -465,7 +465,7 @@ Traffic.NetWork.prototype = {
 
     },
 	
-	generateRandomColors:function(img){
+	generateRandomColors:function(img, img2){
 		for(var i=0; i<3;i++){
 			var canvas = document.createElement( 'canvas' );
 			canvas.width = canvas.height = 1024;
@@ -479,7 +479,11 @@ Traffic.NetWork.prototype = {
 				x++
 				if(x==4){ x=0; y++; }
 			}
+			ctx.globalCompositeOperation = "multiply";
+			//ctx.globalCompositeOperation = "overlay";
 			ctx.drawImage(img, 0, 0, 1024,1024);
+			ctx.globalCompositeOperation = "normal";
+			ctx.drawImage(img2, 0, 0, 1024,1024);
 	        tx = new THREE.Texture(canvas);
 	        tx.needsUpdate = true;
 	        tx.flipY = false;
