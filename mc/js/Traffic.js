@@ -60,15 +60,17 @@ Traffic.NetWork.prototype = {
     getHighGeometry:function(obj, ref){
     	var name = ref.m;
     	var num = name.substring(3,name.length);
-    	console.log(num)
+
     	var g = new THREE.Geometry();
+
     	var body = this.meshes[obj]['m'+name].geometry;
-    	var bottom = this.meshes[obj]['down'+num].geometry;
-    	var wheel;
-
     	g.merge( body );
-        g.merge( bottom );
 
+    	// bottom car
+    	//var bottom = this.meshes[obj]['down'+num].geometry;
+        //g.merge( bottom );
+
+        var wheel;
     	switch(ref.wRadius){
     		case 0.36: wheel = this.meshes[obj]['lw001'].geometry; break;
     		case 0.40: wheel = this.meshes[obj]['lw002'].geometry; break;
@@ -130,11 +132,16 @@ Traffic.NetWork.prototype = {
 		this.inter = [];
 		this.streets = [];
 
-		this.addGrid();
+		//this.addGrid();
 		this.addStreets();
+		//this.addBackGround();
 
 		this.initialized = true;
 	},
+
+
+
+
 	clearAll:function(){
 
 		this.initialized = false;
@@ -155,7 +162,7 @@ Traffic.NetWork.prototype = {
 
 		this.inter_geo.dispose();
 		this.road_geo.dispose();
-		this.street_geo.dispose();
+		//this.street_geo.dispose();
 
 		// del material
 
@@ -177,6 +184,9 @@ Traffic.NetWork.prototype = {
 
 	    this.box_car_mat.dispose();
 	    this.box_car_mat = null;
+
+	    this.back_mat.dispose();
+	    this.back_mat = null;
 
 	    // del texture
 
@@ -234,6 +244,9 @@ Traffic.NetWork.prototype = {
 		for (id in o3) {
             this.addCar(o3[id], id);
         }
+
+
+       // this.groundMirror.render();
 	},
 
 	// MATERIALS
@@ -249,13 +262,15 @@ Traffic.NetWork.prototype = {
     	var env = this.root.environment;
 
 		// road material
-		this.inter_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[1], transparent:true, opacity:0.6} );
+		this.inter_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[1], transparent:true, opacity:0.6 } );
 	    this.road_mat = new THREE.MeshBasicMaterial( { map:this.road_txt[0], transparent:true, opacity:0.6 } );
 
 	    // street material
 	    this.street_mat = [];
 	    var i = 16;
 	    while(i--) this.street_mat[i] = new THREE.MeshBasicMaterial( { map:this.street_txt[i], transparent:true, opacity:0.6} );
+
+	    this.stx_mat = new THREE.MeshFaceMaterial(this.street_mat);
 
 	    // cars material
 		this.car_mat = []
@@ -268,25 +283,106 @@ Traffic.NetWork.prototype = {
 		// box car mat 
 		this.box_car_mat = new THREE.LineBasicMaterial( { color: 0XFF00FF } );
 
+
+		this.back_mat = new THREE.MeshBasicMaterial( { color: 0XFF00FF } );
+
     },
 
     // GEOMETRY
 
 	initGeometry:function(){
+		
+
 		this.inter_geo = new THREE.PlaneBufferGeometry( this.grid, this.grid );
 		this.inter_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 
 		this.road_geo = new THREE.PlaneGeometry( this.grid, this.grid );
 		this.road_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 
-		this.street_geo = new THREE.PlaneGeometry( (this.grid*6) , (this.grid*6)  );
-		this.street_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+		//this.street_geo = new THREE.PlaneGeometry( (this.grid*6) , (this.grid*6)  );
+		//this.street_geo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+	},
+
+	addBackGround:function(){
+		var t = (((7*4)+1)*this.grid);
+		var g = new THREE.PlaneBufferGeometry( t, t*0.5 );
+		var pos = [
+		    [  0, (t*0.25)+this.decal.y, -t*0.5],
+		    [  0, (t*0.25)+this.decal.y, t*0.5],
+		    [ -t*0.5, (t*0.25)+this.decal.y, 0],
+		    [ t*0.5, (t*0.25)+this.decal.y, 0]
+		]
+
+		var settings = { 
+            clipBias: 0.005, 
+            textureWidth:this.root.dimentions.w, 
+            textureHeight:this.root.dimentions.h, 
+            //color: 0x77FF77, 
+            //alpha: 0.5, 
+            power: 1, 
+            radius:1.0, 
+            //debugMode:true,
+        };
+
+		//this.groundMirror = new THREE.Mirror( this.root.renderer,this.root.cameras[this.root.currentCamera], settings );
+
+		this.groundMirror1 = new THREE.Mirror( this.root.renderer,this.root.nav.camera, settings );
+		this.groundMirror2 = new THREE.Mirror( this.root.renderer,this.root.nav.camera, settings );
+		this.groundMirror3 = new THREE.Mirror( this.root.renderer,this.root.nav.camera, settings );
+		this.groundMirror4 = new THREE.Mirror( this.root.renderer,this.root.nav.camera, settings );
+
+		/*this.groundMirror1 = new THREE.Mirror( this.root.renderer,null, settings, pos[0] );
+		this.groundMirror2 = new THREE.Mirror( this.root.renderer,null, settings, pos[1] );
+		this.groundMirror3 = new THREE.Mirror( this.root.renderer,null, settings, pos[2] );
+		this.groundMirror4 = new THREE.Mirror( this.root.renderer,null, settings, pos[3] );*/
+
+		//var myMirror = new THREE.FlatMirror(this.root.renderer,this.root.nav.camera, {clipBias: 0.005, textureWidth: this.root.dimentions.w, textureHeight: this.root.dimentions.h } );
+		
+
+		//this.back_mat = this.groundMirror.material;
+		
+		var bg1 = new THREE.Mesh( g, this.groundMirror1.material );
+		var bg2 = new THREE.Mesh( g, this.groundMirror2.material );
+		var bg3 = new THREE.Mesh( g, this.groundMirror3.material );
+		var bg4 = new THREE.Mesh( g, this.groundMirror4.material );
+
+		bg1.add(this.groundMirror1);
+		bg2.add(this.groundMirror2);
+		bg3.add(this.groundMirror3);
+		bg4.add(this.groundMirror4);
+
+
+		this.root.mirror.push(this.groundMirror1);
+		this.root.mirror.push(this.groundMirror2);
+		this.root.mirror.push(this.groundMirror3);
+		this.root.mirror.push(this.groundMirror4);
+		
+		this.content.add(bg1);
+		this.content.add(bg2);
+
+		this.content.add(bg3);
+		this.content.add(bg4);
+
+
+		bg2.rotation.y = V.PI;
+
+		bg3.rotation.y = V.PI*0.5;
+		bg4.rotation.y = -V.PI*0.5;
+
+		bg1.position.set( 0, (t*0.25)+this.decal.y, -t*0.5);
+		bg2.position.set( 0, (t*0.25)+this.decal.y, t*0.5);
+		bg3.position.set( -t*0.5, (t*0.25)+this.decal.y, 0);
+		bg4.position.set( t*0.5, (t*0.25)+this.decal.y, 0);
+		/*bg1.position.set( 0,this.decal.y, -t*0.5);
+		bg2.position.set( 0, this.decal.y, t*0.5);
+		bg3.position.set( -t*0.5, this.decal.y, 0);
+		bg4.position.set( t*0.5, this.decal.y, 0);*/
 	},
 
 	// GRID
 
 	addGrid:function(){
-		var t = (7*4)+1
+		var t = (7*4)+1;
 		var g = new THREE.PlaneGeometry(this.grid*t,this.grid*t, t,t);
 		g.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 		var ground = new THREE.Mesh( g, this.grid_mat );
@@ -299,26 +395,42 @@ Traffic.NetWork.prototype = {
 	// ADD
 
 	addStreets:function (){
-		//var g = new THREE.Geometry();
-		//var m = new THREE.Matrix4();
-		var dc = (this.grid*4)//+ this.grid*0.5;
+
+		var dc = (this.grid*4);
 		var x = -2;
 		var z = -2;
 		var s;
-		var i = 4*4;
+		var posdd = this.grid*7;
+		var i = 16, j;
+		var g = new THREE.Geometry();
+		var mg;
+		var m = new THREE.Matrix4();
 		while(i--){
-			s = new THREE.Mesh( this.street_geo, this.street_mat[i] );
-			//s.position.set((x*(this.grid*6))+dc, 0,( z*(this.grid*6))+dc)
-			s.position.set((x*(this.grid*7))+dc,  0,( z*(this.grid*7))+dc);
-			s.position.add(this.decal);
-			//s.position.sub(this.decal);
-			this.content.add( s );
-			this.streets[i] = s;
-			x++;
-			if(x==2){
-				z++;
-				x = -2
+			mg = new THREE.PlaneGeometry( (this.grid*6) , (this.grid*6)  );
+			j = mg.faces.length;
+			while(j--){
+				mg.faces[j].materialIndex = i;
 			}
+			m.makeTranslation((x*posdd)+dc,  0,(z*posdd)+dc);
+			m.multiply(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+			g.merge( mg, m );
+
+			x++;
+			if(x==2){ z++; x = -2 }
+		}
+
+		i = 9;
+		x=-1;
+		z=-1;
+		posdd = (((7*4))*this.grid);
+		dc = 0;
+		while(i--){
+			s = new THREE.Mesh( g, this.stx_mat );
+			s.position.set((x*posdd)+dc, 0,( z*posdd)+dc);
+			s.position.add(this.decal);
+			this.content.add( s );
+			x++;
+			if(x==2){ z++; x = -1 }
 		}
 	},
 
@@ -435,8 +547,8 @@ Traffic.NetWork.prototype = {
 
 			ctx.drawImage(img, x*256, y*256, 256,256, 0, 0, 256, 256);
 			var tx = new THREE.Texture(canvas);
-			tx.magFilter = THREE.NearestFilter;
-			tx.minFilter = THREE.LinearMipMapLinearFilter;
+			//tx.magFilter = THREE.NearestFilter;
+			//tx.minFilter = THREE.LinearMipMapLinearFilter;
 			tx.needsUpdate = true;
 			this.street_txt[i] = tx;
 			x++
@@ -454,8 +566,8 @@ Traffic.NetWork.prototype = {
 			var ctx = canvas.getContext('2d');
 			ctx.drawImage(img, x*128, 0, 128,128, 0, 0, 128, 128);
 			var tx = new THREE.Texture(canvas);
-			tx.magFilter = THREE.NearestFilter;
-			tx.minFilter = THREE.LinearMipMapLinearFilter;
+			//tx.magFilter = THREE.NearestFilter;
+			//tx.minFilter = THREE.LinearMipMapLinearFilter;
 			tx.needsUpdate = true;
 			this.road_txt[i] = tx;
 			x++;

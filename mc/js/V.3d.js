@@ -37,6 +37,8 @@ V.Main = null;
 
 V.View = function(h,v,d,f, emvmap){
 
+    this.mirror = [];
+
     this.info = '';
     this.initScene = null;
 
@@ -108,6 +110,7 @@ V.View = function(h,v,d,f, emvmap){
 V.View.prototype = {
     constructor: V.View,
     render:function(){
+        var i;
         //if(this.changeSource) return;
 
         
@@ -121,6 +124,26 @@ V.View.prototype = {
             this.initScene=null;
            // console.log(this.renderer)
         }
+
+        if(this.mirror.length){
+            i = this.mirror.length;
+            var j = 0, k=0, l=0; 
+            while(i--){ 
+               /* if(i==0) j = 1;
+                if(i==1) j = 0;
+                if(i==2) j = 3;
+                if(i==3) j = 2;*/
+                if(i==0){ j = 3; k = 2; l = 1;}
+                if(i==3){ j = 0; k = 1; l = 2;}
+                if(i==1){ j = 2; k = 3; l = 0;}
+                if(i==2){ j = 1; k = 0; l = 3;}
+                this.mirror[i].renderWithMirrors( [this.mirror[j], this.mirror[k]  ] );
+                //this.mirror[i].renderWithMirrors( [this.mirror[j], this.mirror[k] , this.mirror[l] ] );
+                //this.mirror[i].render();
+            }
+        }
+
+
 
         
 
@@ -155,7 +178,7 @@ V.View.prototype = {
             if(!this.previewReady) this.initPreview();
             else {
                 this.previewGroup.visible = true;
-                var i = this.mat.length;
+                i = this.mat.length;
                 while(i--){
                     //if(this.seriouseffect)this.renderer.setRenderTarget(null);
                     this.mat[i].map = this.dummyTexture;
