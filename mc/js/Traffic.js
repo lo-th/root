@@ -70,11 +70,11 @@ Traffic.NetWork.prototype = {
         g.merge( bottom );
 
     	switch(ref.wRadius){
-    		case 0.36: wheel = this.meshes[obj]['w001'].geometry; break;
-    		case 0.40: wheel = this.meshes[obj]['w002'].geometry; break;
-    		case 0.46: wheel = this.meshes[obj]['w003'].geometry; break;
-    		case 0.57: wheel = this.meshes[obj]['w004'].geometry; break;
-    		case 0.64: wheel = this.meshes[obj]['w005'].geometry; break;
+    		case 0.36: wheel = this.meshes[obj]['lw001'].geometry; break;
+    		case 0.40: wheel = this.meshes[obj]['lw002'].geometry; break;
+    		case 0.46: wheel = this.meshes[obj]['lw003'].geometry; break;
+    		case 0.57: wheel = this.meshes[obj]['lw004'].geometry; break;
+    		case 0.64: wheel = this.meshes[obj]['lw005'].geometry; break;
     	}
     	var i = ref.nWheels;
     	var mz2 = 0;
@@ -83,13 +83,16 @@ Traffic.NetWork.prototype = {
     	var mx = ref.wPos[0]*2;
     	var mz = ref.wPos[2]*2;
     	var my = ref.wRadius*2;
+    	var dc = ref.wPos[1]*2;
     	while(i--){
     		if(i==0) m.makeTranslation(mx, my, mz);
     		if(i==1) m.makeTranslation(-mx, my, mz);
-    		if(i==2) m.makeTranslation(mx, my, -mz);
-    		if(i==3) m.makeTranslation(-mx, my, -mz);
+    		if(i==2) m.makeTranslation((mx+dc), my, -mz);
+    		if(i==3) m.makeTranslation(-(mx+dc), my, -mz);
     		if(i==4) m.makeTranslation(mx, my, -mz2);
     		if(i==5) m.makeTranslation(-mx, my, -mz2);
+
+    		if(i==0 || i==2 || i==4) m.multiply(new THREE.Matrix4().makeRotationY(Math.PI));
     		
     		g.merge( wheel, m );
     	}
@@ -257,7 +260,7 @@ Traffic.NetWork.prototype = {
 	    // cars material
 		this.car_mat = []
 		i = 3;
-		while(i--) this.car_mat[i] = new THREE.MeshBasicMaterial( { map:this.car_txt[i], envMap:env, reflectivity:0.9 } );
+		while(i--) this.car_mat[i] = new THREE.MeshBasicMaterial( { map:this.car_txt[i], envMap:env, reflectivity:0.5 } );
 
 		// grid mat
 		this.grid_mat = new THREE.MeshBasicMaterial( { color: 0x303030, wireframe:true, fog:false } );
@@ -480,8 +483,8 @@ Traffic.NetWork.prototype = {
 	        tx = new THREE.Texture(canvas);
 	        tx.needsUpdate = true;
 	        tx.flipY = false;
-	        tx.magFilter = THREE.NearestFilter;
-			tx.minFilter = THREE.LinearMipMapLinearFilter;
+	        //tx.magFilter = THREE.NearestFilter;
+			//tx.minFilter = THREE.LinearMipMapLinearFilter;
 	        this.car_txt[i] = tx;
 	        canvas = null;
 			ctx = null;
