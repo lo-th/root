@@ -6,7 +6,6 @@
 	
 	<script src="js/jquery.js"></script>	
 	<script src="js/mediaelement-and-player.min.js"></script>
-	<script src="js/testforfiles.js"></script>	
 	<link rel="stylesheet" href="js/mediaelementplayer.min.css" />
 </head>
 <body>
@@ -36,6 +35,9 @@
 <script>
 
 $('video').mediaelementplayer({
+	iPadUseNativeControls: true,
+    iPhoneUseNativeControls: true,
+    AndroidUseNativeControls: true,
 	success: function(media, node, player) {
 		$('#' + node.id + '-mode').html('mode: ' + media.pluginType);
 	}
