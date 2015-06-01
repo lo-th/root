@@ -44,7 +44,7 @@ function testResults () {
  //document.getElementById('iframe').innerHTML = frames['result'].document.body.innerHTML
 //  var iframe = document.getElementById('result');
   //var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-  //console.log('grrrr',iframe.innerHTML )
+  console.log('grrrr',iframe.innerHTML )
     //var TestVar = form.videoid.value;
     //alert ("You typed: " + TestVar);
 }
@@ -54,17 +54,18 @@ function testResults () {
 }
 
 
-var httpRequest = new XMLHttpRequest;
+var httpRequest = new XMLHttpRequest();
 httpRequest.onreadystatechange = function(e){
     //
 
     if (httpRequest.readyState == 4) {// request is done
         //if (httpRequest.status === 200) {// successfully
-            callback(httpRequest.responseText);// we're calling our method
+            //callback(httpRequest.responseText);// we're calling our method
+            console.log('zooby', httpRequest.responseText)
        // }
     }
 };
-httpRequest.open('GET', "http://youtube-download.bl.ee/getvideo.php?videoid=gdt_r9O6n9o&type=Download");
+httpRequest.open('get', "getvideo.php?videoid=gdt_r9O6n9o&type=Download");
 httpRequest.send(null);
   </script>
 </html>
