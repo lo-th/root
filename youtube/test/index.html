@@ -16,7 +16,8 @@
   </head>
 
   <body>
-  <form class="form-download" method="get" id="download" action="http://youtube-download.bl.ee/getvideo.php">
+  <!--<form class="form-download" method="get" id="download" action="http://youtube-download.bl.ee/getvideo.php">-->
+  <form class="form-download" method="get" id="download" action="getvideo.php">
     <h1 class="form-download-heading">Youtube Downloader</h1>
     <div class="input-group">
       <span class="input-group-addon">http://www.youtube.com/watch?v=</span>
@@ -39,8 +40,8 @@
 
 var httpRequest = new XMLHttpRequest;
 httpRequest.onreadystatechange = function(){
-    if (httpRequest.readyState === 4) {// request is done
-       // if (httpRequest.status === 200) {// successfully
+   // if (httpRequest.readyState === 4) {// request is done
+        if (httpRequest.status === 200) {// successfully
             callback(httpRequest.responseText);// we're calling our method
       // }
     }
