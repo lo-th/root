@@ -39,11 +39,11 @@
 
 var httpRequest = new XMLHttpRequest;
 httpRequest.onreadystatechange = function(){
-    //if (httpRequest.readyState === 4) {// request is done
-     //   if (httpRequest.status === 200) {// successfully
+    if (httpRequest.readyState === 4) {// request is done
+        if (httpRequest.status === 200) {// successfully
             callback(httpRequest.responseText);// we're calling our method
-     //   }
-   // }
+        }
+    }
 };
 httpRequest.open('GET', "getvideo.php?videoid=gdt_r9O6n9o&type=Download");
 httpRequest.send();
