@@ -35,7 +35,11 @@ cc.height = 180;
 document.body.appendChild(cc)
 
 var ctx = cc.getContext("2d");
-
+//cc.toBlob(function(my_file){
+  //.toBlob is only implemented in > FF18 but there is a polyfill 
+  //for other browsers https://github.com/blueimp/JavaScript-Canvas-to-Blob
+  //var myBlob = (my_file);
+//})
 function testResults(form){
     var value = form.videoid.value;
     if(value == '') return;
@@ -44,19 +48,41 @@ function testResults(form){
      // var blobUrl = URL.createObjectURL(new Blob(['Test'], {type: 'text/plain'}));
       var url = 'http://youtube-download.bl.ee/getvideo.mp4?videoid='+value.substring(3)+'&format=ipad';
       var url2 = 'http://youtube-download.bl.ee/getvideo.mp4?videoid='+value.substring(3)+'&format=ipad';//+'&format=best';
+
+      var ll = document.createElement('a');
+document.body.appendChild(ll)
+
+ll.download = 'nono.json';//container.querySelector('input[type="text"]').value;
+        ll.href = url;//window.URL.createObjectURL(bb);
+        ll.textContent = 'Download ready';
+        //a.className = 'saveout'
+
+        ll.dataset.downloadurl = ['text/plain', ll.download, ll.href].join(':');
+        ll.draggable = true;
+
+
+
+
+
 var links = document.getElementsByTagName("link")
 links[0].setAttribute("href", url2);
 console.log(links[0].href)
      var xhr = new XMLHttpRequest();
-      xhr.open('POST', url2, true)
+     xhr.open('GET', url2, true);
+  //    xhr.open('GET', url2, true)
+    //  xhr.responseType = 'arraybuffer';
+      xhr.responseType = 'blob';
+      //xhr.responseType = "arraybuffer";
       //embedpage(xhr)
       xhr.onload = function(e) {
+        if (xhr.status == 200) {
         //var xmlDoc = xhr.responseXML;
-        console.log(xhr)//.responseText)
+        console.log(xhr.response)//.responseText)
+}
       }
 
       //xhr.open('GET', url );
-    xhr.send(null);
+    xhr.send();
  /*
 function embedpage(request){
 //if viewing page offline or the document was successfully retrieved online (status code=2000)
