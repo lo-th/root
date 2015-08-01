@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mine</title>
+<style>
+*{ margin: 0; padding: 0; border: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select:none; } 
+html{ overflow:hidden; width:100%; height:100%; }
+body { font-family: monospace; background-color:#111; font-size:11px; color:#fff;}
+#version { position:absolute; bottom:92px; left:50%; width:90px; height:10px; pointer-events:none; text-align:right;  font-size:16px;}
+#debug { position:absolute; bottom:10px; left:10px; width:600px; pointer-events:none; }
+#container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:auto; }
+</style>
+<script type="text/javascript" src="js/three.min.js"></script>
+<script type="text/javascript" src="src/Mine.js"></script>
+<script type="text/javascript" src="src/World.js"></script>
+</head>
+
+<body>
+<div id='bg'></div>
+<div id='container'></div>
+<div id='debug'></div>
+<script>
+/*
+Map  |  map (feet)  | map (blocks)   |   Accessible area (feet)  | Accessible area (blocks) |  Floating Islands
+Small   8400 x 2400     4200 x 1200     8234 x 2234     4117 x 1117 2–3
+Medium  12800 x 3600    6400 x 1800     12634 x 3434    6317 x 1717 4–5
+Large   16800 x 4800    8400 x 2400     16634 x 4634    8317 x 2317 4–6
+*/
+var cloudShader= {
+  attributes:{
+    size: { type: 'f', value: null },
+    alpha:{ type: 'f', value: null },
+    customColor: { type: 'c', value: null },
+    customPos: { type: 'v2', value: null }
+  },  
+  uniforms:{
+    scale :  { type: 'f', value: 25.0 },
+    //size :  { type: 'f', value: 0.05 },
+    diffuse :  { type: 'c', value: new THREE.Color(1, 1, 1) },
+    map: { type: 't', value: null }
+  },
+  fs:[
+      'uniform sampler2D map;',
+      'uniform vec3 diffuse;',
+      'varying vec3 vColor;',
+      'varying vec2 vPos;',
+      'varying float vAlpha;',
+      'void main(){',
+      '    vec2 pos = vPos;',
+      '    pos.y = 31.0-pos.y;',
+      '    vec2 sc = vec2(1.0/32.0, 1.0/32.0);',
+      '    vec2 uv = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );',
+      '    vec4 tex = texture2D( map, (uv*sc)+(pos/32.0) );',
+      //'    gl_FragColor = vec4(diffuse*vColor*tex.xyz, vAlpha*tex.a);',
+      '    gl_FragColor = vec4(vColor*tex.xyz, vAlpha*tex.a);',
+      '}'
+  ].join('\n'),
+  vs:[    
+    'attribute float alpha;',
+    'attribute vec3 customColor;',
+    'attribute vec2 customPos;',
+    'attribute float size;',
+    'uniform float scale;',
+    //'uniform float size;',
+    'varying vec2 vPos;',
+    'varying vec3 vColor;',
+    'varying float vAlpha;',
+    'void main(){',
+    '    vPos = customPos;',
+    '    vColor = customColor;',
+    '    vAlpha = alpha;',
+    '    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );',
+    '    gl_PointSize = size*scale;',// * ( scale / length( mvPosition.xyz ) );',
+    '    gl_Position = projectionMatrix * mvPosition;',
+    '}'
+  ].join('\n')
+};
+
+var updatePos = true;
+var debug = document.getElementById('debug');
+var container = document.getElementById('container');
+var camera, scene, renderer, world, material, particleSystem, geometry;
+
+var w = 8400/6;//1000;
+var h = 2400/6;//400;
+var vsize = {w:window.innerWidth, h:window.innerHeight, r:0.02};
+var particles = w*h;
+//   0.02 | 0.01
+// ------------
+//   25   | 50
+// ------------
+//   1  | 0.0002
+
+//25*0.02 = 0.5;
+//50*0.01 = 0.5;
+
+init3d();
+
+function init3d(){
+
+    camera = new THREE.OrthographicCamera( -vsize.w*vsize.r, vsize.w*vsize.r, vsize.h*vsize.r, -vsize.h*vsize.r, 0.1, 10 );
+    camera.rotation.z = Math.PI;
+    //camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+    //camera.zoom = 0.4;
+    //camera.position.z = 10;
+    //camera.position.y = -50;
+    scene = new THREE.Scene();              
+    renderer = new THREE.WebGLRenderer({precision:"mediump", alpha:false, antialias:false });
+    renderer.setClearColor( 0x86ABF9, 1 );
+    //renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
+    window.addEventListener( 'resize', resize, false );
+
+    //neuronShader.uniforms.map.value = THREE.ImageUtils.loadTexture( 'textures/tiles.png' );
+
+
+    material = new THREE.ShaderMaterial( {
+        uniforms:       cloudShader.uniforms,
+        attributes:     cloudShader.attributes,
+        vertexShader:   cloudShader.vs,
+        fragmentShader: cloudShader.fs,
+        //vertexColors:   THREE.VertexColors,
+        depthTest: false,
+        depthWrite: false,
+        transparent: true
+    });
+
+    var map = THREE.ImageUtils.loadTexture( 'textures/tiles.png' );
+    //map.anisotropy = renderer.getMaxAnisotropy();
+    //map.flipY = false;
+    map.magFilter = THREE.NearestFilter;
+    map.minFilter = THREE.LinearMipMapLinearFilter;
+
+    material.uniforms.map.value = map;
+
+    //var radius = 100;
+
+    geometry = new THREE.BufferGeometry();
+
+    var positions = new Float32Array( particles * 3 );
+    var values_pos = new Float32Array( particles * 2 );
+    var values_color = new Float32Array( particles * 3 );
+    var values_size = new Float32Array( particles );
+    var values_alpha = new Float32Array( particles );
+
+    var color = new THREE.Color();
+
+    var x = 0;
+    var y = 0;
+
+
+    for( var v = 0; v < particles; v++ ) {
+    //var v = particles;
+    //while(v--){
+        values_size[ v ] = 1.0;
+        values_alpha[ v ] = 1.0;
+
+        positions[ v * 3 + 0 ] = x//-(w*0.5);
+        positions[ v * 3 + 1 ] = y//+(h*0.5);
+        positions[ v * 3 + 2 ] = 0;
+
+        //color.setHSL( v / particles, 1.0, 0.5 );
+
+        values_pos[ v * 2 + 0 ] = 5;
+        values_pos[ v * 2 + 1 ] = 30;
+
+        values_color[ v * 3 + 0 ] = 1;//color.r;
+        values_color[ v * 3 + 1 ] = 1;//color.g;
+        values_color[ v * 3 + 2 ] = 1;//color.b;
+
+        x++;
+        if(x>(w-1)){
+            x = 0;
+            y++;
+        }
+
+    }
+
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+    geometry.addAttribute( 'customPos', new THREE.BufferAttribute( values_pos, 2 ) );
+    geometry.addAttribute( 'customColor', new THREE.BufferAttribute( values_color, 3 ) );
+    geometry.addAttribute( 'alpha', new THREE.BufferAttribute( values_alpha, 1 ) );
+    geometry.addAttribute( 'size', new THREE.BufferAttribute( values_size, 1 ) );
+
+    particleSystem = new THREE.PointCloud( geometry, material );
+    //particleSystem.position.set(-w*0.5, h*0.5,0);
+
+    camera.position.set(w*0.5, h*0.5+50,10)
+
+    scene.add( particleSystem );
+
+
+    world = new MINE.World(w,h);
+
+    container.onmousewheel = function(e) {onMouseWheel(e)};
+    container.addEventListener('DOMMouseScroll', function(e){onMouseWheel(e)}, false );
+
+    loop();
+}
+
+function onMouseWheel(e){
+    var delta = 0;
+    if(e.wheelDeltaY){delta=e.wheelDeltaY*0.01;}
+    else if(e.wheelDelta){delta=e.wheelDelta*0.05;}
+    else if(e.detail){delta=-e.detail*1.0;}
+    vsize.r-=(delta*0.001);
+    if(vsize.r<0.001) vsize.r = 0.001;
+
+    material.uniforms.scale.value = 0.5/vsize.r;
+
+    upCamera();
+
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function zoom(x) {
+    vsize.r = x
+    material.uniforms.scale.value = 10;
+}
+
+function upCamera() {
+    camera.left = -vsize.w*vsize.r;
+    camera.right = vsize.w*vsize.r;
+    camera.top = vsize.h*vsize.r;
+    camera.bottom = -vsize.h*vsize.r;
+    camera.updateProjectionMatrix();
+}
+
+function resize() {
+    vsize.w = window.innerWidth;
+    vsize.h = window.innerHeight;// = {w:, h:window.innerHeight, r:0.01};
+
+    upCamera();
+    //camera.aspect = window.innerWidth / window.innerHeight;
+    
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    //renderer.render( scene, camera );
+};
+
+
+function loop() {
+    requestAnimationFrame( loop );
+
+    if(world.ready){
+        world.update();
+        var positions;
+        if(updatePos) positions = geometry.attributes.position.array;
+        //var colors = geometry.attributes.customColor.array;
+        var alphas = geometry.attributes.alpha.array;
+        var pos = geometry.attributes.customPos.array;
+
+        //var radius = 100;
+        var color;// = {r:0, g:255, b:100};
+        var pp;
+        var x, y;
+
+        var v = particles;
+        var n = 0;
+        while(v--){
+            n = world.sand[v] || 0;
+            if(n!==0){
+
+                if(updatePos){
+                    y = Math.floor(v/w);
+                    x = v-(y*w);
+                    positions[ v * 3 + 0 ] = x;//pos.x;//-(w*0.5);//( Math.random() * 2 - 1 ) * radius;
+                    positions[ v * 3 + 1 ] = y;//pos.y;//-(h*0.5);
+                }
+
+                /*color = world.COLORS[n];
+                colors[ v * 3 + 0 ] = color.r;
+                colors[ v * 3 + 1 ] = color.g;
+                colors[ v * 3 + 2 ] = color.b;
+                alphas[v] = color.a;*/
+                //alphas[v] = 1;
+
+                pp = world.POS[n];
+                pos[ v * 2 + 0 ] = pp.x;
+                pos[ v * 2 + 1 ] = pp.y;
+
+            } else {
+                if(updatePos){
+                    if(positions[ v * 3 + 0 ]!=100000 ){
+                        positions[ v * 3 + 0 ] = 100000;
+                        positions[ v * 3 + 1 ] = 100000;
+                        //alphas[v] = 0;
+                    }
+
+                } else {
+                    pos[ v * 2 + 0 ] = 0;
+                    pos[ v * 2 + 1 ] = 0;
+                    //if(alphas[v]) alphas[v] = 0;
+                }
+                
+
+            }
+        }
+
+        if(updatePos) geometry.attributes.position.needsUpdate = true;
+        //geometry.attributes.customColor.needsUpdate = true;
+        geometry.attributes.customPos.needsUpdate = true;
+        //geometry.attributes.alpha.needsUpdate = true;
+    }
+
+
+    renderer.render( scene, camera );
+};
+
+</script>
+</body>
+</html>
