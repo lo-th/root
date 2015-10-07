@@ -4,23 +4,69 @@
 <html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>Daedalus 03 Pathfinding javascript example</title
+<title>Daedalus.js Basic</title>
 </head>
 <body bgcolor="#000000">
 <script src="ddls.min.js"></script>
-
 <script>
 var DEMO = function() {
-    this.newPath = false;
-    this.mesh = DDLS.RectMesh(600,600);
-    this.basicCanvas = new DDLS.BasicCanvas(600,600, '#000000', 60);
+    this.mesh = DDLS.RectMesh(800,800);
+    this.basicCanvas = new DDLS.BasicCanvas(800,800);
     this.view = new DDLS.SimpleView(this.basicCanvas);
+    var vertex = this.mesh.insertVertex(550,50);
+    var segment = this.mesh.insertConstraintSegment(70,300,530,320);
+    //var shape = this.mesh.insertConstraintShape([50.,50.,100.,50.,100.,50.,100.,100.,100.,100.,50.,100.,50.,100.,50.,50.,20.,50.,130.,100.]);
+    var objectCoords = [];
+
+    this.obj = [];
+
+    var obj = new DDLS.Object();
+    obj.coordinates = [-50.,0.,50.,0.,0.,-50.,0.,50.,-30.,-30.,30.,30.,30.,-30.,-30.,30.];
+    obj.x = 400;
+    obj.y = 300;
+    obj.scaleX = 2;
+    obj.scaleY = 2;
+    this.mesh.insertObject(obj);
+
+    this.obj.push(obj);
+
+    obj = new DDLS.Object();
+    obj.coordinates = [-50.,0.,50.,0.,0.,-50.,0.,50.,-30.,-30.,30.,30.,30.,-30.,-30.,30.];
+    obj.x = 200;
+    obj.y = 600;
+    obj.scaleX = 2;
+    obj.scaleY = 2;
+    this.mesh.insertObject(obj);
+
+    this.obj.push(obj);
+
+    obj = new DDLS.Object();
+    obj.coordinates = [-1,-1,1,-1,  1,-1,1,1,  1,1,-1,1,  -1,1,-1,-1];
+    obj.x = 400;
+    obj.y = 700;
+    obj.scaleX = 70;
+    obj.scaleY = 70;
+    this.mesh.insertObject(obj);
+
+    this.obj.push(obj);
+
+    obj = new DDLS.Object();
+    obj.coordinates = [-1,-1,1,-1,  1,-1,1,1,  1,1,-1,1,  -1,1,-1,-1];
+    //obj.coordinates = [-50.,0.,50.,0.,0.,-50.,0.,50.,-30.,-30.,30.,30.,30.,-30.,-30.,30.];
+    obj.x = 400;
+    obj.y = 600;
+    obj.scaleX = 50;
+    obj.scaleY = 40;
+    this.mesh.insertObject(obj);
+
+    this.obj.push(obj);
+
     var randGen;
     randGen = new DDLS.RandGenerator();
     randGen.seed = DDLS.randInt(1234,7259);
     var object;
     var _g = 0;
-    while(_g < 50) {
+    while(_g < 20) {
         var i = _g++;
         object = new DDLS.Object();
         object.coordinates = [-1,-1,1,-1,  1,-1,1,1,  1,1,-1,1,  -1,1,-1,-1];
@@ -32,12 +78,13 @@ var DEMO = function() {
         randGen.rangeMax = 1000;
         object.rotation = randGen.next() / 1000 * Math.PI / 2;
         randGen.rangeMin = 50;
-        randGen.rangeMax = 600;
+        randGen.rangeMax = 800;
         object.x = randGen.next();
         object.y = randGen.next();
         this.mesh.insertObject(object);
     }
-    this.view.drawMesh(this.mesh);
+
+    //this.basicCanvas.onEnterFrame = DDLS.Bind(this,this.onEnterFrame);
     this.entityAI = new DDLS.EntityAI();
     this.entityAI.radius = 4;
     this.entityAI.x = 20;
@@ -55,14 +102,6 @@ var DEMO = function() {
     this.basicCanvas.canvas.onmouseup = DDLS.Bind(this,this.onMouseUp);
     this.basicCanvas.canvas.onmousemove = DDLS.Bind(this,this.onMouseMove);
     this.basicCanvas.onEnterFrame = DDLS.Bind(this,this.onEnterFrame);
-
-    this.vegetables = ["spinach", "green pepper", "cilantro", "onion", "avocado"];
-    var spliced = this.vegetables.splice(2, 2);
-    console.log(this.vegetables)
-    console.log(spliced)
-
-    this.vegetables.splice(1, 1, "cilantro");
-    console.log(this.vegetables)
 };
 
 DEMO.prototype = {
@@ -78,7 +117,12 @@ DEMO.prototype = {
         this.newPath = true;
     },
     onEnterFrame: function() {
-        //this.mesh.updateObjects();
+        this.obj[0].rotation += 0.01;
+        this.obj[1].rotation -= 0.03;
+        this.obj[2].rotation += 0.01;
+        this.obj[3].rotation -= 0.01;
+        this.mesh.updateObjects();
+        this.view.drawMesh(this.mesh,true);
         if(this.newPath) this.view.drawMesh(this.mesh,true);
         if(this.newPath) {
             this.pathfinder.findPath(this.x,this.y,this.path);
@@ -90,8 +134,6 @@ DEMO.prototype = {
     }
 };
 
-
-new DEMO();
-
+var d = new DEMO();
 </script>
 </body>
