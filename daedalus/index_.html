@@ -1,0 +1,97 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Daedalus 03 Pathfinding javascript example</title
+</head>
+<body bgcolor="#000000">
+<script src="ddls.min.js"></script>
+
+<script>
+var DEMO = function() {
+    this.newPath = false;
+    this.mesh = DDLS.RectMesh(600,600);
+    this.basicCanvas = new DDLS.BasicCanvas(600,600, '#000000', 60);
+    this.view = new DDLS.SimpleView(this.basicCanvas);
+    var randGen;
+    randGen = new DDLS.RandGenerator();
+    randGen.seed = DDLS.randInt(1234,7259);
+    var object;
+    var _g = 0;
+    while(_g < 50) {
+        var i = _g++;
+        object = new DDLS.Object();
+        object.coordinates = [-1,-1,1,-1,  1,-1,1,1,  1,1,-1,1,  -1,1,-1,-1];
+        randGen.rangeMin = 10;
+        randGen.rangeMax = 40;
+        object.scaleX = randGen.next();
+        object.scaleY = randGen.next();
+        randGen.rangeMin = 0;
+        randGen.rangeMax = 1000;
+        object.rotation = randGen.next() / 1000 * Math.PI / 2;
+        randGen.rangeMin = 50;
+        randGen.rangeMax = 600;
+        object.x = randGen.next();
+        object.y = randGen.next();
+        this.mesh.insertObject(object);
+    }
+    this.view.drawMesh(this.mesh);
+    this.entityAI = new DDLS.EntityAI();
+    this.entityAI.radius = 4;
+    this.entityAI.x = 20;
+    this.entityAI.y = 20;
+    this.view.drawEntity(this.entityAI);
+    this.pathfinder = new DDLS.PathFinder();
+    this.pathfinder.entity = this.entityAI;
+    this.pathfinder.mesh = this.mesh;
+    this.path = [];
+    this.pathSampler = new DDLS.LinearPathSampler();
+    this.pathSampler.entity = this.entityAI;
+    this.pathSampler.samplingDistance = 10;
+    this.pathSampler.path = this.path;
+    this.basicCanvas.canvas.onmousedown = DDLS.Bind(this,this.onMouseDown);
+    this.basicCanvas.canvas.onmouseup = DDLS.Bind(this,this.onMouseUp);
+    this.basicCanvas.canvas.onmousemove = DDLS.Bind(this,this.onMouseMove);
+    this.basicCanvas.onEnterFrame = DDLS.Bind(this,this.onEnterFrame);
+
+    this.vegetables = ["spinach", "green pepper", "cilantro", "onion", "avocado"];
+    var spliced = this.vegetables.splice(2, 2);
+    console.log(this.vegetables)
+    console.log(spliced)
+
+    this.vegetables.splice(1, 1, "cilantro");
+    console.log(this.vegetables)
+};
+
+DEMO.prototype = {
+    onMouseMove: function(e) {
+        var p = e;
+        this.x = p.clientX;
+        this.y = p.clientY;
+    },
+    onMouseUp: function(e) {
+        this.newPath = false;
+    },
+    onMouseDown: function(e) {
+        this.newPath = true;
+    },
+    onEnterFrame: function() {
+        //this.mesh.updateObjects();
+        if(this.newPath) this.view.drawMesh(this.mesh,true);
+        if(this.newPath) {
+            this.pathfinder.findPath(this.x,this.y,this.path);
+            this.view.drawPath(this.path);
+            this.pathSampler.reset();
+        }
+        if(this.pathSampler.hasNext) this.pathSampler.next();
+        this.view.drawEntity(this.entityAI);
+    }
+};
+
+
+new DEMO();
+
+</script>
+</body>
