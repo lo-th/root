@@ -21,6 +21,7 @@ canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; hei
 		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
 		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
 		<script>
+		Math.TwoPI  = 6.283185307179586;
 		Math.lerp = function (a, b, percent) { return a + (b - a) * percent; };
 		Math.rand = function (a, b) { return Math.lerp(a, b, Math.random()); };
 		Math.randInt = function (a, b, n) { return Math.lerp(a, b, Math.random()).toFixed(n || 0)*1;};
@@ -67,6 +68,7 @@ canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; hei
 					var h = man.clone()
 
 					h.position.set(Math.rand(-1000, 1000), 0,Math.rand(-1000, 1000));
+					h.rotation.y = Math.rand(0, Math.TwoPI);
 
 					avatars.push(h);
 
