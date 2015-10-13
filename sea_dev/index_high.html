@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sea3d / skin</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+body { margin: 0px; background-color: #000000; overflow: hidden; }
+canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
+		</style>
+	</head>
+	<body>
+	<canvas id="canvas"></canvas>
+		<script src="js/three.min.js"></script>
+		<script src="js/loaders/collada/Animation.js"></script>
+		<script src="js/loaders/collada/AnimationHandler.js"></script>
+		<script src="js/loaders/collada/KeyFrameAnimation.js"></script>
+		<script src="js/MorphAnimMesh.js"></script>
+		<script src="js/OrbitControls.js"></script>>
+		<script src="js/loaders/sea3d/SEA3D.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script>
+
+			var container, canavas;
+
+			var avatars = [];
+
+			var walking = false;
+
+			var camera, scene, renderer, controls, player, hat;
+
+			var man;
+			var woman
+
+			var loader;
+
+			// Initialize Three.JS
+
+			init();
+
+			//
+			// SEA3D Loader
+			//
+
+			loader = new THREE.SEA3D( {
+
+				autoPlay : true
+				
+			} );
+
+			loader.onComplete = function( e ) {
+
+				// get meshes
+				man = loader.getMesh("man");
+				woman = loader.getMesh("woman");
+
+				console.log(man)
+
+				man.position.set(10, 0,0);
+
+				woman.scale.set(0.96, 0.96, 0.96);
+				woman.position.set(-10, -2,0);
+
+				var i = 100;
+				while(i--){
+					var h = man.clone()
+					var w = woman.clone();
+
+					h.position.set(30, 0,20*i);
+
+				    w.scale.set(0.96, 0.96, 0.96);
+				    w.position.set(-30, -2,20*i);
+
+					avatars.push(h);
+					avatars.push(w);
+
+					scene.add(h);
+					scene.add(w);
+
+					h.play("idle", .5);
+					w.play("idle", .5);
+				}
+
+				// events
+
+				window.addEventListener( 'click', onMouseClick, false );
+
+				animate();
+
+			};
+
+			loader.load( 'avatar2_exp.sea' );
+
+			//
+
+			function init() {
+				canvas = document.getElementById( 'canvas' );
+
+				scene = new THREE.Scene();
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 20000 );
+				camera.position.set( 0, 100, -500 );
+
+				controls = new THREE.OrbitControls( camera, canvas );
+
+				renderer = new THREE.WebGLRenderer({canvas:canvas});
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x333333, 1 );
+
+				// extra lights
+
+				var pointLight = new THREE.PointLight( 0xffffff, 1 );
+				scene.add( pointLight );
+
+				pointLight.position.set(200,300, -100)
+
+				scene.add( new THREE.AmbientLight( 0x333333 ) );
+
+				// events
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onMouseClick( e ) {
+
+				if (!walking) walking = true;
+				else walking = false;
+
+				var i = avatars.length;
+				while(i--){
+					if (!walking) avatars[i].play("idle", .5);
+					else avatars[i].play("walk", .5);
+				}
+
+				e.preventDefault();
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			var clock = new THREE.Clock();
+
+			function animate() {
+
+				var delta = clock.getDelta();
+
+				requestAnimationFrame( animate );
+
+				// Update SEA3D Animations
+				THREE.SEA3D.AnimationHandler.update( delta*0.6 );
+
+				// Update Three.JS Animations
+				THREE.AnimationHandler.update( delta*0.6 );
+
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>
