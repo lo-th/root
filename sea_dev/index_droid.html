@@ -77,6 +77,7 @@ canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; hei
 					var anim = animNames[Math.randInt(0,animNames.length-1)]
 
 					h.play(anim, .5);
+					h.setWeight("droid001",Math.rand(0,1));
 				}
 
 				// events
@@ -148,6 +149,7 @@ canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; hei
 				while(i--){
 					var anim = animNames[Math.randInt(0,animNames.length-1)];
 					avatars[i].play(anim, .5);
+					avatars[i].setWeight("droid001",Math.rand(0,1));
 				}
 
 				e.preventDefault();
