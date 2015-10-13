@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sea3d / skin</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+body { margin: 0px; background-color: #000000; overflow: hidden; }
+canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
+		</style>
+	</head>
+	<body>
+	<canvas id="canvas"></canvas>
+		<script src="js/three.min.js"></script>
+		<script src="js/loaders/collada/Animation.js"></script>
+		<script src="js/loaders/collada/AnimationHandler.js"></script>
+		<script src="js/loaders/collada/KeyFrameAnimation.js"></script>
+		<script src="js/MorphAnimMesh.js"></script>
+		<script src="js/OrbitControls.js"></script>>
+		<script src="js/loaders/sea3d/SEA3D.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script>
+		Math.lerp = function (a, b, percent) { return a + (b - a) * percent; };
+		Math.rand = function (a, b) { return Math.lerp(a, b, Math.random()); };
+		Math.randInt = function (a, b, n) { return Math.lerp(a, b, Math.random()).toFixed(n || 0)*1;};
+			var container, canavas;
+
+			var avatars = [];
+			var animNames=[
+			'fallBack', 'fallBackMid','fallFace', 'fallFaceBack', 'fallRight', 'fallLeft' , 'fallRightMid', 'fallLeftMid',
+			'idleDrive', 'jumpDown', 'idle', 'walk', 'step_right', 'step_left', 'run', 'trowGrenade', 'crouchIdle', 'crouchWalk',
+			'crouchGrenade', 'waterIdle', 'waterSwim'
+			];
+
+			var walking = false;
+
+			var camera, scene, renderer, controls, player, hat;
+
+			var man;
+			var woman
+
+			var loader;
+
+			// Initialize Three.JS
+
+			init();
+
+			//
+			// SEA3D Loader
+			//
+
+			loader = new THREE.SEA3D( {
+
+				autoPlay : true
+				
+			} );
+
+			loader.onComplete = function( e ) {
+
+				// get meshes
+				man = loader.getMesh("droid");
+
+
+				var i = 200;
+				while(i--){
+					var h = man.clone()
+
+					h.position.set(Math.rand(-1000, 1000), 0,Math.rand(-1000, 1000));
+
+					avatars.push(h);
+
+					scene.add(h);
+
+					var anim = animNames[Math.randInt(0,animNames.length-1)]
+
+					h.play(anim, .5);
+				}
+
+				// events
+
+				window.addEventListener( 'click', onMouseClick, false );
+
+				animate();
+
+			};
+
+			loader.load( 'droid.sea' );
+
+			//
+
+			function init() {
+				canvas = document.getElementById( 'canvas' );
+
+				scene = new THREE.Scene();
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 20000 );
+				camera.position.set( 0, 100, -500 );
+
+				controls = new THREE.OrbitControls( camera, canvas );
+
+				renderer = new THREE.WebGLRenderer({canvas:canvas});
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x333333, 1 );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFShadowMap;
+
+				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2200, 2200, 8, 8 ), new THREE.MeshBasicMaterial( { color:0x333333 } ) );
+			    plane.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+			    
+			    scene.add( plane );
+			    plane.castShadow = false;
+				plane.receiveShadow = true;
+
+				// extra lights
+
+				var light = new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 );
+				light.position.set( 0, 1500, 1000 );
+				light.target.position.set( 0, 0, 0 );
+
+				light.castShadow = true;
+
+				light.shadowCameraNear = 1200;
+				light.shadowCameraFar = 2500;
+				light.shadowCameraFov = 50;
+
+				scene.add( light );
+
+				var pointLight = new THREE.PointLight( 0x8888CC, 1 );
+				scene.add( pointLight );
+
+				pointLight.position.set(2000,100, -100)
+
+				scene.add( new THREE.AmbientLight( 0x333333 ) );
+
+				// events
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onMouseClick( e ) {
+
+				var i = avatars.length;
+				while(i--){
+					var anim = animNames[Math.randInt(0,animNames.length-1)];
+					avatars[i].play(anim, .5);
+				}
+
+				e.preventDefault();
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			var clock = new THREE.Clock();
+
+			function animate() {
+
+				var delta = clock.getDelta();
+
+				requestAnimationFrame( animate );
+
+				// Update SEA3D Animations
+				THREE.SEA3D.AnimationHandler.update( delta*0.6 );
+
+				// Update Three.JS Animations
+				THREE.AnimationHandler.update( delta*0.6 );
+
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>
