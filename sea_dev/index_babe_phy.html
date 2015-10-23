@@ -8,11 +8,13 @@
 	body { margin: 0px; background-color: #000000; overflow: hidden; background-image:url(images/shattered.png); font-family: Monospace;}
 	canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
 	#envSelector{position:absolute; bottom:10px; right:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
+	#LL{position:absolute; bottom:0; left:0; background-color:#74818b; width:100%; height:3px;}
 </style>
 </head>
 	<body>
 	<canvas id="canvas"></canvas>
 	<div id="envSelector"></div>
+	<div id="LL"></div>
 
 		<script src="js/three.min.js"></script>
 		<script src="js/shadowShader.js"></script>
@@ -31,6 +33,7 @@
 		Math.rand = function (a, b) { return Math.lerp(a, b, Math.random()); };
 		Math.randInt = function (a, b, n) { return Math.lerp(a, b, Math.random()).toFixed(n || 0)*1;};
 			var container, canvas;
+			var LL = document.getElementById( 'LL' );
 
 			var avatars = [];
 			var animNames=[ 'idle', 'walk','run', 'intro', 'hello', 'dance' , 'dead', 'hit', 'idle2', 'sing', 'kutt' ];
@@ -83,6 +86,14 @@
 			//
 
 			var sea_loader = new THREE.SEA3D( { autoPlay : false } );
+
+			sea_loader.onDownloadProgress = function( e ) {
+				LL.style.width = ((e.progress || 0) * 100) + "%";
+			}
+			sea_loader.onLoadProgress = function( e ) {
+				//console.log('load', e);
+				//LL.style.width = ((e.progress || 0) * 100) + "%";
+			}
 
 			sea_loader.onComplete = function( e ) {
 
