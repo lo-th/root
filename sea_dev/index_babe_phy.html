@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+<title>three.js webgl - sea3d / skin</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+	body { margin: 0px; background-color: #000000; overflow: hidden; background-image:url(images/shattered.png); font-family: Monospace;}
+	canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
+	#envSelector{position:absolute; bottom:10px; right:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
+</style>
+</head>
+	<body>
+	<canvas id="canvas"></canvas>
+	<div id="envSelector"></div>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/shadowShader.js"></script>
+		<script src="js/dat.gui.min.js"></script>
+		<script src="js/loaders/collada/Animation.js"></script>
+		<script src="js/loaders/collada/AnimationHandler.js"></script>
+		<script src="js/loaders/collada/KeyFrameAnimation.js"></script>
+		<script src="js/MorphAnimMesh.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/loaders/sea3d/SEA3D.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script>
+		Math.TwoPI  = 6.283185307179586;
+		Math.lerp = function (a, b, percent) { return a + (b - a) * percent; };
+		Math.rand = function (a, b) { return Math.lerp(a, b, Math.random()); };
+		Math.randInt = function (a, b, n) { return Math.lerp(a, b, Math.random()).toFixed(n || 0)*1;};
+			var container, canvas;
+
+			var avatars = [];
+			var animNames=[ 'idle', 'walk','run', 'intro', 'hello', 'dance' , 'dead', 'hit', 'idle2', 'sing', 'kutt' ];
+
+			var camera, scene, renderer, controls, clock, model, material;
+
+			var phy_material;
+
+			var setAnimation = {
+				idle:0.1,
+				walk:0.1,
+				run:0.1,
+				intro:0.1,
+				hello:0.1,
+				dance:0.1,
+				dead:0.1,
+				hit:0.1,
+				idle2:0.1,
+				sing:0.1,
+				kutt:0.1
+			}
+
+			var settings = {
+				metalness : 0.5,
+				roughness: 0.3,
+				reflectivity : 1,
+				aoMapIntensity: 1,
+				lightMapIntensity:1,
+				normalScale: 2,
+
+				diffuse : true,
+				normal : true,
+				specular : true,
+				ao : true
+			}
+
+			
+
+
+			var map, normalMap, specularMap, aoMap, envMap, fakeMap;
+
+
+			var environment;
+			var envLists = ['e_plastic_r.jpg','e_plastic.jpg','e_smooth.jpg', 'e_metal.jpg','e_chrome.jpg','e_brush.jpg','e_black.jpg','env6.jpg', 'env7.jpg','env8.jpg','env9.jpg'];
+			var envcontext;
+			var nEnv = 0;
+
+			//
+			// SEA3D Loader
+			//
+
+			var sea_loader = new THREE.SEA3D( { autoPlay : false } );
+
+			sea_loader.onComplete = function( e ) {
+
+				// get meshes
+				model = sea_loader.getMesh("girl");
+				//console.log(model.material);
+				model.geometry.addAttribute( 'uv2', model.geometry.attributes.uv );
+				map = model.material.map;
+				var normalScale = new THREE.Vector2(settings.normalScale,settings.normalScale);
+		
+				phy_material = new THREE.MeshPhysicalMaterial( { 
+					map: map, normalMap: normalMap, normalScale:normalScale, color: 0XFFFFFF,
+					lightMap:specularMap, lightMapIntensity:1,
+					aoMap:aoMap, aoMapIntensity:settings.aoMapIntensity,
+					metalness: settings.metalness, roughness: settings.roughness, shading: THREE.SmoothShading,
+					envMap: envMap, skinning:true, fog:false, side:THREE.DoubleSide,
+					transparent : true,
+				});
+
+				model.material = phy_material;
+
+				for(var j=0; j<model.animations.length; j++){
+					setAnimation[model.animations[j].name] = model.animations[j].weight;
+					if(model.animations[j].name == 'walk') setAnimation[model.animations[j].name] = 1;
+				}
+
+				clone();
+			};
+
+			// Initialize Three.JS
+
+			init();
+			animate();
+
+			//
+
+			function init() {
+				canvas = document.getElementById( 'canvas' );
+
+				clock = new THREE.Clock();
+				scene = new THREE.Scene();
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 20000 );
+				camera.position.set( -70, 30, 70 );
+
+
+				controls = new THREE.OrbitControls( camera, canvas );
+				controls.target.set(0, 20, 0);
+
+				renderer = new THREE.WebGLRenderer({canvas:canvas, precision: "lowp", antialias:true, alpha:true});
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0X000000, 0 );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.soft = true;
+			    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			    renderer.shadowMap.cullFace = THREE.CullFaceBack;
+				//renderer.shadowMap.type = THREE.PCFShadowMap;
+
+				var groundmat = new THREE.ShaderMaterial({
+					uniforms: THREE.ShaderLib['basic'].uniforms,
+					vertexShader: THREE.ShaderLib['basic'].vertexShader,
+					fragmentShader: planeFragmentShader,
+					transparent:true,
+					depthWrite: false, 
+					fog:false
+				});
+
+				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 300, 300, 8, 8 ), groundmat );
+			    plane.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+			    
+			    scene.add( plane );
+			    plane.castShadow = false;
+				plane.receiveShadow = true;
+
+				// extra lights
+
+				var light = new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 10, 2 );
+				light.position.set( -100, 300, 50 );
+				light.target.position.set( 0, 0, 0 );
+
+				light.castShadow = true;
+
+				light.shadowCameraNear = 250;
+				light.shadowCameraFar = 400;
+				light.shadowCameraFov = 50;
+				light.shadowDarkness = 0.6;
+				light.shadowMapWidth = 2048;
+				light.shadowMapHeight = 2048;
+				light.shadowBias =  -0.005;
+				//light.shadowCameraFov = 70;
+
+
+				scene.add( light );
+
+				var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.8 );
+				//hemiLight.color.setHSL( 0.6, 1, 0.6 );
+				//hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+				hemiLight.position.set( 0, 10, 0 );
+				scene.add( hemiLight );
+
+				//var lightCam = new THREE.CameraHelper( light.shadow.camera );
+				//scene.add( lightCam )
+
+				var pointLight = new THREE.PointLight( 0xCCCCEE, 1 );
+				pointLight.position.set(200,100, -100)
+				scene.add( pointLight );
+
+				
+
+				//scene.add( new THREE.AmbientLight( 0xAAAAAA ) );
+
+				var helper = new THREE.GridHelper( 300, 50 );
+				helper.setColors( 0xd7d9d9, 0xd7d9d9 );
+				helper.material = new THREE.LineBasicMaterial( { vertexColors: THREE.VertexColors, transparent:true, opacity:0.4 } );
+				scene.add( helper );
+
+				initEnvironment();
+
+
+				var img_loader = new THREE.TextureLoader();
+
+				//reflectionSphere = img_loader.load( "textures/env.jpg");
+				//reflectionSphere.mapping = THREE.SphericalReflectionMapping;
+				//reflectionSphere.format = THREE.RGBFormat;
+
+				aoMap = img_loader.load( "textures/babe_gi.jpg");
+				aoMap.wrapS = THREE.RepeatWrapping;
+				aoMap.wrapT = THREE.RepeatWrapping;
+				aoMap.flipY = false;
+
+				normalMap = img_loader.load( "textures/babe_n.jpg");
+				normalMap.wrapS = THREE.RepeatWrapping;
+				normalMap.wrapT = THREE.RepeatWrapping;
+				normalMap.flipY = false;
+
+
+                specularMap = img_loader.load( "textures/babe_s.jpg");
+				specularMap.wrapS = THREE.RepeatWrapping;
+				specularMap.wrapT = THREE.RepeatWrapping;
+				specularMap.flipY = false;
+
+
+				fakeMap = img_loader.load( "textures/fake_b.png");//= new THREE.Texture()
+				fakeMap.format = THREE.RGBAFormat
+
+				// events
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+
+				// load model
+
+				sea_loader.load( 'babe.sea' );
+
+				initGUI();
+
+			}
+
+			function clone(){
+				var i = 0;
+				var n = avatars.length;
+				if(n==55) return;
+
+				var h = model.clone();
+				scene.add(h);
+
+				var name;
+				for(var j=0; j<h.animations.length; j++){
+					name = h.animations[j].name;
+					h.animations[j].play(0);
+					h.animations[j].weight = setAnimation[h.animations[j].name];
+				}
+
+				avatars.push(h);
+
+				var px=0, pz=0;
+				while(n--){
+					i = n+1;
+					px = 0;
+					pz = 0;
+					if(i>0){ pz = 0; px = (i)*20; }
+					if(i>5){ pz = -40; px = (i-6)*20; }
+					if(i>10){ pz = 40; px = (i-11)*20; }
+					if(i>15){ pz = -80; px = (i-16)*20; }
+					if(i>20){ pz = 80; px = (i-21)*20; }
+					if(i>25){ pz = -120; px = (i-26)*20; }
+					if(i>30){ pz = 120; px = (i-31)*20; }
+					if(i>35){ pz = -160; px = (i-36)*20; }
+					if(i>40){ pz = 160; px = (i-41)*20; }
+					if(i>45){ pz = -200; px = (i-46)*20; }
+					if(i>50){ pz = 200; px = (i-51)*20; }
+
+					avatars[i].position.x = px;
+					avatars[i].position.z = pz;
+
+				}
+
+			}
+
+
+
+			function initGUI(){
+				var gui = new dat.GUI();
+				gui.add({clone:function(){clone();}}, 'clone');
+
+				var f1 = gui.addFolder('Animation');
+				for(var a in setAnimation){
+				    f1.add( setAnimation, a,  0, 1, 0.01 ).step(0.01).listen().onChange( function(v){upAnimation(this.property, v); } );
+			    }
+
+			    var f2 = gui.addFolder('Material');
+
+				f2.add( settings, 'metalness', 0, 1, 0.01 ).onChange(upMaterial);
+				f2.add( settings, 'roughness', 0, 1, 0.01 ).onChange(upMaterial);
+				f2.add( settings, 'reflectivity', 0, 1, 0.01 ).onChange(upMaterial);
+				f2.add( settings, 'aoMapIntensity', 0, 1, 0.01 ).onChange(upMaterial);
+				f2.add( settings, 'lightMapIntensity', 0, 1, 0.01 ).onChange(upMaterial);
+				f2.add( settings, 'normalScale', 0, 10, 0.01 ).onChange(upMaterial);
+
+				f2.add(settings, 'diffuse').onChange( function(v){  if(v){ phy_material.map = map; } else { phy_material.map = fakeMap; }; });
+			    f2.add(settings, 'normal').onChange( function(v){ if(v){ phy_material.normalMap = normalMap; phy_material.normalScale = new THREE.Vector2(settings.normalScale,settings.normalScale);} else { phy_material.normalMap=fakeMap; phy_material.normalScale = new THREE.Vector2();}; });
+			    f2.add(settings, 'specular').onChange( function(v){ if(v){ phy_material.lightMap = specularMap; } else { phy_material.lightMap=fakeMap; }; });
+			    f2.add(settings, 'ao').onChange( function(v){ if(v){ phy_material.aoMap = aoMap; } else { phy_material.aoMap=fakeMap; }; });
+			}
+
+			function upAnimation(name, v){
+
+				var res = 1-v;
+				var num = 0;
+
+				for(var a in setAnimation){
+					if(a !== name){
+						if(setAnimation[a] !== 0) num ++;
+					}
+				}
+
+				for(var a in setAnimation){
+					if(a !== name){
+						if(setAnimation[a] !== 0) setAnimation[a] = res/num;
+					}
+				}
+				
+				var i = avatars.length;
+				while(i--){
+					for(var a in setAnimation){
+				        avatars[i].animations[a].weight = setAnimation[a];
+					}
+				
+					//avatars[i].play(settings.animation, 0.5);
+				}
+			}
+
+			function upMaterial(){
+				phy_material.metalness = settings.metalness;
+				phy_material.roughness = settings.roughness;
+				phy_material.reflectivity = settings.reflectivity;
+				phy_material.aoMapIntensity = settings.aoMapIntensity;
+				phy_material.lightMapIntensity = settings.lightMapIntensity;
+				phy_material.normalScale = new THREE.Vector2(settings.normalScale,settings.normalScale);
+			}
+
+			function onMouseClick( e ) {
+
+				var i = avatars.length;
+				while(i--){
+					var anim = animNames[Math.randInt(0,animNames.length-1)];
+					avatars[i].play(anim, .5);
+				}
+
+				e.preventDefault();
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function initEnvironment(){
+
+				var env = document.getElementById('envSelector');
+				var canvas = document.createElement( 'canvas' );
+				canvas.width = canvas.height = 64;
+				env.appendChild( canvas );
+				envcontext = canvas.getContext('2d');
+				loadNewEnv(true);
+				env.onclick = loadNewEnv;
+
+			}
+
+			function loadNewEnv(){
+
+				var img = new Image();
+				img.onload = function(){
+					nEnv++;
+					if(nEnv==envLists.length) nEnv = 0;
+					envcontext.drawImage(img,0,0,64,64);
+					
+					envMap = new THREE.Texture(img);
+					envMap.mapping = THREE.SphericalReflectionMapping;
+				    envMap.format = THREE.RGBFormat;
+					envMap.needsUpdate = true;
+
+					if(phy_material)phy_material.envMap = envMap
+				}
+				img.src = 'textures/spherical/'+envLists[nEnv];
+
+			}
+
+			//
+
+			function animate() {
+
+				controls.update();
+
+				var delta = clock.getDelta();
+
+				requestAnimationFrame( animate );
+
+				// Update SEA3D Animations
+				THREE.SEA3D.AnimationHandler.update( delta*0.6 );
+
+				// Update Three.JS Animations
+				THREE.AnimationHandler.update( delta*0.6 );
+
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>
