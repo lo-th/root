@@ -8,7 +8,7 @@
 	body { margin: 0px; background-color: #000000; overflow: hidden; background-image:url(images/shattered.png); font-family: Monospace;}
 	canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
 	#envSelector{position:absolute; bottom:10px; right:10px; border:3px solid #74818b; width:64px; height:64px; cursor:pointer;}
-	#LL{position:absolute; bottom:0; left:0; background-color:#74818b; width:100%; height:3px;}
+	#LL{position:absolute; top:0; left:0; background-color:#FF3300; width:100%; height:5px;}
 </style>
 </head>
 	<body>
@@ -96,6 +96,7 @@
 			}
 
 			sea_loader.onComplete = function( e ) {
+				LL.style.display = 'none'
 
 				// get meshes
 				model = sea_loader.getMesh("girl");
@@ -119,6 +120,8 @@
 					setAnimation[model.animations[j].name] = model.animations[j].weight;
 					if(model.animations[j].name == 'walk') setAnimation[model.animations[j].name] = 1;
 				}
+
+				initGUI();
 
 				clone();
 			};
@@ -251,7 +254,7 @@
 
 				sea_loader.load( 'babe.sea' );
 
-				initGUI();
+				
 
 			}
 
