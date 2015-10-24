@@ -246,7 +246,8 @@ function onMouseWheel(e) {
 
 function initBVH() {
     bvhReader = new BVH.Reader();
-    loadBVH("ActionPak.BVH");
+    loadBVH("images/action.png");
+    //loadBVH("ActionPak.BVH");
     //initBVHGui();
 }
 
@@ -492,10 +493,11 @@ BVH.Reader.prototype = {
                         c.width = this.width;
                         c.height = this.height;
                         c.getContext('2d').drawImage(this, 0, 0);
-                        var color = 0;
-                        if(data[1]!==0)color=1;
-                        if(data[2]!==0)color=2;
+                        
                         var d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+                        var color = 0;
+                        if(d[1]!==0)color=1;
+                        if(d[2]!==0)color=2;
                         var pix, string = "", id, l = d.length/4;
                         for ( var i = 0; i<l; i++){
                             id = (i*4)+color;
