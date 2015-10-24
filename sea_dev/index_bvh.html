@@ -70,8 +70,8 @@ function init() {
     out2 = document.getElementById("out2");
     debug = document.getElementById("debug");
     document.getElementById('files').addEventListener('change', handleFileSelect, false);
-    document.getElementById("b1").addEventListener( 'click', function ( e ) {BVHanimConfig.speed=0.5; loadBVH("images/action.z"); }, false );
-    document.getElementById("b2").addEventListener( 'click', function ( e ) {BVHanimConfig.speed=1; loadBVH("images/story.z"); }, false ); 
+    document.getElementById("b1").addEventListener( 'click', function ( e ) {BVHanimConfig.speed=0.5; loadBVH("bvh/action.z"); }, false );
+    document.getElementById("b2").addEventListener( 'click', function ( e ) {BVHanimConfig.speed=1; loadBVH("bvh/story.z"); }, false ); 
     document.getElementById("b3").addEventListener( 'click', function ( e ) {heroVisibility(); }, false );
     document.getElementById("b4").addEventListener( 'click', function ( e ) {skeletonVisibility(); }, false );
     
@@ -248,7 +248,7 @@ function onMouseWheel(e) {
 function initBVH() {
     bvhReader = new BVH.Reader();
     //loadBVH("images/action.png");
-    loadBVH("images/action.z");
+    loadBVH("bvh/action.z");
     //loadBVH("ActionPak.BVH");
     //initBVHGui();
 }
