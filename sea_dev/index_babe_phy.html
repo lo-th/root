@@ -103,7 +103,8 @@
 
 			function showBones(id){
 				var isWhite = false;
-				if (id == 0) isWhite = true;
+				if (id == 0){ isWhite = true;  if(settings.diffuse)phy_material.map = map;}
+				else { phy_material.map = fakeMap; }
 				//var id = 57;
 				var colors = model.geometry.attributes.color.array;
 				var index = model.geometry.attributes.skinIndex.array;
@@ -153,6 +154,7 @@
 				var nn;
 				for(i=0; i< model.skeleton.bones.length; i++){
 					nn = model.skeleton.bones[i].name;
+					if(nn == 'Dummy_root') nn = 'NONE';
 					setBones.list[nn.replace("Bip01-", "bip-")] = i;
 					//setBones.list[i] = {nn.replace("Bip01-", "+") : i } 
 				}
