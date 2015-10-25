@@ -143,6 +143,9 @@
 				model = sea_loader.getMesh("girl");
 				
 				var colors = new THREE.Float32Attribute( model.geometry.attributes.position.count*3, 3 );
+				for(i=0; i<colors.count; i++){
+					colors.array[i*3] = 1; colors.array[i*3+1] = 1; colors.array[i*3+2] = 1;
+				}
 				
 				model.geometry.addAttribute( 'color', colors );
 
