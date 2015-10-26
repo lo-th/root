@@ -17,7 +17,6 @@
 	<div id="LL"></div>
 
 		<script src="js/three.min.js"></script>
-		<script src="js/shadowShader.js"></script>
 		<script src="js/dat.gui.min.js"></script>
 		<script src="js/loaders/collada/Animation.js"></script>
 		<script src="js/loaders/collada/AnimationHandler.js"></script>
@@ -27,6 +26,8 @@
 		<script src="js/loaders/sea3d/SEA3D.js"></script>
 		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
 		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script src="shaders/TransparentShadow.js"></script>
+		<script src="shaders/Physical.js"></script>
 		<script>
 		Math.TwoPI  = 6.283185307179586;
 		Math.lerp = function (a, b, percent) { return a + (b - a) * percent; };
@@ -69,6 +70,8 @@
 				aoMapIntensity: 1,
 				lightMapIntensity:1,
 				normalScale: 2,
+				gammaoffset:0,
+				exposure:1,
 
 				diffuse : true,
 				normal : true,
@@ -181,6 +184,11 @@
 					transparent : true, vertexColors: THREE.VertexColors
 				});
 
+				//phy_material.uExposure = 3;
+				//phy_material.uGammaOffset = 0;
+
+				console.log(phy_material)
+
 				model.material = phy_material;
 
 				for(var j=0; j<model.animations.length; j++){
@@ -221,22 +229,13 @@
 				renderer.setClearColor( 0X000000, 0 );
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
+				renderer.gammaFactor = 2.2;
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.soft = true;
 			    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 			    renderer.shadowMap.cullFace = THREE.CullFaceBack;
-				//renderer.shadowMap.type = THREE.PCFShadowMap;
 
-				var groundmat = new THREE.ShaderMaterial({
-					uniforms: THREE.ShaderLib['basic'].uniforms,
-					vertexShader: THREE.ShaderLib['basic'].vertexShader,
-					fragmentShader: planeFragmentShader,
-					transparent:true,
-					depthWrite: false, 
-					fog:false
-				});
-
-				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 300, 300, 8, 8 ), groundmat );
+				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 300, 300, 8, 8 ), THREE.ShadowMaterial );
 			    plane.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 			    
 			    scene.add( plane );
@@ -296,23 +295,23 @@
 
 				aoMap = img_loader.load( "textures/babe_gi.jpg");
 				aoMap.wrapS = THREE.RepeatWrapping;
-				aoMap.wrapT = THREE.RepeatWrapping;
+				//aoMap.wrapT = THREE.RepeatWrapping;
 				aoMap.flipY = false;
 
 				normalMap = img_loader.load( "textures/babe_n.jpg");
 				normalMap.wrapS = THREE.RepeatWrapping;
-				normalMap.wrapT = THREE.RepeatWrapping;
+				//normalMap.wrapT = THREE.RepeatWrapping;
 				normalMap.flipY = false;
 
 
                 specularMap = img_loader.load( "textures/babe_s.jpg");
 				specularMap.wrapS = THREE.RepeatWrapping;
-				specularMap.wrapT = THREE.RepeatWrapping;
+				//specularMap.wrapT = THREE.RepeatWrapping;
 				specularMap.flipY = false;
 
 
 				fakeMap = img_loader.load( "textures/fake_b.png");//= new THREE.Texture()
-				fakeMap.format = THREE.RGBAFormat
+				fakeMap.format = THREE.RGBAFormat;
 
 				// events
 
@@ -388,10 +387,15 @@
 				f2.add( settings, 'lightMapIntensity', 0, 1, 0.01 ).onChange(upMaterial);
 				f2.add( settings, 'normalScale', 0, 10, 0.01 ).onChange(upMaterial);
 
+				f2.add( settings, 'exposure', -5, 5, 0.01 ).onChange(upMaterial);
+				f2.add(settings, 'gammaoffset', -10, 10, 0.01).onChange(upMaterial);// function(){ phy_material.uGammaOffset = settings.gamma; });
+
 				f2.add(settings, 'diffuse').onChange( function(v){  if(v){ phy_material.map = map; } else { phy_material.map = fakeMap; }; });
 			    f2.add(settings, 'normal').onChange( function(v){ if(v){ phy_material.normalMap = normalMap; phy_material.normalScale = new THREE.Vector2(settings.normalScale,settings.normalScale);} else { phy_material.normalMap=fakeMap; phy_material.normalScale = new THREE.Vector2();}; });
 			    f2.add(settings, 'specular').onChange( function(v){ if(v){ phy_material.lightMap = specularMap; } else { phy_material.lightMap=fakeMap; }; });
 			    f2.add(settings, 'ao').onChange( function(v){ if(v){ phy_material.aoMap = aoMap; } else { phy_material.aoMap=fakeMap; }; });
+
+			    
 
 			    var f3 = gui.addFolder('Bones');
 			    f3.add( setBones,  'list', setBones.list ).onChange( function(v){ showBones(v) });
@@ -430,6 +434,10 @@
 				phy_material.reflectivity = settings.reflectivity;
 				phy_material.aoMapIntensity = settings.aoMapIntensity;
 				phy_material.lightMapIntensity = settings.lightMapIntensity;
+
+				phy_material.exposure = Math.pow(2, settings.exposure);
+				phy_material.gammaoffset =  1 / 2.2 * settings.gammaoffset / 10 ;//settings.gammaoffset;
+
 				phy_material.normalScale = new THREE.Vector2(settings.normalScale,settings.normalScale);
 			}
 
