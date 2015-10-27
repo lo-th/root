@@ -380,7 +380,7 @@
 
 			Pad.prototype = {
 				update:function(ar){
-                    if(!ar)return;
+                    //if(!ar)return;
 					this.axeR.rotation.z = ar[0];
 					this.axeR.rotation.x = -ar[1];
 					this.axeL.rotation.z = ar[2];
@@ -452,7 +452,7 @@
 				controls.update();
 
 				if(gamepad) gamepad.update();
-				if(pads[0]) pads[0].update(gamepad.values[0]);
+				if(pads[0] && gamepad.values[0]) pads[0].update(gamepad.values[0]);
 
 				// Update SEA3D Animations
 				//THREE.SEA3D.AnimationHandler.update( delta*0.6 );
