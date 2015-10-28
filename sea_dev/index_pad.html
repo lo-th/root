@@ -89,11 +89,11 @@
 			
 
 
-			var map, normalMap, specularMap, aoMap, envMap, fakeMap;
+			var map, normalMap, specularMap, aoMap, envMap, fakeMap, diffuselMap;
 
 
 			var environment;
-			var envLists = ['e_plastic_r.jpg','e_plastic.jpg','e_smooth.jpg', 'e_metal.jpg','e_chrome.jpg','e_brush.jpg','e_black.jpg','env6.jpg', 'env7.jpg','env8.jpg','env9.jpg'];
+			var envLists = ['e_chrome.jpg','e_plastic_r.jpg','e_plastic.jpg','e_smooth.jpg', 'e_metal.jpg','e_brush.jpg','e_black.jpg','env6.jpg', 'env7.jpg','env8.jpg','env9.jpg'];
 			var envcontext;
 			var nEnv = 0;
 
@@ -152,8 +152,8 @@
 
 				// get meshes
 				pad = sea_loader.getMesh("pad");
-				pad_mid = sea_loader.getMesh("pad_mid");
-				pad_body = sea_loader.getMesh("coque");
+				//pad_mid = sea_loader.getMesh("pad_mid");
+				//pad_body = sea_loader.getMesh("coque");
 				
 				/*var colors = new THREE.Float32Attribute( model.geometry.attributes.position.count*3, 3 );
 				for(i=0; i<colors.count; i++){
@@ -178,18 +178,20 @@
 				//console.log(model.geometry.attributes );
 				//console.log(model.geometry.attributes.skinWeight.array, model.geometry.attributes.skinWeight.array[3] );
 
-				//model.geometry.addAttribute( 'uv2', model.geometry.attributes.uv );
+				pad.geometry.addAttribute( 'uv2', pad.geometry.attributes.uv );
 				//map = model.material.map;
 				//var normalScale = new THREE.Vector2(settings.normalScale,settings.normalScale);
 
 				//phy_material = new THREE.MeshBasicMaterial ( { color:0xFFFFFF, vertexColors: THREE.VertexColors, skinning:true });
 		
 				phy_material = new THREE.MeshPhysicalMaterial( { 
-					//map: map, normalMap: normalMap, normalScale:normalScale,
+					map: map,// normalMap: normalMap, normalScale:normalScale,
 					//lightMap:specularMap, lightMapIntensity:1,
-					//aoMap:aoMap, aoMapIntensity:settings.aoMapIntensity,
+					aoMap:aoMap, aoMapIntensity:1,
+                    //metalnessMap:metalMap, 
 					color: 0XAAAAAA,
-					metalness: 1, roughness: 0.3, shading: THREE.SmoothShading,
+
+					metalness: 1, roughness: 0.5, shading: THREE.SmoothShading,
 					envMap:envMap, skinning:true, fog:false//, side:THREE.DoubleSide,
 					//transparent : true, vertexColors: THREE.VertexColors
 				});
@@ -200,9 +202,9 @@
 				//console.log(phy_material)
 
 				pad.material = phy_material;
-				pad_mid.material = phy_material;
-				pad_body.material = phy_material.clone();
-				pad_body.material.skinning = false;
+				//pad_mid.material = phy_material;
+				//pad_body.material = phy_material.clone();
+				//pad_body.material.skinning = false;
 
 				/*for(var j=0; j<model.animations.length; j++){
 					setAnimation[model.animations[j].name] = model.animations[j].weight;
@@ -240,7 +242,7 @@
 				scene = new THREE.Scene();
 
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 20000 );
-				camera.position.set( 0, 50, -70 );
+				camera.position.set( 0, 50, -100 );
 
 
 				controls = new THREE.OrbitControls( camera, canvas );
@@ -294,8 +296,8 @@
 				//var lightCam = new THREE.CameraHelper( light.shadow.camera );
 				//scene.add( lightCam )
 
-				var pointLight = new THREE.PointLight( 0xCCCCEE, 1 );
-				pointLight.position.set(200,100, -100)
+				var pointLight = new THREE.PointLight( 0xCCCCFF, 3 );
+				pointLight.position.set(0,3, 0)
 				scene.add( pointLight );
 
 				
@@ -316,12 +318,13 @@
 				//reflectionSphere.mapping = THREE.SphericalReflectionMapping;
 				//reflectionSphere.format = THREE.RGBFormat;
 
-				aoMap = img_loader.load( "textures/babe_gi.jpg");
-				aoMap.wrapS = THREE.RepeatWrapping;
-				//aoMap.wrapT = THREE.RepeatWrapping;
+				aoMap = img_loader.load( "textures/pad_gi.jpg");
 				aoMap.flipY = false;
 
-				normalMap = img_loader.load( "textures/babe_n.jpg");
+                map = img_loader.load( "textures/pad_c.jpg");
+                map.flipY = false;
+
+				/*normalMap = img_loader.load( "textures/babe_n.jpg");
 				normalMap.wrapS = THREE.RepeatWrapping;
 				//normalMap.wrapT = THREE.RepeatWrapping;
 				normalMap.flipY = false;
@@ -334,7 +337,7 @@
 
 
 				fakeMap = img_loader.load( "textures/fake_b.png");//= new THREE.Texture()
-				fakeMap.format = THREE.RGBAFormat;
+				fakeMap.format = THREE.RGBAFormat;*/
 
 				// events
 
@@ -350,8 +353,18 @@
 			}
 
 			function Pad(){
-				this.padL = pad.clone();
-				this.padR = pad.clone();
+				this.pad = pad.clone();
+                this.pad.position.y = 15;
+                this.pad.rotation.x = -0.37;
+                console.log(this.pad.skeleton)
+                var b;
+                for(var i = 0; i<this.pad.skeleton.bones.length; i++){
+                    b = this.pad.skeleton.bones[i];
+                    this[b.name] = b;
+
+                    //console.log(b.name)
+                }
+				/*this.padR = pad.clone();
 				this.padM = pad_mid.clone();
 
 				this.body = pad_body.clone();
@@ -370,32 +383,69 @@
 
 				this.group = new THREE.Group();
 
+
 				this.group.add(this.padL);
 				this.group.add(this.padR);
 				this.group.add(this.padM);
-				this.group.add(this.body);
+				this.group.add(this.body);*/
 
-				scene.add(this.group);
+                 console.log(this.g_l.rotation.y)
+
+				scene.add(this.pad);
 			}
 
 			Pad.prototype = {
 				update:function(ar){
                     //if(!ar)return;
-					this.axeR.rotation.z = ar[0];
-					this.axeR.rotation.x = -ar[1];
-					this.axeL.rotation.z = ar[2];
-					this.axeL.rotation.x = -ar[3];
+					this.axe_r.rotation.z = ar[0];
+					this.axe_r.rotation.x = -ar[1];
+					this.axe_l.rotation.z = ar[2];
+					this.axe_l.rotation.x = -ar[3];
 
-					//this.axeR.applyMatrix(new THREE.Matrix4().makeTranslation(0,ar[14]==1 ? -2:0,0));
-					//this.axeL.applyMatrix(new THREE.Matrix4().makeTranslation(0,ar[15]==1 ? -2:0,0));
+					this.axe_r.scale.y = ar[14]==1 ? 0.5:1;
+					this.axe_l.scale.y = ar[15]==1 ? 0.5:1;
 
-					this.axeR.scale.y = ar[14]==1 ? 0.5:1;
-					this.axeL.scale.y = ar[15]==1 ? 0.5:1;
+                    this.axe_m.rotation.x = ar[16]==1 ? 0.3:0;
+                    this.axe_m.rotation.x = ar[17]==1 ? -0.3:this.axe_m.rotation.x;
+                    this.axe_m.rotation.z = ar[18]==1 ? -0.3:0;
+                    this.axe_m.rotation.z = ar[19]==1 ? 0.3:this.axe_m.rotation.z;
 
-					this.axeM.rotation.x = ar[16]==1 ? 0.3:0;
-					this.axeM.rotation.x = ar[17]==1 ? -0.3:this.axeM.rotation.x;
-					this.axeM.rotation.z = ar[18]==1 ? -0.3:0;
-					this.axeM.rotation.z = ar[19]==1 ? 0.3:this.axeM.rotation.z;
+                    // button A B X Y
+
+                    this.ba.position.z = ar[4]==1 ? -12.101:-13.035;
+                    this.ba.position.y = ar[4]==1 ? -4.441:-3.707;
+
+                    this.bb.position.z = ar[5]==1 ? -9.173:-9.671;
+                    this.bb.position.y = ar[5]==1 ? -2.32:-1.118;
+
+                    this.bx.position.z = ar[6]==1 ? -9.173:-9.671;
+                    this.bx.position.y = ar[6]==1 ? -2.32:-1.118;
+
+                    this.by.position.y = ar[7]==1 ? -1.266:0;
+
+                    // button select menu
+
+                    this.bs1.position.y = ar[12]==1 ? -1.4:0;
+                    this.bs2.position.y = ar[13]==1 ? -1.4:0;
+
+                    // gachette
+                    //this.b_r.position.x = ar[9]==1 ? -22.249:-22.963;
+                    //this.b_r.position.z = ar[9]==1 ? -8.086:-8.886;
+
+                    //this.b_l.position.x = ar[8]==1 ? 22.249:22.963;
+                    this.b_l.position.x = ar[8]==1 ? 7.249:7.962;
+                    this.b_l.position.z = ar[8]==1 ? -8.086:-8.886;
+                    this.b_r.position.x = ar[9]==1 ? -37.249:-37.962;
+                    this.b_r.position.z = ar[9]==1 ? -8.086:-8.886;
+
+                    this.g_l.rotation.y = ar[10]*0.4;
+                    this.g_r.rotation.y = -ar[11]*0.4;
+
+
+
+
+
+					
 				}
 
 			}
