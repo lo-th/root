@@ -3,8 +3,7 @@ root
 
 source factory and demo labs
 
-// SEA3D dev
-
+o SEA3D DEV<br>
 [human low](http://lo-th.github.io/root/sea_dev/index.html)<br>
 [human high](http://lo-th.github.io/root/sea_dev/index_high.html)<br>
 [android](http://lo-th.github.io/root/sea_dev/index_droid.html)<br>
@@ -13,23 +12,17 @@ source factory and demo labs
 [gamepad](http://lo-th.github.io/root/sea_dev/index_pad.html)<br>
 [bvh lab](http://lo-th.github.io/root/sea_dev/index_bvh.html)<br>
 
-
-// PLY test
-
+o PLY TEST<br>
 [high model](http://lo-th.github.io/root/plyTest/index.html)
 
-
-// TRAFFIC 
-
+o TRAFFIC<br>
 [demo](http://lo-th.github.io/root/traffic/index.html)
 
-
-// MINE 2D 
-
+o MINE 2D<br>
 [demo](http://lo-th.github.io/root/mine/index.html)
 
-
-
-// FAST 2D PHYSICS 
-
+o FAST 2D PHYSICS<br>
 [demo](http://lo-th.github.io/root/fast/index.html)
+
+o DEADALUS<br>
+[demo](http://lo-th.github.io/root/daedalus/index.html)
