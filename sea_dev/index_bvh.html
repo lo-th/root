@@ -260,6 +260,7 @@ function loadBVH(file) {
 }
 
 function updateBVH() {
+    if(!bvhReader.play) return;
     //var delta = clock.getDelta();
     //THREE.SEA3D.AnimationHandler.update( delta*0.6 );
     //THREE.AnimationHandler.update( delta*0.6 );
@@ -332,16 +333,19 @@ function updateSkin(){
     var globalQuat = new THREE.Quaternion();
     var globalPos = new THREE.Vector3();
     var tmpPos = new THREE.Vector3();
+    var revers = new THREE.Vector3(-1,1,-1);
 
     for(var i=0; i<len; i++){
         bone = bones[i];
         name = bone.name;
         worldMtx = bone.parent.matrixWorld || matrixWorldInv;//new THREE.Matrix4();
-        parentMtx = bone.parent.mtx ? bone.parent.mtx : worldMtx;
+        //parentMtx = bone.parent.mtx ? bone.parent.mtx : worldMtx;
+        parentMtx = bone.parent ? bone.parent.matrixWorld : worldMtx;
         if ( node = nodes[name] ){
             
             // LOCAL TO GLOBAL
             tmpMtx =  node.matrixWorld.clone();
+            tmpMtx.scale(revers);
             //tmpMtx.multiplyMatrices( matrixWorldInv,tmpMtx);
             globalPos.setFromMatrixPosition( tmpMtx );
             globalQuat.setFromRotationMatrix( tmpMtx );
@@ -380,7 +384,11 @@ function updateSkin(){
         }
 
         // UPDATE BONE
-        bone.mtx = globalMtx;
+        bone.matrixWorld.copy(globalMtx);
+        bone.matrix.getInverse( bone.parent.matrixWorld );
+        bone.matrix.multiply( bone.matrixWorld );
+        bone.matrixAutoUpdate = false;
+        //bone.mtx = globalMtx;
         //globalMtx = globalMtx.multiplyMatrices( matrixWorldInv );
        // bone.matrixAutoUpdate = true;
        // bone.matrixWorldNeedsUpdate = true;
@@ -394,7 +402,7 @@ function updateSkin(){
 //   THREE BONE HACK 
 //===============================================
 
-THREE.Skeleton.prototype.update = ( function () {
+/*THREE.Skeleton.prototype.update = ( function () {
     var offsetMatrix = new THREE.Matrix4();
     return function () {
         // flatten bone matrices to array
@@ -412,7 +420,7 @@ THREE.Skeleton.prototype.update = ( function () {
         }
         if ( this.useVertexTexture ) this.boneTexture.needsUpdate = true;
     };
-} )();
+} )();*/
 
 
 //===============================================
@@ -427,7 +435,7 @@ window.URL = window.URL || window.webkitURL;
 BVH.Reader = function(){
 
     this.extractor = new EXTRACT.Pool();
-
+    this.isComplete = false;
     this.debug = true;
     this.type = "";
     this.data = null;
@@ -527,6 +535,7 @@ BVH.Reader.prototype = {
         }
     },
     parseData:function(data){
+        this.isComplete = false;
         this.data = data;
         this.channels = [];
         this.nodes = [];
@@ -564,7 +573,7 @@ BVH.Reader.prototype = {
         this.getNodeList();
         
         if(this.debug) this.addSkeleton();
-        
+        this.isComplete = true;
         this.startTime = Date.now();
         this.play = true;
     },
@@ -883,6 +892,8 @@ function gradTexture(color) {
     texture.needsUpdate = true;
     return texture;
 }
+
+
 </script>
 </body>
 </html>

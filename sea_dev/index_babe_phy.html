@@ -85,10 +85,8 @@
 			var map, normalMap, specularMap, aoMap, envMap, fakeMap;
 
 
-			var environment;
+			var environment, envcontext, nEnv = 0;
 			var envLists = ['e_plastic_r.jpg','e_plastic.jpg','e_smooth.jpg', 'e_metal.jpg','e_chrome.jpg','e_brush.jpg','e_black.jpg','env6.jpg', 'env7.jpg','env8.jpg','env9.jpg'];
-			var envcontext;
-			var nEnv = 0;
 
 			//
 			// SEA3D Loader
@@ -98,10 +96,6 @@
 
 			sea_loader.onDownloadProgress = function( e ) {
 				LL.style.width = ((e.progress || 0) * 100) + "%";
-			}
-			sea_loader.onLoadProgress = function( e ) {
-				//console.log('load', e);
-				//LL.style.width = ((e.progress || 0) * 100) + "%";
 			}
 
 			function showBones(id){
