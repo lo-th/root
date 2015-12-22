@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>three.js webgl - geometry - cube</title>
+<meta charset="utf-8">
+<style>
+body { margin: 0px; background-color: #6a6a6a; overflow: hidden; background-image:url(images/bg.png); background-repeat:repeat-x;}
+canvas { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script src="js/ddls.min.js"></script>
+<script src="js/three.min.js"></script>
+<script src="js/sea.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/ddls_plugins/ThreeView.js"></script>
+<script>
+
+var canvas, camera, scene, renderer, controls, clock, mouse, raycaster, offset, select = null, down = false, first = false;
+var world, ddlsRender;
+var geobox = null;
+var matbox = null;
+var matboxSelect = null;
+var h1;
+var objects = [], plane;
+var obj = [];
+var mousePos = null;
+
+var heroModel = null;
+
+var hero = [];
+var heroObj = [];
+
+var INTERSECTED, SELECTED, HERO;
+
+init();
+animate();
+
+function init() {
+    canvas = document.getElementById( 'canvas' );
+
+    camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10000 );
+    camera.position.set(300, 300, 300+600);
+
+    controls = new THREE.OrbitControls( camera, canvas );
+    controls.target.set(300,0,300);
+
+    scene = new THREE.Scene();
+
+    clock = new THREE.Clock();
+
+    mouse = new THREE.Vector2();
+    raycaster = new THREE.Raycaster();
+    offset = new THREE.Vector3();
+    mousePos = new THREE.Vector3();
+
+    var baseBox = new THREE.BoxGeometry( 1, 1, 1 );
+    baseBox.applyMatrix(new THREE.Matrix4().makeTranslation(0,0.5,0));
+
+    var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+    geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,5,0));
+    var material = new THREE.MeshBasicMaterial( { color:0x00FF00 } );
+
+    plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 8, 8 ), new THREE.MeshBasicMaterial( { visible: false , color:0x6a6a6a } ) );
+    plane.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+    plane.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(300,0, 300));
+    
+    scene.add( plane );
+
+    scene.add( new THREE.AmbientLight( 0xAAAAAA ) );
+
+    renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setClearColor( 0x000000 , 0.0);
+
+    //
+
+    canvas.onmousedown = mouseDown;
+    canvas.onmouseup = mouseUp;
+    canvas.onmousemove = mouseMove;
+
+    window.addEventListener( 'resize', onWindowResize, false );
+
+    //
+
+    load();
+
+}
+
+function load(){
+    var loader = new THREE.SEA3D();
+    loader.onComplete = function( e ) {
+        heroModel = loader.getMesh("hero");
+        geobox = loader.getMesh("box").geometry;
+        matbox = loader.getMesh("box").material;
+        matboxSelect = matbox.clone();
+        matboxSelect.color.setHex( 0xff0000 );
+        matboxSelect.transparent = true;
+        matboxSelect.opacity = 0.5;
+
+        demo();
+    }
+    loader.load( 'models/basic.sea' );
+}
+
+function demo(){
+    world = new DDLS.World(600,600);
+
+    var i = 50, x, y, w, h, r, d;
+    while(i--) {
+        x = DDLS.randInt(50, 600);
+        y = DDLS.randInt(50, 600);
+        w = DDLS.randInt(10, 40);
+        h = DDLS.randInt(10, 40);
+        r = DDLS.rand(0, DDLS.TwoPI);
+        d = (w*h*0.025)+DDLS.rand(1, 4);
+
+        obj[i] = world.addObject({ x:x, y:y, w:w, h:h, r:r });
+        objects[i] = new THREE.Mesh( geobox, matbox );
+
+        objects[i].scale.set(w*2,d, h*2);
+        objects[i].position.set(x,0,y);
+        objects[i].rotation.y = r;
+
+        scene.add( objects[i] );
+    }
+
+    ddlsRender = new DDLSRender();
+
+    addHero(20,20,4);
+
+    //h1 = world.addHeroe({x:20, y:20, r:4, speed:10});
+}
+
+function addHero(x, y, r){
+    var id = hero.length;
+
+    //var geo = new THREE.BoxGeometry( r*2, 10, r*2 );
+    var geo = new THREE.SphereGeometry( r*2 );
+    geo.applyMatrix(new THREE.Matrix4().makeTranslation(0,r*2,0));
+    var mat = new THREE.MeshBasicMaterial( { color:0x00FF00 , visible:false } );
+    var mat2 = new THREE.MeshBasicMaterial( { color:0x00FF00, wireframe:true, visible:true} );
+
+    var cont = new THREE.Mesh(new THREE.CircleGeometry(r), mat2);
+    cont.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+
+    var m =  heroModel.clone();
+    m.scale.set(25,25,25);
+    m.position.y = 7;
+    m.play("idle", .5);
+
+    hero[id] = world.addHeroe({x:x, y:y, r:r, speed:1});
+    heroObj[id] = new THREE.Mesh(geo, mat);
+
+    hero[id].mesh = heroObj[id];
+
+
+
+    heroObj[id].add(cont);
+    heroObj[id].add(m)
+    scene.add(heroObj[id]);
+
+}
+function findTargetHero(id){
+    hero[id].setTarget(mousePos.x, mousePos.z);
+    //console.log(mousePos.x)
+};
+
+function selectHero(id){
+    HERO = heroObj[id];
+    //hero[id].mesh.material = new THREE.MeshBasicMaterial( { color:0xFFFF00, visible:false } );
+    hero[id].mesh.children[0].material = new THREE.MeshBasicMaterial( { color:0xFFFF00, wireframe:true } );
+    hero[id].isSelected = true;
+};
+
+function unSelectHero(id){
+    HERO = null;
+    //hero[id].mesh.material = new THREE.MeshBasicMaterial( { color:0x00FF00 } );
+    hero[id].mesh.children[0].material = new THREE.MeshBasicMaterial( { color:0x00FF00, wireframe:true } );
+    hero[id].isSelected = false;
+};
+
+function updateWorldMesh(id){
+    obj[id].position(objects[id].position.x, objects[id].position.z)
+    //obj[id].x = objects[id].position.x;
+    //obj[id].y = objects[id].position.z;
+    obj[id].rotation = objects[id].rotation.y;
+
+    world.mesh.updateObjects();
+};
+
+
+function mouseUp(e){
+    down = false;
+    e.preventDefault();
+    controls.enabled = true;
+    if ( INTERSECTED ) SELECTED = null;
+    canvas.style.cursor = 'auto';
+}
+
+function mouseDown(e){
+    down = true;
+    first = true;
+
+    var inter;
+    raycaster.setFromCamera( mouse, camera );
+
+    inter = raycaster.intersectObjects( heroObj );
+    if ( inter.length > 0 ) {
+        if(down){ 
+            selectHero(heroObj.indexOf(inter[ 0 ].object));
+        }
+    } /*else {
+        if(HERO!=null && down){
+            unSelectHero(heroObj.indexOf(HERO));
+        }
+    }*/
+
+     inter = raycaster.intersectObject( plane );
+    if ( inter.length > 0 ) {
+        var p = inter[ 0 ].point;
+            mousePos.copy(p);
+            if(HERO!=null && down) findTargetHero(heroObj.indexOf(HERO) );
+    }
+
+    e.preventDefault();
+}
+
+function mouseMove(e){
+    mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
+
+    
+    updateRaycast();
+}
+
+function updateRaycast(){
+    var inter;
+    raycaster.setFromCamera( mouse, camera );
+
+
+    
+    inter = raycaster.intersectObjects( objects );
+    if ( inter.length > 0 ) {
+        if ( INTERSECTED != inter[ 0 ].object ) {
+            if ( INTERSECTED ) INTERSECTED.material = matbox;
+            INTERSECTED = inter[ 0 ].object;
+            INTERSECTED.material = matboxSelect;
+        }
+        canvas.style.cursor = 'pointer';
+    } else {
+        if ( INTERSECTED )  INTERSECTED.material = matbox;
+        INTERSECTED = null;
+        SELECTED = null;
+        canvas.style.cursor = 'auto';
+    }
+
+    if(first && INTERSECTED){
+        controls.enabled = false;
+        SELECTED = INTERSECTED;
+        canvas.style.cursor = 'move';
+    }
+
+   
+
+    if ( SELECTED ) {
+        inter = raycaster.intersectObject( plane );
+        if ( inter.length > 0 ) {
+            var p = inter[ 0 ].point;
+            mousePos.copy(p);
+            if(first){
+                offset.x = SELECTED.position.x-p.x;
+                offset.z = SELECTED.position.z-p.z;
+            }
+            SELECTED.position.copy( p.add( offset ) );
+            updateWorldMesh(objects.indexOf(SELECTED))
+        }
+    }
+
+    if(first) first = false;
+}
+
+function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
+
+function animate() {
+
+    requestAnimationFrame( animate );
+
+    var delta = clock.getDelta();
+    THREE.SEA3D.AnimationHandler.update( delta*0.6 );
+    THREE.AnimationHandler.update( delta*0.6 );
+
+    var i = hero.length;
+    while(i--){
+        if(hero[i].move) { hero[i].mesh.children[1].play("walk", .5); hero[i].inWalk = true;}
+        if(hero[i].inWalk && !hero[i].move){ hero[i].mesh.children[1].play("idle", .5); hero[i].inWalk = false;}
+    }
+
+    controls.update();
+    if(ddlsRender)ddlsRender.update();
+    renderer.render( scene, camera );
+
+}
+
+</script>
+
+</body>
+</html>
