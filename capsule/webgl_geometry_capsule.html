@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - capsule</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+			}
+			#info { position:absolute; color: #fFF; top:10px; font-weight: bold; width:100%; text-align: center; }
+		</style>
+	</head>
+	<body>
+	<div id="info"></div>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/CapsuleBufferGeometry.js"></script>
+		<script src="js/CapsuleGeometry.js"></script>
+		<script src="js/bufferGeo.js"></script>
+		<script src="js/TransparentShadow.js"></script>
+
+		<script>
+
+			var camera, scene, renderer;
+			var mesh, vnh, mesh2, vnh2, mesh3, vnh3;
+
+			init();
+			animate();
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.z = 300;
+
+				scene = new THREE.Scene();
+
+				var texture = THREE.ImageUtils.loadTexture( 'UV_Grid_Sm.jpg' );
+
+				//var geometry = new THREE.BoxGeometry( 200, 200, 200 );
+				var geometry = new THREE.CapsuleGeometry(50,50, 12, 1);
+				var geometry2 = new THREE.CapsuleBufferGeometry(50,50, 12, 1);
+				var geometry3 = bufferGeo(new THREE.CapsuleGeometry(50,50, 12, 1));
+
+				
+				var material = new THREE.MeshBasicMaterial( { map: texture } );
+
+				mesh = new THREE.Mesh( geometry, material );
+				scene.add( mesh );
+				mesh.position.x = -120;
+
+				mesh2 = new THREE.Mesh( geometry2, material );
+				scene.add( mesh2 );
+				mesh2.position.x = 0;				
+
+				mesh3 = new THREE.Mesh( geometry3, material );
+				scene.add( mesh3 );
+				mesh3.position.x = 120;
+
+				vnh = new THREE.VertexNormalsHelper( mesh, 5 );
+				scene.add( vnh );
+
+				vnh2 = new THREE.VertexNormalsHelper( mesh2, 5 );
+				scene.add( vnh2 );
+
+				vnh3 = new THREE.VertexNormalsHelper( mesh3, 5 );
+				scene.add( vnh3 );
+
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+				mesh2.castShadow = true;
+				mesh2.receiveShadow = true;
+				mesh3.castShadow = true;
+				mesh3.receiveShadow = true;
+
+
+				// LIGHTS
+
+				var ambient = new THREE.AmbientLight( 0x444444 );
+				scene.add( ambient );
+
+				var light = new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 );
+				light.position.set( 0, 1500, 1000 );
+				light.target.position.set( 0, 0, 0 );
+
+				light.castShadow = true;
+
+				light.shadowCameraNear = 1200;
+				light.shadowCameraFar = 2500;
+				light.shadowCameraFov = 50;
+
+				//light.shadowCameraVisible = true;
+
+				light.shadowBias = 0.0001;
+
+				light.shadowMapWidth = 1024;
+				light.shadowMapHeight = 1024;
+
+				scene.add( light );
+
+				var plane = new THREE.PlaneBufferGeometry( 100, 100 );
+				var planeMaterial = new THREE.MeshPhongMaterial( { color: 0xffdd99 } );
+
+				var ground = new THREE.Mesh( plane, TransparentShadow() );
+				ground.position.set( 0, -150, 0 );
+				ground.rotation.x = - Math.PI / 2;
+				ground.scale.set( 100, 100, 100 );
+				ground.castShadow = false;
+				ground.receiveShadow = true;
+
+				scene.add( ground );
+
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.setClearColor(0x662A2A, 1);
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMap.type = THREE.PCFShadowMap;
+				document.body.appendChild( renderer.domElement );
+
+				//
+
+				document.getElementById('info').innerHTML = [
+				'geometry vertices:' + geometry.vertices.length,
+				' | buffer vertices:'+geometry2.attributes.position.array.length/3,
+				' | buffer2 vertices:'+geometry3.attributes.position.array.length/3
+				].join( "\n" );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				mesh.rotation.x += 0.005;
+				mesh.rotation.y += 0.01;
+
+				mesh2.rotation.x += 0.005;
+				mesh2.rotation.y += 0.01;
+
+				mesh3.rotation.x += 0.005;
+				mesh3.rotation.y += 0.01;
+
+				if ( vnh ) vnh.update()
+				if ( vnh2 ) vnh2.update()
+				if ( vnh3 ) vnh3.update()
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
