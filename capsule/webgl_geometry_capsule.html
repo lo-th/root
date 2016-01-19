@@ -38,10 +38,11 @@
 
 				var texture = THREE.ImageUtils.loadTexture( 'UV_Grid_Sm.jpg' );
 
-				//var geometry = new THREE.BoxGeometry( 200, 200, 200 );
-				var geometry = new THREE.CapsuleGeometry(50,50, 12, 1);
-				var geometry2 = new THREE.CapsuleBufferGeometry(50,50, 12, 1);
-				var geometry3 = bufferGeo(new THREE.CapsuleGeometry(50,50, 12, 1));
+				var res = 18;
+				
+				var geometry = new THREE.CapsuleGeometry(50,50, res, 1);
+				var geometry2 = new THREE.CapsuleBufferGeometry(50,50, res, 1);
+				var geometry3 = bufferGeo(new THREE.CapsuleGeometry(50,50, res, 1));
 
 				
 				var material = new THREE.MeshBasicMaterial( { map: texture } );
