@@ -21,7 +21,7 @@
 
 		<script>
 
-			var camera, scene, renderer, mesh, normal, ui;
+			var camera, scene, renderer, mesh, normal, ui, material;
 
 			init();
 			animate();
@@ -36,7 +36,7 @@
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setPixelRatio( window.devicePixelRatio );
                 renderer.setSize( window.innerWidth, window.innerHeight );
-                renderer.setClearColor( 0x808080, 1 );
+                renderer.setClearColor( 0x333333, 1 );
                 renderer.sortObjects = false;
                 document.body.appendChild( renderer.domElement );
 
@@ -54,15 +54,15 @@
 
                 normal.texture.wrapS = THREE.RepeatWrapping; 
                 normal.texture.wrapT = THREE.RepeatWrapping;
-                normal.texture.repeat.set( 6, 4 );
+                normal.texture.repeat.set( 4, 4 );
 
                 //normal.render(  );
 
-                normal.load('transition3.png');
+                normal.load('reacto.jpg');
 
 
 
-                var material = new THREE.MeshStandardMaterial({ 
+                material = new THREE.MeshStandardMaterial({ 
                     //map :normal.texture,
                     color: 0xFFFFFF, transparent:false, metalness:1, roughness:0.3, normalMap:normal.texture, normalScale:new THREE.Vector2(1,1), 
                     envMap:env
@@ -97,6 +97,10 @@
                 ui.add('button', { name:'Load image', p:4, h:30, r:10, loader:true, drag:true } ).onChange( function(result,fname){ normal.load(result); } );
                 ui.add('slide',  { name:'repeat x',  min:1, max:20, value:6, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.texture.repeat.x = v; } );
                 ui.add('slide',  { name:'repeat y',  min:1, max:20, value:4, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.texture.repeat.y = v; } );
+
+                ui.add('slide',  { name:'normal x',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.x = v; } );
+                ui.add('slide',  { name:'normal y',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.y = v; } );
+
 
             }
 
