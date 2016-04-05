@@ -101,6 +101,11 @@
                 ui.add('slide',  { name:'normal x',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.x = v; } );
                 ui.add('slide',  { name:'normal y',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.y = v; } );
 
+                ui.add('slide',  { name:'blur',  min:0, max:20, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blur = v; normal.makeTerrain(); } );
+
+                ui.add('bool', { name:'sharpen', p:70, h:20, value:false } ).onChange( function(v){ normal.sharpen = v ? 1:0; normal.makeTerrain(); } );
+                ui.add('bool', { name:'emboss', p:70, h:20, value:false } ).onChange( function(v){ normal.emboss = v ? 1:0; normal.makeTerrain(); } );
+
 
             }
 
