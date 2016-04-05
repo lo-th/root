@@ -18,6 +18,7 @@
         <script src="js/OrbitControls.js"></script>
         <script src="js/NormalMaker.js"></script>
         <script src="js/uil.min.js"></script>
+        <script src="js/ImageFilters.js"></script>
 
 		<script>
 
@@ -101,10 +102,29 @@
                 ui.add('slide',  { name:'normal x',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.x = v; } );
                 ui.add('slide',  { name:'normal y',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.y = v; } );
 
-                ui.add('slide',  { name:'blur',  min:0, max:20, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blur = v; normal.makeTerrain(); } );
+                
 
-                ui.add('bool', { name:'sharpen', p:70, h:20, value:false } ).onChange( function(v){ normal.sharpen = v ? 1:0; normal.makeTerrain(); } );
-                ui.add('bool', { name:'emboss', p:70, h:20, value:false } ).onChange( function(v){ normal.emboss = v ? 1:0; normal.makeTerrain(); } );
+              //  ui.add('bool', { name:'sharpen', p:70, h:20, value:false } ).onChange( function(v){ normal.sharpen = v ? 1:0; normal.makeTerrain(); } );
+             //   ui.add('bool', { name:'emboss', p:70, h:20, value:false } ).onChange( function(v){ normal.emboss = v ? 1:0; normal.makeTerrain(); } );
+
+                var gr1 = ui.add('group', { name:'Box Blur', fontColor:'#D4B87B', h:30 });
+                gr1.add('slide',  { name:'blurX',  min:1, max:20, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blurX = v; normal.makeTerrain(); } );
+                gr1.add('slide',  { name:'blurY',  min:1, max:20, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blurY = v; normal.makeTerrain(); } );
+                gr1.add('slide',  { name:'Quality',  min:1, max:10, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.quality = v; normal.makeTerrain(); } );
+                var gr2 = ui.add('group', { name:'Gaussian Blur', fontColor:'#D4B87B', h:30 });
+                gr2.add('slide',  { name:'blur',  min:0, max:4, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blur = v; normal.makeTerrain(); } );
+
+                var gr3 = ui.add('group', { name:'Stack Blur', fontColor:'#D4B87B', h:30 });
+                gr3.add('slide',  { name:'radius',  min:0, max:40, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.Rblur = v; normal.makeTerrain(); } );
+
+                //var gr4 = ui.add('group', { name:'Dither', fontColor:'#D4B87B', h:30 });
+                //gr4.add('slide',  { name:'levels',  min:0, max:40, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.Dither = v; normal.makeTerrain(); } );
+
+                var gr5 = ui.add('group', { name:'Sharpen', fontColor:'#D4B87B', h:30 });
+                gr5.add('slide',  { name:'levels',  min:0, max:10, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.sharpen = v; normal.makeTerrain(); } );
+
+
+
 
 
             }
