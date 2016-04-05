@@ -12,9 +12,9 @@ THREE.NormalMaker = function( renderer ){
     this.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
     this.camera.position.z = 1;
     this.scene = new THREE.Scene();
-    this.plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), this.material );
+    this.plane = null;//new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), this.material );
    // var sph2 = new THREE.Mesh( new THREE.SphereBufferGeometry(0.8, 30, 30), this.material );
-    this.scene.add( this.plane );
+    //this.scene.add( this.plane );
     //this.scene.add( sph2 );
 }
 
@@ -53,7 +53,7 @@ THREE.NormalMaker.prototype = {
 
     makeTerrain:function( data, w, h ){
 
-        this.scene.remove( this.plane );
+        
         var g = new THREE.PlaneBufferGeometry( 2, 2, w-1, h-1 );
         var vertices = g.attributes.position.array;
 
@@ -78,6 +78,9 @@ THREE.NormalMaker.prototype = {
     render : function(){
 
         this.renderer.render( this.scene, this.camera, this.renderTarget, true );
+
+        this.scene.remove( this.plane );
+        this.plane.geometry.dispose();
 
     }
 
