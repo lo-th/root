@@ -35,7 +35,7 @@
 
 				scene = new THREE.Scene();
 
-                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
                 renderer.setPixelRatio( window.devicePixelRatio );
                 renderer.setSize( window.innerWidth, window.innerHeight );
                 renderer.setClearColor( 0x333333, 1 );
@@ -95,13 +95,19 @@
             function initGui() {
 
                 ui = new UIL.Gui({size:250, height:30 });
+                ui.add('title', { name:'NORMAL LAB', prefix:'', h:30, r:10 } );
 
                 ui.add('button', { name:'Load image', p:4, h:30, r:10, loader:true, drag:true } ).onChange( function(result,fname){ normal.load(result); } );
+                
                 ui.add('slide',  { name:'repeat x',  min:1, max:20, value:4, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.texture.repeat.x = v; } );
                 ui.add('slide',  { name:'repeat y',  min:1, max:20, value:4, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.texture.repeat.y = v; } );
 
                 ui.add('slide',  { name:'normal x',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.x = v; } );
                 ui.add('slide',  { name:'normal y',  min:-5, max:5, value:1, precision:2, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ material.normalScale.y = v; } );
+
+               // ui.add('slide',  { name:'blur',  min:0, max:40, value:0, precision:0, fontColor:'#D4B87B', stype:0, bColor:'#999' }).onChange( function(v){ normal.Rblur = v; normal.makeTerrain(); } );
+
+                ui.add('button', { name:'save image', p:4, h:30, r:10 } ).onChange( function(v){ normal.save() } );
 
                 
 
@@ -109,11 +115,11 @@
              //   ui.add('bool', { name:'emboss', p:70, h:20, value:false } ).onChange( function(v){ normal.emboss = v ? 1:0; normal.makeTerrain(); } );
 
                 var gr1 = ui.add('group', { name:'Box Blur', fontColor:'#D4B87B', h:30 });
-                gr1.add('slide',  { name:'blurX',  min:1, max:20, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blurX = v; normal.makeTerrain(); } );
-                gr1.add('slide',  { name:'blurY',  min:1, max:20, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blurY = v; normal.makeTerrain(); } );
-                gr1.add('slide',  { name:'Quality',  min:1, max:10, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.quality = v; normal.makeTerrain(); } );
+                gr1.add('slide',  { name:'blurX',  min:1, max:20, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onFinishChange( function(v){ normal.blurX = v; normal.makeTerrain(); } );
+                gr1.add('slide',  { name:'blurY',  min:1, max:20, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onFinishChange( function(v){ normal.blurY = v; normal.makeTerrain(); } );
+                gr1.add('slide',  { name:'Quality',  min:1, max:10, value:1, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onFinishChange( function(v){ normal.quality = v; normal.makeTerrain(); } );
                 var gr2 = ui.add('group', { name:'Gaussian Blur', fontColor:'#D4B87B', h:30 });
-                gr2.add('slide',  { name:'blur',  min:0, max:4, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.blur = v; normal.makeTerrain(); } );
+                gr2.add('slide',  { name:'blur',  min:0, max:4, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onFinishChange( function(v){ normal.blur = v; normal.makeTerrain(); } );
 
                 var gr3 = ui.add('group', { name:'Stack Blur', fontColor:'#D4B87B', h:30 });
                 gr3.add('slide',  { name:'radius',  min:0, max:40, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.Rblur = v; normal.makeTerrain(); } );
@@ -122,7 +128,7 @@
                 //gr4.add('slide',  { name:'levels',  min:0, max:40, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.Dither = v; normal.makeTerrain(); } );
 
                 var gr5 = ui.add('group', { name:'Sharpen', fontColor:'#D4B87B', h:30 });
-                gr5.add('slide',  { name:'levels',  min:0, max:10, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onChange( function(v){ normal.sharpen = v; normal.makeTerrain(); } );
+                gr5.add('slide',  { name:'levels',  min:0, max:10, value:0, precision:0, fontColor:'#D4B87B', stype:1, bColor:'#999' }).onFinishChange( function(v){ normal.sharpen = v; normal.makeTerrain(); } );
 
 
 
