@@ -196,12 +196,12 @@ THREE.Fabric.prototype = {
                     newArrayOfInitialPositions[i + 1][j] = sumOfFirstStepAndSecond;
                 }
             }
-            arrayOfInitialPositions.forEach(function (item, i) {
+            /*arrayOfInitialPositions.forEach(function (item, i) {
                 this.log("Old position Node_" + i + " = " , item);
             }.bind(this));
             newArrayOfInitialPositions.forEach(function (item, i) {
                 this.log("The new position Node_" + i + " = " , item);
-            }.bind(this));
+            }.bind(this));*/
             //the result of the algorithm - an array of new coordinate values, the algorithm does not perform any own permutations, only miscalculation
             return newArrayOfInitialPositions;
         }
