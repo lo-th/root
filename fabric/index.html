@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Three.js Bones Browser</title>
+		<title>Three.js Fabric IK</title>
 		<style>
 			body {
 				margin:0;
@@ -29,7 +29,8 @@
 		<script src="js/three.min.js"></script>
 		<script src='js/dat.gui.min.js'></script>
 		<script src="js/OrbitControls.js"></script>
-		<script src="js/Fabric.js"></script>
+
+		<script src="js/fabik.min.js"></script>
 
 		<script>
 
@@ -39,13 +40,13 @@
 
 			var boxTarget , boxEffector;
 
+			var box = [];
+
 			var solver;
 
-			var state = {
+			var X_AXIS, Y_AXIS, Z_AXIS;
+			var defaultBoneDirection, defaultBoneLength;
 
-				animateBones : false
-
-			};
 
 			function initScene () {
 
@@ -65,7 +66,7 @@
 
 
 
-				boxTarget = new THREE.Mesh(new THREE.BoxBufferGeometry( 1, 1, 1 ),  new THREE.MeshStandardMaterial({color:0xFF0000}) );
+				boxTarget = new THREE.Mesh(new THREE.BoxBufferGeometry( 2, 2, 2 ),  new THREE.MeshStandardMaterial({color:0xFF0000}) );
 				scene.add( boxTarget );
 				boxTarget.position.set(0,20,0);
 				target = boxTarget.position;
@@ -86,9 +87,6 @@
 				scene.add( lights[ 1 ] );
 				scene.add( lights[ 2 ] );
 
-				
-
-
 				window.addEventListener( 'resize', function () {
 
 					camera.aspect = window.innerWidth / window.innerHeight;
@@ -99,207 +97,100 @@
 				}, false );
 
 
-				solver = new THREE.Fabric();
+				//solver = new THREE.Fabric();
 
-				initBones();
+				//initBones();
 				setupDatGui();
+
+                X_AXIS = new Fabrik.V3( 1, 0, 0 );
+                Y_AXIS = new Fabrik.V3( 0, 1, 0 );
+                Z_AXIS = new Fabrik.V3( 0, 0, 1 );
+
+                defaultBoneDirection = Z_AXIS.negated();
+                defaultBoneLength = 10;
+
+                solver = new Fabrik.Structure( scene );
+
+                demo(0)
 
 			}
 
-			function createGeometry ( sizing ) {
-
-				var geometry = new THREE.CylinderGeometry(
-					5,                       // radiusTop
-					10,                       // radiusBottom
-					sizing.height,           // height
-					8,                       // radiusSegments
-					sizing.segmentCount * 3, // heightSegments
-					true                     // openEnded
-				);
-
-				for ( var i = 0; i < geometry.vertices.length; i ++ ) {
-
-					var vertex = geometry.vertices[ i ];
-					var y = ( vertex.y + sizing.halfHeight );
-
-					var skinIndex = Math.floor( y / sizing.segmentHeight );
-					var skinWeight = ( y % sizing.segmentHeight ) / sizing.segmentHeight;
-
-					geometry.skinIndices.push( new THREE.Vector4( skinIndex, skinIndex + 1, 0, 0 ) );
-					geometry.skinWeights.push( new THREE.Vector4( 1 - skinWeight, skinWeight, 0, 0 ) );
-
-				}
-
-				return geometry;
-
-			};
-
-			function createBones ( sizing ) {
-
-				bones = [];
-
-				var prevBone = new THREE.Bone();
-				bones.push( prevBone );
-				prevBone.position.y = - sizing.halfHeight;
-
-				for ( var i = 0; i < sizing.segmentCount; i ++ ) {
-
-					var bone = new THREE.Bone();
-					bone.position.y = sizing.segmentHeight;
-					bones.push( bone );
-					prevBone.add( bone );
-					prevBone = bone;
-
-					//bone.matrixAutoUpdate = false;
-
-				}
-
-
-
-				return bones;
-
-			};
-
-			function createMesh ( geometry, bones ) {
-
-				var material = new THREE.MeshPhongMaterial( {
-					skinning : true,
-					color: 0x156289,
-					emissive: 0x072534,
-					side: THREE.DoubleSide,
-					shading: THREE.FlatShading
-				} );
-
-				var mesh = new THREE.SkinnedMesh( geometry,	material );
-				var skeleton = new THREE.Skeleton( bones );
-
-				mesh.add( bones[ 0 ] );
-
-				mesh.bind( skeleton );
-
-				skeletonHelper = new THREE.SkeletonHelper( mesh );
-				skeletonHelper.material.linewidth = 2;
-				scene.add( skeletonHelper );
-
-				return mesh;
-
-			};
 
 			function setupDatGui () {
 
-				gui.add( target, 'x', - 20, 20 ).onChange(function(value) {solver.update()});
-				gui.add( target, 'y', - 20, 20 ).onChange(function(value) {solver.update()});
-				gui.add( target, 'z', - 20, 20 ).onChange(function(value) {solver.update()});
+				gui.add( target, 'x', - 100, 100 ).onChange(function(value) {solver.update();});
+				gui.add( target, 'y', - 100, 100 ).onChange(function(value) {solver.update();});
+				gui.add( target, 'z', - 100, 100 ).onChange(function(value) {solver.update();});
 
-				var folder = gui.addFolder( "General Options" );
-
-				folder.add( state, "animateBones" );
-				folder.__controllers[ 0 ].name( "Animate Bones" );
-
-				folder.add( mesh, "pose" );
-				folder.__controllers[ 1 ].name( ".pose()" );
-
-				var bones = mesh.skeleton.bones;
-
-				for ( var i = 0; i < bones.length; i ++ ) {
-
-					var bone = bones[ i ];
-
-					folder = gui.addFolder( "Bone " + i );
-
-					folder.add( bone.position, 'x', - 10 + bone.position.x, 10 + bone.position.x );
-					folder.add( bone.position, 'y', - 10 + bone.position.y, 10 + bone.position.y );
-					folder.add( bone.position, 'z', - 10 + bone.position.z, 10 + bone.position.z );
-
-					folder.add( bone.rotation, 'x', - Math.PI * 0.5, Math.PI * 0.5 );
-					folder.add( bone.rotation, 'y', - Math.PI * 0.5, Math.PI * 0.5 );
-					folder.add( bone.rotation, 'z', - Math.PI * 0.5, Math.PI * 0.5 );
-
-					folder.add( bone.scale, 'x', 0, 2 );
-					folder.add( bone.scale, 'y', 0, 2 )
-					folder.add( bone.scale, 'z', 0, 2 );
-
-					folder.__controllers[ 0 ].name( "position.x" );
-					folder.__controllers[ 1 ].name( "position.y" );
-					folder.__controllers[ 2 ].name( "position.z" );
-
-					folder.__controllers[ 3 ].name( "rotation.x" );
-					folder.__controllers[ 4 ].name( "rotation.y" );
-					folder.__controllers[ 5 ].name( "rotation.z" );
-
-					folder.__controllers[ 6 ].name( "scale.x" );
-					folder.__controllers[ 7 ].name( "scale.y" );
-					folder.__controllers[ 8 ].name( "scale.z" );
-
-				}
-
+	
 			}
 
-			function initBones () {
+		
+            function demo(n){
 
-				var segmentHeight = 8;
-				var segmentCount = 4;
-				var height = segmentHeight * segmentCount;
-				var halfHeight = height * 0.5;
+                
 
-				var sizing = {
-					segmentHeight : segmentHeight,
-					segmentCount : segmentCount,
-					height : height,
-					halfHeight : halfHeight
-				};
+               // solver.clear();
 
-				var geometry = createGeometry( sizing );
-				var bones = createBones( sizing );
-				mesh = createMesh( geometry, bones );
+                switch(n){
+                    case 0:
 
-				mesh.scale.multiplyScalar( 1 );
-				scene.add( mesh );
+                    for(var i=0; i< 20; i++){
+
+                    var chain = new Fabrik.Chain();
+                    var chain3D = [];
+
+                    var startLoc = new Fabrik.V3(-40+(i*4),0,40);
+                    var endLoc = startLoc.plus( defaultBoneDirection.times(defaultBoneLength));
+
+                    var basebone = new Fabrik.Bone( startLoc, endLoc );
+                    chain.addBone( basebone );
+
+                    chain3D.push( addBone3D({ x:1, y:1, z:defaultBoneLength }, 0xFFFFFF) );
+
+                    for (var j = 0; j < 7; j++) {
+
+                        chain.addConsecutiveBone( defaultBoneDirection, defaultBoneLength );
+                        chain3D.push( addBone3D() );
+
+                    };
+
+                    //console.log(chain3D)
+
+                    solver.add( chain, chain3D, target );
+                    }
+
+                    break;
+                }
 
 
-				// init ik Solver
-				// link is the index of bone in skeleton
+                solver.update();
+            }
 
-				var link = [];
+            function addBone3D( size, color ){
 
-				for(var i=0; i<5; i++){
-					link.push( i );
-				}
+                size = size || {x:1, y:1, z:defaultBoneLength }
+                color = color || 0XFFFF00;
+                var g = new THREE.BoxBufferGeometry( size.x, size.y, size.z );
+                g.applyMatrix( new THREE.Matrix4().makeTranslation( size.x === 1 ? 0: size.x*0.5, size.y === 1 ? 0: size.y*0.5, size.z === 1 ? 0: size.z*0.5 ) )
+                b = new THREE.Mesh( g,  new THREE.MeshStandardMaterial({color:color}) );
+                scene.add( b );
 
-				solver.add( boxTarget, 0.3, mesh, link, 10, 0, 45);
-
-				solver.update();
-
-			};
+                return b;
+                
+            }
 
 			function render () {
 
 				requestAnimationFrame( render );
 
-				//solver.update();
-
-
-				var time = Date.now() * 0.001;
-
-				var bone = mesh;
-
-
-				//Wiggle the bone
-				if ( state.animateBones ) {
-
-					for ( var i = 0; i < mesh.skeleton.bones.length; i ++ ) {
-
-						mesh.skeleton.bones[ i ].rotation.z = Math.sin( time ) * 2 / mesh.skeleton.bones.length;
-
-					}
-
-				}
-
-				skeletonHelper.update();
+                //solver.update();
 
 				renderer.render( scene, camera );
 
 			};
+
+			//initTest();
 
 			initScene();
 			render();
