@@ -124,7 +124,7 @@
 				gui.add( target, 'y', - 100, 100 ).onChange(function(value) {solver.update();});
 				gui.add( target, 'z', - 100, 100 ).onChange(function(value) {solver.update();});
 
-                gui.add( setting, 'fixed' ).onChange(function(value) {solver.setFixedBaseMode(setting.fixed);});
+                gui.add( setting, 'fixed' ).onChange(function(value) {solver.setFixedBaseMode(setting.fixed); solver.update(); });
 
 	
 			}
