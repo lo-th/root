@@ -1,5 +1,19 @@
+//- makeTransition(URL, faceNumber)
+//- setOpacity(opacityLevel, faceNumber)
+//- setImage(URL, faceNumber)
+//- move(x,y,z
+// -zoom
+// pause
+// - pauseFace(faceNumber) // et la balle fixe la caméra sur la face en question
+// 16/9
+//- `zoomOnFace(faceNumber)`
+//- `startRunning(faceNumber)
+
 
 var BallonMesh = function( size, txt ){
+
+    this.side = -1;
+    this.zoom = 1;
 
     this.mesh = new THREE.Group();
     this.mesh.scale.set( size, size, size );
@@ -11,11 +25,13 @@ var BallonMesh = function( size, txt ){
         uniforms: {
             map : { type: 't', value: null },
             color: {type: 'c', value: new THREE.Color(0x323436) },
-            angle: {type: 'f', value: 0 }
+            angle: {type: 'f', value: 0 },
+            zoom: {type: 'f', value: 1 },
         },
         vertexShader:[
 
         'uniform float angle;',
+        'uniform float zoom;',
 
         'vec2 rotUV(vec2 uv, float angle ){',
         '    float s = sin(angle);',
@@ -26,9 +42,15 @@ var BallonMesh = function( size, txt ){
         '    return uv;',
         '}',
 
+        'vec2 zoomUV(vec2 uv, float power ){',
+        '    uv -= 0.5; uv = uv * power; uv += 0.5;',
+        '    return uv;',
+        '}',
+
         'varying vec2 vUv;',
         'void main(){',
         '    vUv = rotUV( uv, angle);',
+        '    vUv = zoomUV( vUv, zoom);',
         '    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);',
         '}'
 
@@ -81,8 +103,25 @@ BallonMesh.prototype = {
 
     update:function(){
 
+        if(this.zoom>=1){ this.zoom = 1; this.side = -1 };
+        if(this.zoom<0.3){ this.zoom = 0.3; this.side = 1; };
+
+        this.zoom += 0.01*this.side;
+
+        var z = this.zoom
+
         this.mats.forEach( function ( m ) { 
-            m.uniforms.angle.value += 0.1; 
+            m.uniforms.angle.value += 0.01; 
+            //var z = m.uniforms.zoom.value;
+            
+
+
+            //if(z>=1){ m.uniforms.zoom.value = 1; s = -1 };
+            //if(z<=0.3){ m.uniforms.zoom.value = 0.3; s = 1; };
+
+            m.uniforms.zoom.value =  z;
+
+            
         });
 
     }
