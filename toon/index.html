@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sea3d / skin</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+body { margin: 0px; background-color: #000000; overflow: hidden; }
+#canvasTree { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
+		</style>
+	</head>
+	<body>
+	<canvas id="canvasTree"></canvas>
+		<script src="js/three.min.js"></script>
+		<script src="js/sea3d.min.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/shaderHack.js"></script>
+		<script>
+
+			var container, canvas;
+
+			var avatars = [];
+
+			var walking = false;
+
+			var camera, scene, renderer, controls, player, textureLoader;
+
+			var mat, outline;
+
+			var man;
+			var woman
+
+			var loader;
+
+			// Initialize Three.JS
+
+			init();
+
+			//
+			// SEA3D Loader
+			//
+
+			loader = new THREE.SEA3D();
+
+			loader.onComplete = function( e ) {
+
+				var i = loader.meshes.length, mesh, out;
+
+				while(i--){
+
+					mesh = loader.meshes[i]
+
+					mesh.material = mat;
+					scene.add( mesh );
+
+					out = new THREE.SEA3D.Mesh( mesh.geometry, outline );
+					out.position.copy(mesh.position)
+					//out.material = outline;
+					scene.add( out );
+				}
+
+				animate();
+
+			};
+
+			loader.load( 'meck.sea' );
+
+			//
+
+			function init() {
+
+				canvas = document.getElementById( 'canvasTree' );
+
+				textureLoader = new THREE.TextureLoader();
+
+				shaderHack.init();
+
+				mat = new THREE.MeshStandardMaterial({ metalness:0.8, roughness:0.8 });
+
+				var c = document.createElement( 'canvas' );
+		        c.width = c.height = 128;
+		        var ctx = c.getContext( '2d' );
+		        ctx.fillStyle = "#FFFFFF";
+		        ctx.fillRect(0,0,128,128);
+
+		        var texture = new THREE.Texture( c );
+		        texture.needsUpdate = true;
+
+		        outline = new THREE.MeshPhongMaterial( { color:0x000000, specular:0x000000, shininess:0, side:THREE.BackSide, displacementMap:texture , displacementScale:0.1, displacementBias:0 } );
+
+
+				textureLoader.load( 'metal.jpg', textureComplete );
+
+				scene = new THREE.Scene();
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
+				camera.position.set( 0, 40, 150 );
+
+				controls = new THREE.OrbitControls( camera, canvas );
+				controls.target.set(0, 40, 0);
+
+				controls.update();
+
+				renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true });
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x5a5a59, 1 );
+
+				renderer.gammaInput = true;
+                renderer.gammaOutput = true;
+
+                renderer.toneMapping = THREE.Uncharted2ToneMapping;
+                renderer.toneMappingExposure = 1.5;
+                renderer.toneMappingWhitePoint = 10;
+
+				// extra lights
+
+				var light = new THREE.SpotLight( 0xFFFFEE, 0.5, 0, Math.PI/2, 1 );
+		        light.position.set(100,100,300);
+		        light.lookAt(new THREE.Vector3(0,40,0));
+		        scene.add( light );
+
+				var pointLight = new THREE.PointLight( 0xffffff, 1 );
+				scene.add( pointLight );
+
+				pointLight.position.set(200,300, 100)
+
+				//scene.add( new THREE.AmbientLight( 0x333333 ) );
+
+				// events
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function textureComplete( tex ){
+
+				var name = tex.image.currentSrc.substring(tex.image.currentSrc.lastIndexOf('/')+1, tex.image.currentSrc.lastIndexOf('.'));
+                tex.name = name;
+
+                if(name === 'metal'){ 
+			        tex.mapping = THREE.SphericalReflectionMapping;
+			        mat.envMap = tex;
+			        mat.needsUpdate = true;
+			    }
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			var clock = new THREE.Clock();
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+		</script>
+	</body>
+</html>
