@@ -33,9 +33,7 @@ body { margin: 0px; background-color: #5a5a59; overflow: hidden; color:#FFF; fon
 
 			var loader;
 
-			// Initialize Three.JS
-
-			init();
+			
 
 			//
 			// SEA3D Loader
@@ -45,19 +43,20 @@ body { margin: 0px; background-color: #5a5a59; overflow: hidden; color:#FFF; fon
 
             loader.onDownloadProgress = function( e ) {
 
-                var pp = (Math.floor(e.progress) * 100) + "%";
+                var pp = Math.floor((e.progress || 0) * 100) + "%";
                 debug( 'Loading 3D model : ' + pp );
 
             };
 
 			loader.onComplete = function( e ) {
 
+                init();
+
 				var i = loader.meshes.length, mesh, out;
 
 				while(i--){
 
 					mesh = loader.meshes[i];
-                    console.log(mesh.name)
 					scene.add( mesh );
 
                     meshs[mesh.name] = mesh;
@@ -68,6 +67,9 @@ body { margin: 0px; background-color: #5a5a59; overflow: hidden; color:#FFF; fon
 
 				}
 
+                // Initialize Three.JS
+
+                
 				animate();
 
 			};
