@@ -8,6 +8,9 @@
 			body {
 				margin: 0px;
 				background-color: #333333;
+				background-image:url(background.png);
+				background-repeat:no-repeat;
+				background-size:cover;
 				overflow: hidden;
 			}
 		</style>
@@ -16,6 +19,7 @@
 
 		<script src="three.min.js"></script>
 		<script src="ballonMesh.js"></script>
+		<script src="OrbitControls.js"></script>
 
 		<script>
 
@@ -23,6 +27,7 @@
 			var mesh, ballon, texture;
 
 			init();
+			animate();
 			
 
 			function init() {
@@ -30,11 +35,11 @@
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
 				camera.position.z = 400;
 
+				controls = new THREE.OrbitControls( camera );
+
 				scene = new THREE.Scene();
 
-			    texture = new THREE.TextureLoader().load( 'logo.png', initModel );
-
-				renderer = new THREE.WebGLRenderer({alpha:true});
+				renderer = new THREE.WebGLRenderer({antialias: true, alpha:true});
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
@@ -42,18 +47,23 @@
 
 				//
 
-				window.addEventListener( 'resize', onWindowResize, false );
-
-			}
-
-			function initModel() {
-
-				ballon = new BallonMesh( 30, texture );
+				ballon = new BallonMesh( 30 );
 				scene.add( ballon.mesh );
 
 				mesh = ballon.mesh;
 
-				animate();
+				// face > 19 = face 5 
+
+				ballon.setImage('img/im00.jpg', 0);
+				ballon.setImage('img/im01.jpg', 1);
+				ballon.setImage('img/im02.jpg', 2);
+				ballon.setImage('img/im03.jpg', 3);
+				ballon.setImage('img/im04.jpg', 4);
+
+				ballon.setImage('img/im19.jpg', 19);
+				ballon.setImage('img/im20.jpg', 20);
+
+				window.addEventListener( 'resize', onWindowResize, false );
 
 			}
 
@@ -61,7 +71,6 @@
 
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
-
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
 			}
@@ -72,8 +81,8 @@
 
 				ballon.update();
 
-				mesh.rotation.x += 0.005;
-				mesh.rotation.y += 0.01;
+				//mesh.rotation.x += 0.005;
+				//mesh.rotation.y += 0.01;
 
 				renderer.render( scene, camera );
 
