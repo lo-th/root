@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Soccer Kinect</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+* { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; }
+body {
+    font-family: "Lucida Console", Monaco, monospace;
+    font-size: 11px; 
+    color:#fff;
+    background: #c60e13; 
+    background-repeat:no-repeat;
+    background-size:cover;
+    overflow:hidden;
+}
+#canvasTree { position: absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
+#container { position:absolute; top:0; left:0; }
+#debug { position:absolute; top:10px; left:10px; text-align:left; pointer-events:none; width:300px;}
+</style>
+
+<script src="js/lib/three.min.js"></script>
+<script src="js/lib/OrbitControls.js"></script>
+
+</head>
+<body>
+
+<script src="js/view.js"></script>
+<script src="js/ball.js"></script>
+
+<canvas id="canvasTree"></canvas>
+<div id="debug"></div>
+
+<script>
+
+var d = document.getElementById('debug');
+function debug ( s ) { d.innerHTML = s; };
+
+view.init();
+view.simpleRender();
+view.setCamera( 100, 400 );
+view.shadow(true);
+
+
+ball.init();
+
+
+</script>
+</body>
+</html>
