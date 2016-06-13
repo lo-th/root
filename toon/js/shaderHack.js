@@ -18,6 +18,8 @@ var shaderHack = ( function () {
 
         var vm = [
 
+        "v_eyeNormal = -( modelViewMatrix  * vec4( position, 1.0 ) ).xyz;",
+
         "vec3 vo = vNormal;", 
         "vec3 vn = normalize( (normalMatrix * cameraPosition) - (modelViewMatrix * vec4(position, 1.0 )).xyz );", 
         "intensity = pow( abs( glowC - dot(vo, vn) ), glowP );",
@@ -35,11 +37,12 @@ var shaderHack = ( function () {
         "uniform float u_celShading;",
         "uniform vec3 u_specular;",
         "uniform float u_shine;",
+        "uniform vec3 u_light;",
 
         "uniform int glow;",
         "uniform vec3 glowColor;",
         "varying float intensity;",
-        //"varying vec3 v_eyeNormal;",
+        "varying vec3 v_eyeNormal;",
 
         "float celShade(float d) {",
         "    float E = 0.05;",
@@ -75,13 +78,16 @@ var shaderHack = ( function () {
 
             //"vec3 en = normalize( v_eyeNormal );",
             "vec3 en = normalize( geometry.normal );",
-            "vec3 ln = normalize( directLight.direction );",
+            //"vec3 ln = normalize( directLight.direction );",
+            //"vec3 ln = normalize( directLight.position );",
+            "vec3 ln = normalize( geometry.position + u_light );",
             "vec3 hn = normalize(ln + vec3(0, 0, 1));",
             "float E = 0.05;",
             'float df = max(0.0, dot(en, ln));',
             'float sf = max(0.0, dot(en, hn));',
 
             'float cdf = celShade( df );',
+
             "sf = pow( abs(sf), u_shine );",
 
             "if (sf > 0.5 - E && sf < 0.5 + E) {",
@@ -116,6 +122,7 @@ var shaderHack = ( function () {
         this.uniformPush('physical', 'u_celShading', { type: "f", value: 4 });
         this.uniformPush('physical', 'u_specular', { type: "c", value: new THREE.Color( 0x606060 ) } );
         this.uniformPush('physical', 'u_shine', { type: "f", value: 10 });
+        this.uniformPush('physical', 'u_light', { type: "v3", value: new THREE.Vector3( 0, 500, 500 ) });
 
         this.uniformPush('physical', 'glow', { type: "i", value: 1 });
         this.uniformPush('physical', 'glowC', { type: "f", value: 0.8 });
