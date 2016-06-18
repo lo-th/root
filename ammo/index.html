@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>my Game</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+* { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; }
+body { 
+    font-family: "Lucida Console", Monaco, monospace;
+    font-size: 11px; 
+    color:#fff;
+    background: #000000; 
+    overflow:hidden; 
+}
+#debug { position:absolute; top:10px; left:10px; text-align:left; pointer-events:none; width:300px;}
+</style>
+
+<script src="js/libs/ammo.js"></script>
+<script src="js/libs/three.min.js"></script>
+<script src="js/controls/OrbitControls.js"></script>
+
+<script src="js/view.js"></script>
+<script src="js/Perlin.js"></script>
+<script src="js/ground.js"></script>
+<script src="js/physic.js"></script>
+
+
+</head>
+<body>
+
+<div id="debug"></div>
+
+<script>
+
+    var d = document.getElementById('debug');
+    function debug ( s ) { d.innerHTML = s; };
+
+    debug('Double click to add ball !!')
+
+
+    //
+
+
+    view.init();
+    ground.init();
+    physic.init();
+
+
+    //
+
+
+
+</script>
+</body>
+</html>
