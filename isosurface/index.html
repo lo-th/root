@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+<head>
+<title>Isosurface Toolbox</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+* { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; }
+body { 
+    font-family: "Lucida Console", Monaco, monospace;
+    font-size: 11px; 
+    color:#fff;
+    background: #000000; 
+    overflow:hidden; 
+}
+#top { position:absolute; top:0px; left:0px; width:100%; text-align:center; pointer-events:none; }
+#debug { position:absolute; top:70px; left:10px; text-align:left; pointer-events:none; width:300px;}
+</style>
+
+<script src="js/three.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/stats.min.js"></script>
+<script src="js/uil.min.js"></script>
+
+
+<!--Mesh algorithms-->
+<script src="js/marchingcubes.js"></script>
+<script src="js/marchingtetrahedra.js"></script>
+<script src="js/surfacenets.js"></script>
+<script src="js/ImprovedNoise.js"></script>
+<script src="js/testdata.js"></script>
+
+</head>
+<body>
+<div id="top">Isosurface Algorithm Tester</div>
+<div id="debug"></div>
+
+<script type="text/javascript">
+    var container, stats, scene, renderer, ui;
+    var camera, cameraControl;
+    var geometry, geo, surfacemesh, wiremesh;
+    var material, wirematerial;
+
+    var obj = 'Sphere';
+    var alg = 'Naive Surface Nets';
+
+    var statistics = '';
+
+
+
+    var meshers = {
+        'Marching Cubes': MarchingCubes,
+        'Marching Tetraheda' : MarchingTetrahedra,
+        'Naive Surface Nets': SurfaceNets
+    };
+
+    var testdata = {};
+
+    function updateMesh() {
+
+        scene.remove( surfacemesh );
+        scene.remove( wiremesh );
+
+        if(geo) geo.dispose();
+
+        //Create surface mesh
+        geometry = new THREE.Geometry();
+        
+
+        var mesher = meshers[ alg ], field  = testdata[ obj ]();
+
+        var start = (new Date()).getTime();
+        var result = mesher( field.data, field.dims );
+        var end = (new Date()).getTime();
+
+
+        //Update statistics
+        statistics = '';
+        statistics += 'resolution: ' + field.dims[0] + 'x' + field.dims[1] + 'x' + field.dims[2] + '<br>';
+        statistics += 'vertcount: ' + result.vertices.length + '<br>';
+        statistics += 'facecount: ' + result.faces.length + '<br>';
+        statistics += 'meshtime: ' + ((end - start) / 1000.0) + '<br>';
+
+        document.getElementById('debug').innerHTML = statistics;
+
+        //
+
+        geometry.vertices.length = 0;
+        geometry.faces.length = 0;
+
+        for(var i=0; i<result.vertices.length; ++i) {
+            var v = result.vertices[i];
+            geometry.vertices.push(new THREE.Vector3(v[0], v[1], v[2]));
+        }
+
+        var n = 1;
+
+        for(var i=0; i<result.faces.length; ++i) {
+            var f = result.faces[i];
+            if(f.length === 3) {
+                geometry.faces.push(new THREE.Face3(f[0], f[1], f[2]));
+            } else if(f.length === 4) {
+                n = 2;
+                geometry.faces.push(new THREE.Face3(f[0], f[1], f[2]));
+                geometry.faces.push(new THREE.Face3(f[3], f[0], f[2]));
+            } else {
+                //Polygon needs to be subdivided
+            }
+        }
+
+        geometry.mergeVertices();
+        geometry.computeFaceNormals();
+        geometry.computeVertexNormals();
+
+        geo = new THREE.BufferGeometry().fromGeometry( geometry );
+
+        //geo.computeVertexNormals();
+
+        geometry.dispose();
+
+        geo.computeBoundingBox();
+        geo.computeBoundingSphere();
+
+        var bb = geo.boundingBox;
+        var pos = new THREE.Vector3( -(bb.max.x + bb.min.x) / 2.0, -(bb.max.y + bb.min.y) / 2.0, -(bb.max.z + bb.min.z) / 2.0 );
+
+        surfacemesh = new THREE.Mesh( geo, material );
+        surfacemesh.position.copy(pos);
+        scene.add( surfacemesh );
+
+        wiremesh = new THREE.Mesh( geo, wirematerial);
+        wiremesh.position.copy(pos);
+        scene.add( wiremesh );
+
+    }
+
+    init()   
+    animate();
+
+    // init the scene
+    function init(){
+
+        container = document.createElement( 'div' );
+        document.body.appendChild( container );
+
+        renderer = new THREE.WebGLRenderer({ antialias: true});
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setClearColor( 0xBBBBBB, 1 );
+
+        container.appendChild( renderer.domElement );
+
+        stats = new Stats();
+        document.body.appendChild( stats.domElement );
+
+        // create a scene
+        scene = new THREE.Scene();
+
+        // put a camera in the scene
+        camera  = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera.position.set(0, 0, 40);
+        scene.add(camera);
+
+        // create a camera contol
+        controls  = new THREE.OrbitControls( camera, renderer.domElement );
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+        // here you add your objects
+        // - you will most likely replace this part by your own
+        var light   = new THREE.AmbientLight( Math.random() * 0xffffff );
+        scene.add( light );
+        var light   = new THREE.DirectionalLight( Math.random() * 0xffffff );
+        light.position.set( Math.random(), Math.random(), Math.random() ).normalize();
+        scene.add( light );
+
+        // texture / material
+
+        var texture = new THREE.TextureLoader().load( 'textures/metal.jpg' );
+        texture.mapping = THREE.SphericalReflectionMapping;
+
+        var map = new THREE.TextureLoader().load( 'textures/UV_Grid_Sm.jpg' );
+
+        material = new THREE.MeshStandardMaterial({ side:THREE.DoubleSide, envMap:texture, metalness:0.9, roughness:0.2, map:map });//vertexColors: THREE.VertexColors
+        //material = new THREE.MeshNormalMaterial({side:THREE.DoubleSide})
+        wirematerial = new THREE.MeshBasicMaterial({ color : 0x000000, wireframe : true, transparent:true, opacity:0.1  });
+
+        //
+
+        testdata = createTestData();
+        updateMesh();
+
+        //
+        
+        initUI();
+
+        
+
+    }
+
+    function initUI(){
+
+        
+
+        var list = [];
+        for(var id in testdata) {
+            list.push(id);
+        }
+
+        var list2 = [];
+        for(var id in meshers) {
+            list2.push(id);
+        }
+
+
+        ui = new UIL.Gui( { size:300 } );
+        ui.add('list',   { name:'objects',  list:list, fontColor:'#D4B87B', height:30, value:obj}).onChange( function(v){ obj = v; updateMesh(); } );
+        ui.add('list',   { name:'Algorithm',  list:list2, fontColor:'#D4B87B', height:30, value:alg}).onChange( function(v){ alg = v; updateMesh(); } );
+        ui.add('bool',   { name:'showfacets', titleColor:'#D4B87B', h:30, inh:20, value:true }).onChange( function(v){ surfacemesh.visible = v; } );
+        ui.add('bool',   { name:'showedges', titleColor:'#D4B87B', h:30, inh:20, value:true }).onChange( function(v){ wiremesh.visible = v; } );
+
+    };
+
+    function onWindowResize() {
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        
+    };
+
+    // animation loop
+    function animate() {
+
+        requestAnimationFrame( animate );
+        renderer.render( scene, camera );
+        stats.update();
+
+    }
+
+
+</script>
+</body>
+</html>
