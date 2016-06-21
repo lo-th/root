@@ -178,9 +178,9 @@ body {
         var texture = new THREE.TextureLoader().load( 'textures/metal.jpg' );
         texture.mapping = THREE.SphericalReflectionMapping;
 
-        var map = new THREE.TextureLoader().load( 'textures/UV_Grid_Sm.jpg' );
+        //var map = new THREE.TextureLoader().load( 'textures/UV_Grid_Sm.jpg' );
 
-        material = new THREE.MeshStandardMaterial({ side:THREE.DoubleSide, envMap:texture, metalness:0.9, roughness:0.2, map:map });//vertexColors: THREE.VertexColors
+        material = new THREE.MeshStandardMaterial({ side:THREE.DoubleSide, envMap:texture, metalness:0.9, roughness:0.2 });//vertexColors: THREE.VertexColors
         //material = new THREE.MeshNormalMaterial({side:THREE.DoubleSide})
         wirematerial = new THREE.MeshBasicMaterial({ color : 0x000000, wireframe : true, transparent:true, opacity:0.1  });
 
