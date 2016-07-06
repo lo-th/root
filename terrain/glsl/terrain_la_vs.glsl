@@ -35,12 +35,12 @@ varying vec3 vLightFront;
 vec3 makeNormal( vec2 uv ){
 
     float eps = 1.0 / resolution;
-    float ratio = resolution / size;
+    //float ratio = resolution / size;
 
     vec3 norm = vec3(0.0);
-    norm.x = ( texture2D( heightmap, uv + vec2( - eps, 0 ) ).x - texture2D( heightmap, uv + vec2( eps, 0 ) ).x ) * height * ratio;
+    norm.x = ( texture2D( heightmap, uv + vec2( - eps, 0 ) ).x - texture2D( heightmap, uv + vec2( eps, 0 ) ).x ) * height;// * ratio;
     norm.y = 1.0;
-    norm.z = ( texture2D( heightmap, uv + vec2( 0, - eps ) ).x - texture2D( heightmap, uv + vec2( 0, eps ) ).x ) * height * ratio;
+    norm.z = ( texture2D( heightmap, uv + vec2( 0, - eps ) ).x - texture2D( heightmap, uv + vec2( 0, eps ) ).x ) * height;// * ratio;
     return normalize( norm );
 
 }
@@ -61,7 +61,7 @@ void main() {
     #include <begin_vertex>
 
     // normal
-    transformedNormal = makeNormal( uv );
+    transformedNormal =  normalMatrix * makeNormal( uv );
 
     // new position
     float heightValue = texture2D( heightmap, uv ).x;
