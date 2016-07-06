@@ -3,12 +3,15 @@ uniform vec3 emissive;
 uniform float opacity;
 uniform int enableFog;
 uniform vec3 fogColor;
+uniform float fogStart;
 //uniform sampler2D heightmap;
+
+uniform sampler2D grass;
+
+varying vec2 guv;
 
 varying vec3 vLightFront;
 varying float H;
-
-varying vec2 vUv;
 
 #ifdef DOUBLE_SIDED
 
@@ -98,16 +101,16 @@ void main() {
     #include <fog_fragment>
 
     if( enableFog == 1 ){
-        float f_min = 0.3;
+        float f_min = fogStart * 0.5;
         float f_max = 0.5;
-        vec2 nuv = vUv - vec2(0.5, 0.5);
-        float dist =  sqrt(dot(nuv, nuv));
+        float f_r = f_max - f_min;
+        vec2 nuv = guv - vec2( 0.5 );
+        float f_dist = sqrt(dot(nuv, nuv));
         float ff = 0.0;
-        if ( dist > f_min ) ff = (dist-f_min)*5.0;
-        if ( dist > f_max ) ff = 1.0;
+        if ( f_dist > f_min ) ff = ( f_dist - f_min ) / f_r;//((f_dist * 2.0) / f_r) - f_min;//((f_dist - f_min) * 2.0) * (f_min/f_max);//f_dist + f_min;//( f_dist - f_min ) * 5.0;
+        if ( f_dist > f_max ) ff = 1.0;
 
         gl_FragColor.xyz = mix( gl_FragColor.xyz, fogColor, ff );
-        //gl_FragColor = vec4( gl_FragColor.xyz, 1.-ff );
 
     }
 

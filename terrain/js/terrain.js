@@ -6,9 +6,10 @@ var terrain = ( function () {
         size : 100,
         height : 20,
         resolution : 256,
-        complexity : 1,
+        complexity : 2,
         type : 1,
-        fog:0,
+        fog: 1,
+        fogStart : 0.5,
     };
 
     var maxspeed = 1;
@@ -47,6 +48,13 @@ var terrain = ( function () {
 
             terrain.makeHeightTexture();
 
+            //var tx = new THREE.Texture( pool.get( 'diffuse1' ) );
+            //tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+            //tx.repeat.set( 100, 100 );
+
+            //tx.anisotropy = 4;
+            //tx.needsUpdate = true;
+
             
 
             var uniformPlus = {
@@ -56,6 +64,8 @@ var terrain = ( function () {
                     heightmap: { value: null },
                     enableFog: { value: null },
                     fogColor: { value: null },
+                    fogStart: { value: null },
+                    grass: { value: null },
             };
 
             material = new THREE.ShaderMaterial( {
@@ -69,9 +79,10 @@ var terrain = ( function () {
 
             uniforms_terrain = material.uniforms;
 
-            uniforms_terrain.map.value = material.map;
+            //uniforms_terrain.grass.value = tx;
             uniforms_terrain.heightmap.value = heightTexture.texture;
             uniforms_terrain.enableFog.value = u.fog;
+            uniforms_terrain.fogStart.value = u.fogStart;
             uniforms_terrain.fogColor.value = new THREE.Color(0x2c2c26);
 
 
@@ -129,6 +140,7 @@ var terrain = ( function () {
             uniforms_terrain.resolution.value = u.resolution;
             uniforms_terrain.height.value = u.height;
             uniforms_terrain.enableFog.value = u.fog;
+            uniforms_terrain.fogStart.value = u.fogStart;
 
             compute.compute();
 
