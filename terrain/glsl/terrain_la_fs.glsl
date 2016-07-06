@@ -1,10 +1,14 @@
 uniform vec3 diffuse;
 uniform vec3 emissive;
 uniform float opacity;
+uniform int enableFog;
+uniform vec3 fogColor;
 //uniform sampler2D heightmap;
 
 varying vec3 vLightFront;
 varying float H;
+
+varying vec2 vUv;
 
 #ifdef DOUBLE_SIDED
 
@@ -41,18 +45,17 @@ void main() {
     vec3 totalEmissiveRadiance = emissive;
 
     #include <logdepthbuf_fragment>
-    #include <map_fragment>
-    #include <color_fragment>
 
     diffuseColor.r = H;
     diffuseColor.g = 1.0- H*0.5;
     if(H<0.1) diffuseColor.b = 1.0;
     else diffuseColor.b = 0.0;
 
-   // diffuseColor.r = pow( abs(diffuseColor.r), 1.0/2.2 );
-   // diffuseColor.g = pow( abs(diffuseColor.g), 1.0/2.2 );
-   // diffuseColor.b = pow( abs(diffuseColor.b), 1.0/2.2 );
 
+    #include <map_fragment>
+    #include <color_fragment>
+
+    
 
     #include <alphamap_fragment>
     #include <alphatest_fragment>
@@ -93,5 +96,21 @@ void main() {
     #include <tonemapping_fragment>
     #include <encodings_fragment>
     #include <fog_fragment>
+
+    if( enableFog == 1 ){
+        float f_min = 0.3;
+        float f_max = 0.5;
+        vec2 nuv = vUv - vec2(0.5, 0.5);
+        float dist =  sqrt(dot(nuv, nuv));
+        float ff = 0.0;
+        if ( dist > f_min ) ff = (dist-f_min)*5.0;
+        if ( dist > f_max ) ff = 1.0;
+
+        gl_FragColor.xyz = mix( gl_FragColor.xyz, fogColor, ff );
+        //gl_FragColor = vec4( gl_FragColor.xyz, 1.-ff );
+
+    }
+
+
 
 }

@@ -66,9 +66,11 @@ body {
 
         var data = terrain.getData();
 
+        ui1.add( data, 'fog', { type:'Bool', h:18 }).onChange( function(){ terrain.update() } );
         ui1.add( data, 'complexity', { min:0.01, max:10, stype:2, precision:2 } ).onChange( function(){ terrain.update() } );
         ui1.add( data, 'height', { min:0, max:50, stype:2, precision:0 } ).onChange( function(){ terrain.update() } );
         ui1.add( data, 'type', { min:0, max:7, stype:2, precision:0 } ).onChange( function(){ terrain.update() } );
+
 
     }
 

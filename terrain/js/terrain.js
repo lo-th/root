@@ -8,6 +8,7 @@ var terrain = ( function () {
         resolution : 256,
         complexity : 1,
         type : 1,
+        fog:0,
     };
 
     var maxspeed = 1;
@@ -53,6 +54,8 @@ var terrain = ( function () {
                     height: { value: u.height },
                     resolution: { value: u.resolution },
                     heightmap: { value: null },
+                    enableFog: { value: null },
+                    fogColor: { value: null },
             };
 
             material = new THREE.ShaderMaterial( {
@@ -62,10 +65,14 @@ var terrain = ( function () {
             });
 
             material.lights = true;
+            material.map = null;
 
             uniforms_terrain = material.uniforms;
 
+            uniforms_terrain.map.value = material.map;
             uniforms_terrain.heightmap.value = heightTexture.texture;
+            uniforms_terrain.enableFog.value = u.fog;
+            uniforms_terrain.fogColor.value = new THREE.Color(0x2c2c26);
 
 
             var geometry = new THREE.PlaneBufferGeometry( u.size, u.size, u.resolution - 1, u.resolution -1 );
@@ -73,6 +80,10 @@ var terrain = ( function () {
 
             mesh = new THREE.Mesh( geometry, material );
             mesh.matrixAutoUpdate = false;
+
+            //mesh.castShadow = true;
+            //mesh.receiveShadow = true;
+
             //mesh.updateMatrix();
             view.add( mesh );
 
@@ -117,6 +128,7 @@ var terrain = ( function () {
             uniforms_terrain.size.value = u.size;
             uniforms_terrain.resolution.value = u.resolution;
             uniforms_terrain.height.value = u.height;
+            uniforms_terrain.enableFog.value = u.fog;
 
             compute.compute();
 

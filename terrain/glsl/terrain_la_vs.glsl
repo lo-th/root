@@ -7,6 +7,7 @@ uniform float resolution;
 uniform sampler2D heightmap;
 
 varying float H;
+varying vec2 vUv;
 
 #define LAMBERT
 
@@ -66,6 +67,9 @@ void main() {
     float heightValue = texture2D( heightmap, uv ).x;
     H = heightValue;
     transformed = vec3( position.x, heightValue*height, position.z );
+
+    vUv = uv;
+
 
     
     #include <morphtarget_vertex>
