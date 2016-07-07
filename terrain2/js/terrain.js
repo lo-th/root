@@ -5,7 +5,7 @@ var terrain = ( function () {
     var u = {
         size : 100,
         height : 10,
-        resolution : 512,
+        resolution : 256,
         complexity : 2,
         type : 1,
         fog: 1,
@@ -22,6 +22,7 @@ var terrain = ( function () {
 
     var material = null;
     var mesh = null;
+    var geometry = null;
     var compute = null;
 
     var uniforms_terrain = null;
@@ -30,8 +31,8 @@ var terrain = ( function () {
     var heightmapVariable, smoothShader;
     var heightTexture = null;
 
-
     var needsUpdate = false;
+    var currentResolution = u.resolution;
 
 
     terrain = {
@@ -40,7 +41,9 @@ var terrain = ( function () {
             return u;
         },
 
-        init : function ( o ) {
+        init : function ( w ) {
+
+            u.resolution = w || 256;
 
             pos = new THREE.Vector3();
             ease = new THREE.Vector2();
@@ -114,10 +117,10 @@ var terrain = ( function () {
             //uniforms_terrain.map.value = material.map;
             //uniforms_terrain.normalMap.value = material.normalMap
 
-            uniforms_terrain.repeat.value = u.repeat;
+            //uniforms_terrain.repeat.value = u.repeat;
             uniforms_terrain.ratioUV.value = 1.0 / (u.size/u.repeat);
             uniforms_terrain.pos.value = pos;
-            uniforms_terrain.blur.value = u.blur;
+            //uniforms_terrain.blur.value = u.blur;
 
             uniforms_terrain.snow.value = tx.snow;
             uniforms_terrain.rock.value = tx.rock;
@@ -128,18 +131,18 @@ var terrain = ( function () {
             //uniforms_terrain.offsetRepeat.value = new THREE.Vector4(u.repeat,u.repeat,u.repeat,u.repeat);
 
             uniforms_terrain.roughness.value = 0.9;
-            uniforms_terrain.metalness.value = 0.0;
+            uniforms_terrain.metalness.value = 0.2;
 
             uniforms_terrain.heightmap.value = heightTexture.texture;
 
-            uniforms_terrain.enableFog.value = u.fog;
-            uniforms_terrain.fogStart.value = u.fogStart;
+            //uniforms_terrain.enableFog.value = u.fog;
+            //uniforms_terrain.fogStart.value = u.fogStart;
             uniforms_terrain.fogColor.value = view.getBgColor();//new THREE.Color(0x2c2c26);
 
 
-            var geometry = new THREE.PlaneBufferGeometry2( u.size, u.size, u.resolution - 1, u.resolution -1 );
-            geometry.rotateX( -Math.PI / 2 );
+            
             //geometry.rotateY( -Math.PI / 2 );
+            terrain.makeGeometry();
 
             mesh = new THREE.Mesh( geometry, material );
             mesh.matrixAutoUpdate = false;
@@ -152,7 +155,20 @@ var terrain = ( function () {
 
 
             view.addUpdate( terrain.update );
-            view.addUpdate( terrain.easing );
+
+            terrain.setUniform();
+            //view.addUpdate( terrain.easing );
+
+
+
+        },
+
+        makeGeometry : function(){
+
+            if(geometry) geometry.dispose();
+
+            geometry = new THREE.PlaneBufferGeometry2( u.size, u.size, u.resolution - 1, u.resolution -1 );
+            geometry.rotateX( -Math.PI / 2 );
 
         },
 
@@ -175,15 +191,15 @@ var terrain = ( function () {
             uniforms_height.complexity = { value: 0 };
 
             uniforms_height.pos.value = pos;
-            uniforms_height.size.value = u.size;
-            uniforms_height.resolution.value = u.resolution;
-            uniforms_height.type.value = u.type;
-            uniforms_height.complexity.value = 1 / ( u.complexity * 100 );
+            //uniforms_height.size.value = u.size;
+            //uniforms_height.resolution.value = u.resolution;
+            //uniforms_height.type.value = u.type;
+           // uniforms_height.complexity.value = 1 / ( u.complexity * 100 );
 
 
 
-            compute.compute();
-            terrain.smoothTerrain();
+            //compute.compute();
+            //terrain.smoothTerrain();
             heightTexture = compute.getCurrentRenderTarget( heightmapVariable );
 
         },
@@ -209,20 +225,17 @@ var terrain = ( function () {
 
         setUniform: function () {
 
-            //uniforms_height.pos.value = pos;
-
             uniforms_height.type.value = u.type;
             uniforms_height.size.value = u.size;
             uniforms_height.resolution.value = u.resolution;
             uniforms_height.complexity.value = 1 / ( u.complexity * 100 );
-
-            //uniforms_terrain.pos.value = pos;
 
             uniforms_terrain.size.value = u.size;
             uniforms_terrain.resolution.value = u.resolution;
             uniforms_terrain.height.value = u.height;
             uniforms_terrain.enableFog.value = u.fog;
             uniforms_terrain.fogStart.value = u.fogStart;
+            uniforms_terrain.repeat.value = u.repeat;
             
             uniforms_terrain.ratioUV.value = 1.0 / (u.size/u.repeat);
 
@@ -232,14 +245,9 @@ var terrain = ( function () {
 
         update: function () {
 
+            terrain.easing();
+
             if(!needsUpdate) return;
-
-            
-
-            //compute.compute();
-
-            //smoothShader.uniforms.blur.value = u.blur;
-            //smoothShader.uniforms.resolution.value = u.resolution;
 
             compute.compute();
 

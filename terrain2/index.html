@@ -2,20 +2,28 @@
 <html>
 <head>
 <meta charset="UTF-8" />
-<title>my Game</title>
+<title>GPU terrain</title>
 <meta name="Description" content="" />
 <meta name="Keywords"  content="" />
 <style>
 * { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; }
 body { 
     font-family: "Lucida Console", Monaco, monospace;
-    font-size: 11px; 
+    font-size: 12px; 
     color:#fff;
     background: #000000; 
     overflow:hidden; 
+    line-height: 130%;
+    text-shadow: 1px 1px 3px #000000;
 }
-#debug { position:absolute; bottom:10px; left:10px; text-align:left; pointer-events:none; width:100%;}
+#debug { position:absolute; bottom:10px; right:10px; text-align:right; pointer-events:none; width:50%;}
+#info { position:absolute; bottom:10px; left:10px; text-align:left; pointer-events:auto; width:70%;}
 </style>
+<div id="info">
+    <a href="http://threejs.org" target="_blank">three.js</a> - <span id="waterSize"></span> webgl gpgpu terrain<br/>
+    Select <span id="options"></span> terrain size<br/>
+    Use keyboard WSAD or ZSQD to move, shift to speed up, rotate with mouse
+</div>
 
 <script src="js/libs/three.min.js"></script>
 <script src="js/libs/uil.min.js"></script>
@@ -23,12 +31,6 @@ body {
 <script src="js/controls/OrbitControls.js"></script>
 <script src="js/GPUComputationRenderer.js"></script>
 <script src="js/PlaneBufferGeometry2.js"></script>
-<!--<script src="js/loaders/sea3d/SEA3D.js"></script>
-<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
-<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
-<script src="js/loaders/sea3d/SEA3DLegacy.js"></script>-->
-
-
 
 <script src="js/pool.js"></script>
 <script src="js/view.js"></script>
@@ -42,15 +44,32 @@ body {
 
 <script>
 
+    var hash = document.location.hash.substr( 1 );
+    if ( hash ) hash = parseInt( hash, 0 ); 
+
+    var WIDTH = hash || 256;
+    document.getElementById( 'waterSize' ).innerText = WIDTH + ' x ' + WIDTH;
+
+    function change(n) {
+        location.hash = n;
+        location.reload();
+        return false;
+    }
+
+
+    var options = '';
+    for ( var i = 5; i < 9; i++ ) {
+        var j = Math.pow( 2, i ) * 4;
+        options += '<a href="#" onclick="return change(' + j + ')">' + j + 'x' + j + '</a> ';
+    }
+    document.getElementById('options').innerHTML = options;
+
     var d = document.getElementById( 'debug' );
     function debug ( s ) { d.innerHTML = s; };
 
-    debug( 'use keyboard WSAD or ZSQD to move, shift to speed up,  rotate with mouse')
-
-
 
     view.init();
-    terrain.init();
+    terrain.init( WIDTH );
     user.init();
 
     var target = new THREE.Mesh(new THREE.SphereBufferGeometry( 0.25, 12, 10 ), new THREE.MeshBasicMaterial());
@@ -68,18 +87,18 @@ body {
 
     function initGui(){
 
-        var ui1 = new UIL.Gui( { width:300, bg:'rgba(44,44,38,0.1)' } ).onChange( function(){ terrain.setUniform() } );
+        var ui1 = new UIL.Gui( { width:300, bg:'rgba(126,192,258,0.5)' } ).onChange( function(){ terrain.setUniform() } );
 
         var data = terrain.getData();
 
         ui1.add( data, 'fog', { type:'Bool', inh:14 })
-        ui1.add( data, 'fogStart', { min:0, max:1, stype:2, precision:2 } )//.onChange( function(){ terrain.update() } );
+        ui1.add( data, 'fogStart', { min:0, max:1, stype:1, precision:2 } )//.onChange( function(){ terrain.update() } );
 
-        ui1.add( data, 'complexity', { min:0.01, max:10, stype:2, precision:2 } )//.onChange( function(){ terrain.update() } );
-        ui1.add( data, 'height', { min:0, max:50, stype:2, precision:0 } )//.onChange( function(){ terrain.update() } );
-        ui1.add( data, 'type', { min:0, max:8, stype:2, precision:0 } )//.onChange( function(){ terrain.update() } );
+        ui1.add( data, 'complexity', { min:0.01, max:10, stype:1, precision:2 } )//.onChange( function(){ terrain.update() } );
+        ui1.add( data, 'height', { min:0, max:50, stype:1, precision:0 } )//.onChange( function(){ terrain.update() } );
+        ui1.add( data, 'type', { min:0, max:8, stype:1, precision:0 } )//.onChange( function(){ terrain.update() } );
 
-        ui1.add( data, 'blur', { min:0, max:10, stype:2, precision:0 } )//.onChange( function(){ terrain.update() } );
+        ui1.add( data, 'blur', { min:0, max:10, stype:1, precision:0 } )//.onChange( function(){ terrain.update() } );
 
 
     }
