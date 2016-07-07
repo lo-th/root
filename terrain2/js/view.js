@@ -74,8 +74,8 @@ var view = ( function () {
             renderer.gammaInput = true;
             renderer.gammaOutput = true;
 
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFShadowMap;
+            //renderer.shadowMap.enabled = true;
+            //renderer.shadowMap.type = THREE.PCFShadowMap;
 
             container.appendChild( renderer.domElement );
 
@@ -101,13 +101,13 @@ var view = ( function () {
             light.position.set(2,10,6).multiplyScalar( 10 );
             light.lookAt(new THREE.Vector3(0,0,0));
 
-            light.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 20, 1, 5, 200 ) );
-            light.shadow.bias = 0.0001;
+            //light.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 20, 1, 5, 200 ) );
+            //light.shadow.bias = 0.0001;
 
-            light.shadow.mapSize.width = 1024;
-            light.shadow.mapSize.height = 1024;
+            //light.shadow.mapSize.width = 1024;
+            //light.shadow.mapSize.height = 1024;
 
-            light.castShadow = true;
+            //light.castShadow = true;
 
             scene.add( light );
 
