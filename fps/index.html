@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>my Game</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+* { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; box-sizing: border-box; }
+html { width:100%; height:100% }
+body { 
+    font-family: "Lucida Console", Monaco, monospace;
+    font-size: 11px; 
+    color:#fff;
+    background: #000000; 
+    /*overflow:hidden;*/
+}
+#debug { }
+</style>
+
+<script src="js/three.min.js"></script>
+<script src="js/sea3d.min.js"></script>
+<script src="js/controls/OrbitControls.js"></script>
+<script src="src/pool.js"></script>
+<script src="src/view.js"></script>
+<script src="src/map.js"></script>
+<script src="src/user.js"></script>
+<script src="src/player.js"></script>
+
+</head>
+<body>
+
+<script>
+
+    var demo = 1;
+
+    var d, t;
+    function addtell () { 
+        d = document.createElement( 'div' );
+        d.style.cssText = 'position:absolute; top:0; left:0; text-align:left; padding: 10px 10px; pointer-events:none; width:100%; color:#0F0; ';
+        document.body.appendChild( d );
+    };
+    function tell ( s ) { d.innerHTML += s + '<br>'; };
+    function trace ( s ) { d.innerHTML = s; };
+
+    view.init();
+    user.init();
+
+    addtell();
+    map.init();
+
+    
+
+
+    pool.load(['models/basic.sea', 'models/bob.sea', 'models/museum.sea' ], init );
+
+    function init ( p ) {
+
+        var sc = 1;//1.23;
+        var y = 0;//3.27*sc;
+        var names;
+        var types;
+
+        if(demo === 1 ) {
+
+            sc = 1;
+            y = 3.27// * sc;
+
+            //view.setDeep( sc*10 );
+            //view.setDecal( 3.27 );
+            
+            //view.addCollision( p['museum']['floor_0'], sc, {y:y} );
+            //view.addCollision( p['museum']['floor_1'], sc, {y:y} );
+
+            names = ['facade', 'elevator','facade_w','elevator_w','floor','bigwall', 'floor2', 'floor_0', 'floor_1'];
+            types = [       0,    0, 0, 0, 0, 0, 0, 1, 1];
+
+        } else {
+
+            //view.setDeep( 10 );
+            //view.setDecal( y );
+
+            //map.add( p['basic']['collision'], sc, {y:y} );
+
+            //view.addCollision( p['basic']['collision'], sc, {y:y} );
+            names = ['sea', 'hh'];
+            types = [    0,    1];
+
+        }
+
+       
+        var i = names.length, m, name;
+        while(i--){
+
+            name = names[i];
+            if(demo === 1 ) m = p['museum'][names[i]];
+            else m = p['basic'][names[i]];
+
+            view.add( m, { size:sc, pos:[0,y,0], type:types[i] } );
+
+        }
+
+        player.init( p['bob']['bob'] );
+
+    }
+
+</script>
+</body>
+</html>
