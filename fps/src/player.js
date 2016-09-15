@@ -34,6 +34,8 @@ var player = ( function () {
 
     var mixer;
 
+    var count = 0;
+
 
 
 
@@ -172,12 +174,13 @@ var player = ( function () {
                 level.y = origin.y;
             }
 
-            
-
-
         },
 
         move : function () {
+
+            count++;
+
+            
 
             var delta = 0.017;
 
@@ -249,10 +252,16 @@ var player = ( function () {
             easeRot.y = -view.getAzimut();
 
             mesh.rotation.y = -easeRot.y;
-            view.rotateTopCamera( -easeRot.y );
+            //view.rotateTopCamera( -easeRot.y );
+            map.rotateCamera( -easeRot.y );
 
             var ry = oldRot - easeRot.y;
 
+
+            /*if( count===3 ){
+                count = 0;
+            } else { return }
+*/
   
             if( ease.z === 0 && ease.x === 0 ) return;
 
@@ -267,9 +276,17 @@ var player = ( function () {
             level.z = origin.z + easeRot.z;
 
 
+            if( level.y > 2 ) view.setLevel(1);
+            else view.setLevel(0);
+
+
+
             view.testPosition( level );
 
             player.raytest();
+
+            //if( level.y > 2 ) view.setLevel(1);
+            //else view.setLevel(0);
             
 
             var b = map.getHit();

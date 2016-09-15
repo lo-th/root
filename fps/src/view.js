@@ -7,6 +7,10 @@ var view = ( function () {
     var debug = false;
     var isDirect = false;
 
+    var isNewLevel = false;
+
+    var isNeedRevers = false;
+
     var vsize = { x: window.innerWidth, y: window.innerHeight, z:1 };
     var zsize, zoneTexture, zoneTextureXX;
 
@@ -19,6 +23,9 @@ var view = ( function () {
     var level = 0;
     var zone, zoneFull;
 
+
+    var landRender, land, camera_land, land_mesh;
+
     var extra = [];
     var collisions = [];
 
@@ -30,9 +37,13 @@ var view = ( function () {
 
     var mat_deep, mat_solid;
 
-    var gputmp;
+    //var gputmp;
 
     var ar8 = typeof Uint8Array !== "undefined" ? Uint8Array : Array;
+
+    var count = 0;
+    var timeElapsed = 0;
+    var lastTimeStamp = 0;
 
     view = {
 
@@ -69,7 +80,7 @@ var view = ( function () {
 
             //
 
-            gputmp = new view.GpuSide();
+            //gputmp = new view.GpuSide();
 
             //
 
@@ -82,11 +93,50 @@ var view = ( function () {
 
             //
 
+            /*var geometry = new THREE.PlaneGeometry( 32, 32, 1, 1 );
+            geometry.rotateX( - Math.PI / 2 );
+
+            var material = new THREE.MeshBasicMaterial( {color:0x00FF00, wireframe:true } );
+
+            //var material = new THREE.MeshBasicMaterial( { color: 0x00FF00, overdraw: 0.5 } );
+
+            land_mesh = new THREE.Mesh( geometry, material );
+            scene.add( land_mesh );
+            */
+
             window.addEventListener( 'resize', view.resize, false );
 
             this.render();
 
         },
+
+        snapShoot : function () {
+
+            view.materialSwitch( true );
+
+            renderer.setSize( 512, 512 );
+            renderer.setClearColor( mask );
+
+            renderer.render( scene, camera_land, landRender, true );
+            renderer.readRenderTargetPixels( landRender, 0, 0, 512, 512, land );
+
+            map.drawLand( land );
+
+            isNeedRevers = true;
+
+        },
+
+        /*pushCanvas: function ( c ){
+
+            var t = new THREE.CanvasTexture( c );//new THREE.Texture( c );
+            t.flipY = false;
+
+            var mat = new THREE.MeshBasicMaterial( { map:t } );
+
+            land_mesh.material = mat;
+        },*/
+
+
 
         initCameraTop: function () {
 
@@ -95,6 +145,9 @@ var view = ( function () {
             //zoneTextureXX.needsUpdate = true;
 
             //var pixels = zoneTextureXX.image.data;
+
+            landRender = new THREE.WebGLRenderTarget( 512, 512, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, format: THREE.RGBAFormat, type: THREE.UNSIGNED_BYTE } );
+            land = new ar8( 512 * 512 * 4 );
 
             //console.log(pixels)
 
@@ -110,6 +163,11 @@ var view = ( function () {
 
             cam_top = new THREE.Group();
 
+            var v = 32*0.5;//6;// 500*this.miniSize.f;
+            camera_land = new THREE.OrthographicCamera( -v , v , v , -v , 1, 8 );
+            camera_land.position.set( 0, 5, 0 );
+            camera_land.lookAt( new THREE.Vector3() );
+
             //factor = 0.005;//1 / 200;
             //camera_top = new THREE.OrthographicCamera( -vsize.x * factor , vsize.x * factor , vsize.y * factor , -vsize.y * factor , 0.1, 400 );
             var w = 0.5;//6;// 500*this.miniSize.f;
@@ -117,12 +175,13 @@ var view = ( function () {
             camera_top.position.set( 0, 3, 0 );
             camera_top.lookAt( new THREE.Vector3() );
 
-            camera_top_helper = new THREE.CameraHelper( camera_top );
+            //camera_top_helper = new THREE.CameraHelper( camera_land );
 
             cam_top.add( camera_top );
+            cam_top.add( camera_land );
             ///scene_top.add( cam_top );
             scene.add( cam_top );
-            scene.add( camera_top_helper );
+            //scene.add( camera_top_helper );
 
         },
 
@@ -147,13 +206,13 @@ var view = ( function () {
 
             ambient = new THREE.AmbientLight( 0x282824 );
 
-            light = new THREE.DirectionalLight( 0xffffff, 1 );
+            light = new THREE.DirectionalLight( 0xffffff, 1.6 );
             light.position.set(2,10,6).multiplyScalar( 10 );
             light.lookAt(new THREE.Vector3(0,0,0));
 
 
-            point = new THREE.PointLight( 0x7EC0EE, 1, 200);
-            point.position.set( -2,-10,-6 ).multiplyScalar( 10 );
+            point = new THREE.PointLight( 0x3388EE, 2, 200);
+            point.position.set( -2,0,-6 ).multiplyScalar( 10 );
 
             scene.add( ambient );
             scene.add( light );
@@ -192,21 +251,25 @@ var view = ( function () {
             var p = o.pos || [0,0,0];
             var s = o.scale || 1;
 
-            m.material = material;
+            m.material = o.material ||  material;
 
-            m.userData['mat'] = o.material || material;
+            m.userData['mat'] = m.material;//o.material || material;
             m.userData['type'] = o.type || 0;
+            m.userData['level'] = o.level !== undefined ? o.level : -1;
 
             if( s !== 1 ) m.scale.multiplyScalar( s );
             m.position.fromArray( p );
-
-            if( m.userData.type === 1 ) collid.add( m );
+            
+            if( m.userData.type === 2) m.visible = false;
+            if( m.userData.type === 1 || m.userData.type === 3 ) collid.add( m );
             else scene.add( m );
+
+
             meshs.push( m );
 
         },
 
-        addCollision: function ( m, s, p ) {
+        /*addCollision: function ( m, s, p ) {
 
             p = p || {};
             s = s || 1;
@@ -227,20 +290,58 @@ var view = ( function () {
 
             collisions.push( m );
 
+        },*/
+
+        findLevel: function () {
+
+            var i = meshs.length, m, l;
+            while( i-- ){
+                m = meshs[i];
+                l = m.userData.level; 
+                if( l !== -1 ){
+
+                    if( l === level ) m.visible = true;
+                    else m.visible = false;
+
+                }
+            }
+
         },
 
         setLevel: function ( n ) {
 
             if( n === level ) return;
-            if( !collisions[n] ) return;
+
+
+
+            /*if( !collisions[n] ) return;
 
             var i = collisions.length;
             while (i--) collisions[i].visible = n === i ? true : false;
 
+            */
+
             level = n;
+
+            isNewLevel = true;
+
+            //view.snapShoot();
+
+            //if( level === 0 ){
+
+            //}
 
             //map.render();
 
+        },
+
+        checkNewLevel: function () {
+            if(isNewLevel){
+                isNewLevel = false;
+                return true;
+            } else {
+                return false;
+            }
         },
 
         //
@@ -251,21 +352,33 @@ var view = ( function () {
             vsize.y = window.innerHeight;
             vsize.z = vsize.x / vsize.y;
 
+            renderer.setSize( vsize.x, vsize.y );
+
             camera.aspect = vsize.z;
             camera.updateProjectionMatrix();
 
         },
 
-        rotateTopCamera: function ( r ) {
+        /*rotateTopCamera: function ( r ) {
             cam_top.rotation.y = r;
-        },
+            camera_land.rotation.z = -r;
+        },*/
 
         testPosition: function ( v, r ) {
 
             cam_top.position.copy( v );
+
+            map.moveCamera( v );
+            map.testHit();
+
             //cam_top.rotation.y = r;
 
-            view.renderTop();
+            /*count ++;
+            if( count === 2 ){
+                count = 0;
+            } else { return }
+
+            view.renderTop();*/
 
         },
 
@@ -281,18 +394,26 @@ var view = ( function () {
 
                 if( up ){
 
-                    camera_top_helper.visible = false;
+
+
+                    //camera_top_helper.visible = false;
 
                     if( t === 0 ) m.visible = false;
-                    //else if( t === 1 ) m.material = mat_deep;
-                    else if( t === 2 ) m.material = mat_solid;
+                    else if( t === 1 ) m.material = mat_deep;
+                    else if( t === 2 ){ m.visible = true; m.material = mat_deep;}
+                    else if( t === 3 ){ m.visible = false; }
+                    else if( t === 4 ) m.material = mat_solid;
+
+                    view.findLevel();
 
                 } else {
 
-                    camera_top_helper.visible = true;
+                    //camera_top_helper.visible = true;
 
                     if( t === 0 ) m.visible = true;
-                    else if( t === 2 ) m.material =  m.userData.mat;
+                    else if( t === 2 ) m.visible = false;
+                    else if( t === 3 ) m.visible = true;
+                    else m.material =  m.userData.mat;
 
                 }
 
@@ -315,7 +436,7 @@ var view = ( function () {
 
         },
 
-        renderTop__: function () {
+        /*renderTop__: function () {
 
             renderer.setSize( 16, 16 );
             renderer.setClearColor( mask );
@@ -350,21 +471,28 @@ var view = ( function () {
             else renderer.readRenderTargetPixels( zoneTexture, zsize.x, zsize.y, zsize.z, zsize.z, zone );
             map.testHit( zone );
 
-        },
+        },*/
 
-        render: function () {
+        render: function ( timeStamp ) {
 
             requestAnimationFrame( view.render );
+
+
+            timeElapsed = lastTimeStamp ? timeStamp - lastTimeStamp : 0;
+            lastTimeStamp = timeStamp;
+
+            //trace( timeElapsed );
         
             var i = extra.length;
-            while(i--) extra[i]();
+            while(i--) extra[i]( timeElapsed );
 
             //view.renderTop();
 
-            view.materialSwitch( false );
-
-            renderer.setSize( vsize.x, vsize.y );
-            renderer.setClearColor( bg );
+            if( isNeedRevers ){ 
+                view.materialSwitch( false );
+                renderer.setSize( vsize.x, vsize.y );
+                renderer.setClearColor( bg );
+            }
 
             renderer.render( scene, camera );
             
@@ -400,7 +528,7 @@ var view = ( function () {
     //   GPU RENDER
     // ------------------------------
 
-    view.GpuSide = function(){
+    /*view.GpuSide = function(){
 
         this.renderer = view.getRenderer();
         this.scene = new THREE.Scene();
@@ -442,7 +570,7 @@ var view = ( function () {
             //this.passThruUniforms.texture.value = null;
 
         }
-    }
+    }*/
 
     return view;
 

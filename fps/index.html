@@ -19,6 +19,7 @@ body {
 </style>
 
 <script src="js/three.min.js"></script>
+
 <script src="js/sea3d.min.js"></script>
 <script src="js/controls/OrbitControls.js"></script>
 <script src="src/pool.js"></script>
@@ -29,7 +30,6 @@ body {
 
 </head>
 <body>
-
 <script>
 
     var demo = 1;
@@ -41,7 +41,7 @@ body {
         document.body.appendChild( d );
     };
     function tell ( s ) { d.innerHTML += s + '<br>'; };
-    function trace ( s ) { d.innerHTML = s; };
+    function trace ( s ) { if(d) d.innerHTML = s; };
 
     view.init();
     user.init();
@@ -49,10 +49,17 @@ body {
     addtell();
     map.init();
 
+    /*var butt = document.createElement( 'div' );
+    butt.style.cssText = 'position: absolute; cursor: pointer; bottom: 10px; left: 10px; width: 100px; border:1px solid #FFFFFF;';
+    butt.innerHTML = 'SNAPSHOOT'
+    document.body.appendChild( butt );
+
+    butt.addEventListener('click', view.snapShoot, false );*/
+
     
 
 
-    pool.load(['models/basic.sea', 'models/bob.sea', 'models/museum.sea' ], init );
+    pool.load(['models/basic.sea', 'models/bob.sea', 'models/museum.sea', 'textures/spherical/ceramic.jpg','textures/museum/facade.png', 'textures/museum/escalator.png', 'textures/museum/bigwall.jpg', 'textures/museum/floor.jpg', 'textures/museum/floor2.jpg' ], init );
 
     function init ( p ) {
 
@@ -60,25 +67,58 @@ body {
         var y = 0;//3.27*sc;
         var names;
         var types;
+        var level = [];
+        var material = [];
 
         if(demo === 1 ) {
 
             sc = 1;
             y = 3.27// * sc;
 
-            //view.setDeep( sc*10 );
-            //view.setDecal( 3.27 );
+            view.setDeep( sc*10 );
+            view.setDecal( 3.27 );
+
+            var envMap =  new THREE.Texture( p.ceramic );
+            envMap.mapping = THREE.SphericalReflectionMapping;
+            envMap.needsUpdate = true;
+
+            var t = new THREE.Texture( p.facade );
+            t.flipY = false;
+            t.needsUpdate = true;
+            material[0] = new THREE.MeshLambertMaterial({ map:t, envMap:envMap, reflectivity:0.6  });
+            material[2] = new THREE.MeshLambertMaterial({ map:t, transparent:true, side:THREE.DoubleSide, envMap:envMap, reflectivity:0.8 });
+            t = new THREE.Texture( p.escalator );
+            t.flipY = false;
+            t.needsUpdate = true;
+            material[1] = new THREE.MeshLambertMaterial({ map:t, envMap:envMap, reflectivity:0.6 });
+            material[3] = new THREE.MeshLambertMaterial({ map:t, transparent:true, side:THREE.DoubleSide, envMap:envMap, reflectivity:0.8 });
+
+            t = new THREE.Texture( p.floor );
+            t.flipY = false;
+            t.needsUpdate = true;
+            material[4] = new THREE.MeshLambertMaterial({ map:t, envMap:envMap, reflectivity:0.6 });
+
+            t = new THREE.Texture( p.bigwall );
+            t.flipY = false;
+            t.needsUpdate = true;
+            material[5] = new THREE.MeshLambertMaterial({ map:t, envMap:envMap, reflectivity:0.6 });
+
+            t = new THREE.Texture( p.floor2 );
+            t.flipY = false;
+            t.needsUpdate = true;
+            material[6] = new THREE.MeshLambertMaterial({ map:t, envMap:envMap, reflectivity:0.6 });
             
             //view.addCollision( p['museum']['floor_0'], sc, {y:y} );
             //view.addCollision( p['museum']['floor_1'], sc, {y:y} );
 
             names = ['facade', 'elevator','facade_w','elevator_w','floor','bigwall', 'floor2', 'floor_0', 'floor_1'];
-            types = [       0,    0, 0, 0, 0, 0, 0, 1, 1];
+            types = [       0,    3, 0, 0, 3, 0, 3, 2, 2];
+            level = [       -1,  -1,-1,-1,-1,-1,-1, 0, 1 ];
 
         } else {
 
-            //view.setDeep( 10 );
-            //view.setDecal( y );
+            view.setDeep( 10 );
+            view.setDecal( y );
 
             //map.add( p['basic']['collision'], sc, {y:y} );
 
@@ -96,7 +136,7 @@ body {
             if(demo === 1 ) m = p['museum'][names[i]];
             else m = p['basic'][names[i]];
 
-            view.add( m, { size:sc, pos:[0,y,0], type:types[i] } );
+            view.add( m, { size:sc, pos:[0,y,0], type:types[i], level:level[i], material:material[i] } );
 
         }
 
