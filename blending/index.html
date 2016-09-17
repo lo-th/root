@@ -79,7 +79,14 @@
 				renderer.setClearColor( 0x777777 );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.autoClear = true;
+
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.soft = true;
+			    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			    renderer.shadowMap.renderReverseSided = false
 
 				container.appendChild( renderer.domElement );
 
@@ -87,25 +94,56 @@
 				var radius = 30;
 
 				camera = new THREE.PerspectiveCamera( 45, aspect, 1, 10000 );
-				camera.position.set( 0.0, radius, radius * 3.5 );
+				camera.position.set( 0.0, radius + 10, radius * 3.5 );
 
 				controls = new THREE.OrbitControls( camera );
 				controls.target.set( 0, radius, 0 );
 				controls.update();
 
-				var ambient = new THREE.AmbientLight( 0x282824 );
+				var ambient = new THREE.AmbientLight( 0x101010 );
 
-	            var light = new THREE.DirectionalLight( 0xffffff, 1 );
-	            light.position.set(2,10,6).multiplyScalar( 10 );
-	            light.lookAt(new THREE.Vector3(0,0,0));
+	            var light = new THREE.DirectionalLight( 0xffffff, 1.4 );
+	            //var light = new THREE.SpotLight( 0xff0000, 2, 0, Math.PI / 2, 10, 2 );
+	            light.position.set(10,100,60);
+	            light.lookAt(new THREE.Vector3(0,-20,0));
+
+	            var d = 100;
+
+				light.shadow.camera.left = -d;
+				light.shadow.camera.right = d;
+				light.shadow.camera.top = d * 1.5;
+				light.shadow.camera.bottom = -d;
+
+	            light.castShadow = true;
+				//light.shadow.camera.near = 100;
+				light.shadow.camera.far = 200;
+				//light.shadow.camera.fov = 50;
+				light.shadow.mapSize.width = 1024;
+				light.shadow.mapSize.height = 1024;
+				light.shadow.bias =  -0.005;
 
 
-	            var point = new THREE.PointLight( 0x3344EE, 1, 200);
-	            point.position.set( -2,-10,-6 ).multiplyScalar( 10 );
+	            var point = new THREE.PointLight( 0x3388FF, 0.6, 200);
+	            point.position.set( -40,-4,-40 );
+
+	            var point2 = new THREE.PointLight( 0xFF8833, 0.6, 200);
+	            point2.position.set( 70,-2,-60 );
 
 	            scene.add( ambient );
 	            scene.add( light );
 	            scene.add( point );
+	            scene.add( point2 );
+
+	            //
+	            var planemat = new THREE.MeshStandardMaterial({ color:0x171717, metalness:0, roughness:1 });
+	            var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 300, 300, 8, 8 ), planemat );
+			    plane.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+
+			    plane.position.y = -1;
+			    
+			    scene.add( plane );
+			    plane.castShadow = false;
+				plane.receiveShadow = true;
 
 				//
 
@@ -129,12 +167,14 @@
 					tn.wrapS = THREE.MirroredRepeatWrapping;
 					tn.flipY = false;
 
-					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.66, roughness:0.43, normalMap:tn, normalScale:new THREE.Vector2( 1, 1 )})
+					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.6, roughness:0.5, normalMap:tn, normalScale:new THREE.Vector2( 1, 1 )})
 					blendMesh = loader.meshes[0];
 
 					reversUV( blendMesh.geometry );
 
 					blendMesh.material = mat;
+					blendMesh.castShadow = true;
+				    blendMesh.receiveShadow = true;
 
 					scene.add( blendMesh );
 
