@@ -83,6 +83,10 @@
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
 
+				renderer.toneMapping = THREE.Uncharted2ToneMapping;
+                renderer.toneMappingExposure = 3.0;
+                renderer.toneMappingWhitePoint = 5.0;
+
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.soft = true;
 			    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -102,7 +106,7 @@
 
 				var ambient = new THREE.AmbientLight( 0x101010 );
 
-	            var light = new THREE.DirectionalLight( 0xffffff, 1.4 );
+	            var light = new THREE.DirectionalLight( 0xffffff, 1 );
 	            //var light = new THREE.SpotLight( 0xff0000, 2, 0, Math.PI / 2, 10, 2 );
 	            light.position.set(10,100,60);
 	            light.lookAt(new THREE.Vector3(0,-20,0));
@@ -135,7 +139,7 @@
 	            scene.add( point2 );
 
 	            //
-	            var planemat = new THREE.MeshStandardMaterial({ color:0x171717, metalness:0, roughness:1 });
+	            var planemat = new THREE.MeshStandardMaterial({ color:0x131313, metalness:0, roughness:1 });
 	            var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 200, 200, 1, 1 ), planemat );
 			    plane.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 
@@ -188,7 +192,7 @@
 
 			function initGUI(){
 
-				gui = new UIL.Gui( { width:300, bg:'rgba(44,44,38,0.1)' } );
+				gui = new UIL.Gui( { width:250, bg:'rgba(44,44,38,0.1)' } );
 
 				gui.add(settings, 'Skeleton', { type:'Bool' } ).onChange( onShowSkeleton );
 
