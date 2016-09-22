@@ -19,18 +19,15 @@ body {
 </style>
 
 <script src="js/three.min.js"></script>
-
 <script src="js/sea3d.min.js"></script>
-<script src="js/controls/OrbitControls.js"></script>
-<script src="src/pool.js"></script>
-<script src="src/view.js"></script>
-<script src="src/map.js"></script>
-<script src="src/user.js"></script>
-<script src="src/player.js"></script>
+
+<script src="js/zoll.min.js"></script>
 
 </head>
 <body>
 <script>
+
+   var stats = null;
 
     var demo = 1;
 
@@ -43,11 +40,16 @@ body {
     function tell ( s ) { d.innerHTML += s + '<br>'; };
     function trace ( s ) { if(d) d.innerHTML = s; };
 
+    
+
+
     view.init();
     user.init();
 
     addtell();
     map.init();
+    cam.init();
+    hub.init();
 
     /*var butt = document.createElement( 'div' );
     butt.style.cssText = 'position: absolute; cursor: pointer; bottom: 10px; left: 10px; width: 100px; border:1px solid #FFFFFF;';
@@ -59,7 +61,7 @@ body {
     
 
 
-    pool.load(['models/basic.sea', 'models/bob.sea', 'models/museum.sea', 'textures/spherical/ceramic.jpg','textures/museum/facade.png', 'textures/museum/escalator.png', 'textures/museum/bigwall.jpg', 'textures/museum/floor.jpg', 'textures/museum/floor2.jpg' ], init );
+    pool.load(['models/basic.sea', 'models/bob.sea', 'models/museum.sea', 'textures/spherical/smooth.jpg','textures/museum/facade.png', 'textures/museum/escalator.png', 'textures/museum/bigwall.jpg', 'textures/museum/floor.jpg', 'textures/museum/floor2.jpg' ], init );
 
     function init ( p ) {
 
@@ -78,7 +80,7 @@ body {
             view.setDeep( sc*10 );
             view.setDecal( 3.27 );
 
-            var envMap =  new THREE.Texture( p.ceramic );
+            var envMap =  new THREE.Texture( p.smooth );
             envMap.mapping = THREE.SphericalReflectionMapping;
             envMap.needsUpdate = true;
 
@@ -112,7 +114,7 @@ body {
             //view.addCollision( p['museum']['floor_1'], sc, {y:y} );
 
             names = ['facade', 'elevator','facade_w','elevator_w','floor','bigwall', 'floor2', 'floor_0', 'floor_1'];
-            types = [       0,    3, 0, 0, 3, 0, 3, 2, 2];
+            types = [        0,   3, 0, 0, 3, 0, 3, 2, 2];
             level = [       -1,  -1,-1,-1,-1,-1,-1, 0, 1 ];
 
         } else {
