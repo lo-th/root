@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html lang="en">
+<head>
+<title>text Lab</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=11" />
+<meta http-equiv="Pragma" content="no-cache">
+<style>
+*{ 
+    padding:0; margin:0;
+    -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; 
+    -webkit-user-select:none; -moz-user-select: none;/* pointer-events:none; */
+    box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;
+}
+
+@font-face {
+    font-family:'Gabriola';
+    src: url('Gabriola.ttf');
+    font-weight: normal;
+    font-style: normal;
+    font-smooth: never;
+    -webkit-font-smoothing : none;
+}
+
+body { margin:0px; padding:0px; background-color:#1a1a1a; color:#EEEEEE; overflow:hidden; }
+#canvas3d { position:absolute; top:0; left:0; pointer-events:auto; width:100%; height:100%; }
+.timeSlider { position:absolute; top:10px; left:50%; margin-left:-200px; width:400px; height:10px; background:#303030; border:1px solid #303030; padding:2px 2px; cursor:pointer; }
+.middle { position:absolute; top:5px; left:50%; width:1px; height:20px; background:#444444; pointer-events:none; }
+.timer { background:#2fa1d6; height:100%; width:50%; pointer-events:none; }
+.input { position:absolute; bottom:10px; left:50%; margin-left:-200px; text-align:center; width:400px; height:30px; background:none; border:1px solid #444444; font-size:20px; color:#EEEEEE; font-family:Gabriola; }
+.debug {
+    position:absolute; left:10px; top:10px; pointer-events:none; width:400px; height:90%; font-family:monospace;  
+}
+
+</style>
+
+<script src="js/libs/three.min.js"></script>
+<script src="js/libs/OrbitControls.js"></script>
+<script src="js/libs/dat.gui.min.js"></script>
+
+<script src="js/Math.js"></script>
+<script src="js/particle.js"></script>
+<script src="js/view.js"></script>
+<script src="js/CanvasPrepa.js"></script>
+<script src="js/loadordrag.js"></script>
+<script src="js/hub.js"></script>
+
+
+</head>
+
+<body>
+<canvas id="canvas3d"></canvas>
+<script>
+
+var view, particle, hub, loadordrag, canvasPrepa;
+
+// choix de la font charger par le css
+// choix du style et de la taille
+var font = 'Gabriola';
+var style = 'bold';
+var font_size = 60;
+
+// pour faire un nouveau text il faut 
+// faire la function:
+// view.setMessage('mon text');
+// l'animation ce lance automatiquement jusqu'a l'affichage du nouveau message
+// avec \n pour les retour ligne
+
+window.onload = init;
+
+function init(){
+
+    // 1 - la vue three js
+    view.init();
+    // 2 - les particle et shader
+    particle.init( 40000, loadImagesTest );// maximum particle
+    // 3 - le canvas normal pour le text et reperage des points
+    canvasPrepa.init(  512, 256 );
+    canvasPrepa.initFont( font, style, font_size );// choix de la font et taille du texte
+    canvasPrepa.setRandomDistance( 20 );// color distance random sur 255
+    // 4 - l'interface 
+    hub.init();
+
+};
+
+function bigImage ( result, fname ) {
+    if(result === null) return;
+
+    var image = new Image();
+    image.src = result;
+
+    view.setImage( image, 120 );
+
+}
+
+function miniImage ( result, fname ) {
+
+    if(result === null) return;
+
+    var image = new Image();
+    image.src = result;
+
+    particle.addImagetoTexure( image );
+
+};
+
+function loadImagesTest () {
+
+    var list = [];
+
+    for(var i=0; i<72; i++){
+        list.push('p'+i+'.png');
+    }
+
+    particle.loadImageList( list, 'images/', ready );
+
+};
+
+function ready () {
+
+    //var image = new Image();
+    //image.src = 'test.jpg';
+
+   // image.addEventListener( 'load', function(){  }, false);
+
+
+    view.directImage( 'test.jpg', 120 );
+
+
+
+    // text du debut
+    //view.directText('?');
+    // lance l'animation
+    loop();
+    
+};
+
+function loop () {
+
+    view.render();
+    requestAnimationFrame(loop);
+
+};
+
+</script>
+</body>
+</html>
