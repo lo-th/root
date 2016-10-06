@@ -26,3 +26,19 @@ o FAST 2D PHYSICS<br>
 
 o DEADALUS<br>
 [demo](http://lo-th.github.io/root/daedalus/index.html)
+
+o First Person<br>
+[demo](http://lo-th.github.io/root/fps/index.html)
+
+o Animation Blending<br>
+[demo 1](http://lo-th.github.io/root/blending/index.html)
+[demo 2](http://lo-th.github.io/root/blending2/index.html)
+
+o Landscape<br>
+[demo](http://lo-th.github.io/root/terrain2/index.html)
+
+o Toon Shader<br>
+[demo](http://lo-th.github.io/root/toon/index.html)
+
+o Interactive 3D<br>
+[demo](http://lo-th.github.io/root/interactive/index.html)
