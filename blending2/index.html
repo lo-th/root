@@ -200,18 +200,18 @@
 					//man.skeleton = woman.skeleton;
 					//man.skeleton.bones = woman.skeleton.bones;
 
-					var envMap = new THREE.TextureLoader().load( 'textures/spherical/metal.jpg' );
+					var envMap = new THREE.TextureLoader().load( 'textures/spherical/smooth.jpg' );
                     envMap.mapping = THREE.SphericalReflectionMapping;
 
 					var txt =  new THREE.TextureLoader().load( 'textures/avatar.png' );
 					txt.wrapS = THREE.MirroredRepeatWrapping;
 					txt.flipY = false;
 
-					var tn =  new THREE.TextureLoader().load( 'textures/avatar_n.jpg' );
+					var tn =  new THREE.TextureLoader().load( 'textures/avatar_n.png' );
 					tn.wrapS = THREE.MirroredRepeatWrapping;
 					tn.flipY = false;
 
-					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.66, roughness:0.43, normalMap:tn, normalScale:new THREE.Vector2( 0.2, 0.2 )})
+					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.66, roughness:0.43, normalMap:tn, normalScale:new THREE.Vector2( 1, 1 )})
 
 					var txt_e =  new THREE.TextureLoader().load( 'textures/eye.png' );
 					txt.wrapS = THREE.MirroredRepeatWrapping;
