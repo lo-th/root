@@ -211,7 +211,7 @@
 					tn.wrapS = THREE.MirroredRepeatWrapping;
 					tn.flipY = false;
 
-					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.66, roughness:0.43, normalMap:tn, normalScale:new THREE.Vector2( 1, 1 )})
+					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.66, roughness:0.43, normalMap:tn, normalScale:new THREE.Vector2( 0.75, 0.75 )})
 
 					var txt_e =  new THREE.TextureLoader().load( 'textures/eye.png' );
 					txt.wrapS = THREE.MirroredRepeatWrapping;
@@ -221,7 +221,7 @@
 					tn.wrapS = THREE.MirroredRepeatWrapping;
 					tn.flipY = false;
 
-					var mat_e = new THREE.MeshStandardMaterial({ map:txt_e, envMap:envMap, metalness:0.9, roughness:0.3, normalMap:tn_e, normalScale:new THREE.Vector2( 1, 1 )})
+					var mat_e = new THREE.MeshStandardMaterial({ map:txt_e, envMap:envMap, metalness:0.9, roughness:0.3, normalMap:tn_e, normalScale:new THREE.Vector2( 0.75, 0.75 )})
 
 					e_l.material = mat_e;
 					e_r.material = mat_e;
@@ -233,7 +233,7 @@
 
 				}
 
-				loader.load( 'models/avatar_new.sea' );
+				loader.load( 'models/avatar.sea' );
 
 			}
 
@@ -286,7 +286,7 @@
 				var i = blendMesh.skeleton.bones.length, name;
 				while(i--){
 					name = blendMesh.skeleton.bones[i].name;
-					if(name === 'Head') head_bone = blendMesh.skeleton.bones[i];
+					if(name === 'head') head_bone = blendMesh.skeleton.bones[i];
 				}
 
 				eyes.matrix = head_bone.matrixWorld;
