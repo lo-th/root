@@ -66,9 +66,18 @@
 				'from':'base',
 				'to':'base',
 
+				muscles: 0.3,
+				metalness: 0.75,
+				roughness: 0.6,
+
+
 			};
 
+
+
 			var woman, man, e_l, e_r, eyes, head_bone;
+
+			var normMan, normWom;
 
 			var container;
 
@@ -124,8 +133,8 @@
 
 				var ambient = new THREE.AmbientLight( 0x282824 );
 
-	            var light = new THREE.DirectionalLight( 0xffffff, 1 );
-	            light.position.set(10,100,60);
+	            var light = new THREE.DirectionalLight( 0xffffff, 1.4 );
+	            light.position.set(30,100,60);
 	            light.lookAt(new THREE.Vector3(0,0,0));
 
 	            var d = 100;
@@ -141,15 +150,15 @@
 				light.shadow.mapSize.height = 1024;
 				light.shadow.bias =  -0.005;
 
-	            var point = new THREE.PointLight( 0x3388FF, 0.6, 200);
-	            point.position.set( -40,-4,-40 );
+	            var point1 = new THREE.PointLight( 0x0066FF, 1, 200);
+	            point1.position.set( -30,-10,-40 );
 
-	            var point2 = new THREE.PointLight( 0xFF8833, 0.6, 200);
-	            point2.position.set( 70,-2,-60 );
+	            var point2 = new THREE.PointLight( 0xFF6600, 0.6, 200);
+	            point2.position.set( 30, 10, 60 );
 
 	            scene.add( ambient );
 	            scene.add( light );
-	            scene.add( point );
+	            scene.add( point1 );
 	            scene.add( point2 );
 
 				//
@@ -200,26 +209,33 @@
 					//man.skeleton = woman.skeleton;
 					//man.skeleton.bones = woman.skeleton.bones;
 
-					var envMap = new THREE.TextureLoader().load( 'textures/spherical/smooth.jpg' );
+					normMan =  new THREE.TextureLoader().load( 'textures/avatar_n_man.png' );
+                    normMan.wrapS = THREE.RepeatWrapping;
+                    normMan.flipY = false;
+
+                    normWom =  new THREE.TextureLoader().load( 'textures/avatar_n_wom.png' );
+                    normWom.wrapS = THREE.RepeatWrapping;
+                    normWom.flipY = false;
+
+
+					var envMap = new THREE.TextureLoader().load( 'textures/spherical/metal.jpg' );
                     envMap.mapping = THREE.SphericalReflectionMapping;
 
 					var txt =  new THREE.TextureLoader().load( 'textures/avatar.png' );
 					txt.wrapS = THREE.MirroredRepeatWrapping;
 					txt.flipY = false;
 
-					var tn =  new THREE.TextureLoader().load( 'textures/avatar_n.png' );
-					tn.wrapS = THREE.MirroredRepeatWrapping;
-					tn.flipY = false;
-
-					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.66, roughness:0.43, normalMap:tn, normalScale:new THREE.Vector2( 0.75, 0.75 )})
+					var mat = new THREE.MeshStandardMaterial({ 
+						map:txt, skinning:true, morphTargets:false, envMap:envMap, 
+						metalness:settings.metalness, roughness:settings.roughness, 
+						normalScale:new THREE.Vector2( settings.muscles, settings.muscles )
+					})
 
 					var txt_e =  new THREE.TextureLoader().load( 'textures/eye.png' );
-					txt.wrapS = THREE.MirroredRepeatWrapping;
-					txt.flipY = false;
+					txt_e.flipY = false;
 
 					var tn_e =  new THREE.TextureLoader().load( 'textures/eye_n.png' );
-					tn.wrapS = THREE.MirroredRepeatWrapping;
-					tn.flipY = false;
+					tn_e.flipY = false;
 
 					var mat_e = new THREE.MeshStandardMaterial({ map:txt_e, envMap:envMap, metalness:0.9, roughness:0.3, normalMap:tn_e, normalScale:new THREE.Vector2( 0.75, 0.75 )})
 
@@ -246,25 +262,47 @@
 				gui.add(settings, 'Skeleton', { type:'Bool' } ).onChange( onShowSkeleton );
 				gui.add(settings, 'Woman', { type:'Bool' } ).onChange( onGender );
 
-				gui.add(settings, 'timeScale', { min:-2, max:2 } );
-				gui.add(settings, 'stepSize', { min:0.01, max:0.1 } );
-				gui.add(settings, 'crossfade', { min:0.1, max:6 } );
 
-				gui.add( 'button', { name:'play' }).onChange( onStartAnimation );
-				gui.add( 'button', { name:'pause' }).onChange( onPauseAnimation );
-				gui.add( 'button', { name:'step' }).onChange( onStepAnimation );
+				
 
-				gui.add( settings, 'idle', { min:0, max:1 } ).onChange( onWeightAnimation ).listen();
-				gui.add( settings, 'walk', { min:0, max:1 } ).onChange( onWeightAnimation ).listen();
-				gui.add( settings, 'run' , { min:0, max:1 } ).onChange( onWeightAnimation ).listen();
+				
+
+				var g_01 = gui.add('group', { name:'TIME' });
+				var g_02 = gui.add('group', { name:'ANIMATIONS' });
+				//var g_03 = gui.add('group', { name:'BLEND' });
+				var g_04 = gui.add('group', { name:'MATERIAL' });
+
+				g_01.add( 'button', { name:'play' }).onChange( onStartAnimation );
+				g_01.add( 'button', { name:'pause' }).onChange( onPauseAnimation );
+				g_01.add( 'button', { name:'step' }).onChange( onStepAnimation );
+
+				g_01.add(settings, 'timeScale', { min:-2, max:2 } );
+				g_01.add(settings, 'stepSize', { min:0.01, max:0.1 } );
+				g_01.add(settings, 'crossfade', { min:0.1, max:6 } );
+
+				g_01.add( settings, 'idle', { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
+				g_01.add( settings, 'walk', { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
+				g_01.add( settings, 'run' , { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
 
 				//
 
-				fromList = gui.add( 'list', { name:'from', list:animation }).onChange( function(v){ settings.from = v; } );
-				toList   = gui.add( 'list', { name:'to',   list:animation }).onChange( function(v){ settings.to = v; } );
+				fromList = g_02.add( 'list', { name:'from', list:animation }).onChange( function(v){ settings.from = v; } );
+				toList   = g_02.add( 'list', { name:'to',   list:animation }).onChange( function(v){ settings.to = v; } );
 
-				gui.add('button', { name:'Crossfade' }).onChange( function(){ onCrossfade( settings.from, settings.to ) } );
-				gui.add('button', { name:'Warp' }).onChange( function(){ onCrossfade( settings.from, settings.to ) } );
+				g_02.add('button', { name:'Crossfade' }).onChange( function(){ onCrossfade( settings.from, settings.to ); } );
+				g_02.add('button', { name:'Warp' }).onChange( function(){ onWarp( settings.from, settings.to ); } );
+
+				//
+
+				g_04.add(settings, 'muscles', { min:0.1, max:2, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.normalScale = new THREE.Vector2( settings.muscles, settings.muscles ) } );
+				g_04.add(settings, 'metalness', { min:0, max:1, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.metalness = settings.metalness; });
+				g_04.add(settings, 'roughness', { min:0, max:1, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.roughness = settings.roughness; });
+
+
+				//g_01.open();
+				g_02.open();
+				g_04.open();
+
 
 			};
 
@@ -275,8 +313,8 @@
 					scene.remove( blendMesh );
 				}
 
-				if( settings.Woman ) blendMesh = woman;
-				else blendMesh = man;
+				blendMesh = settings.Woman ? woman : man;
+                blendMesh.material.normalMap = settings.Woman ? normWom : normMan;
 
 				blendMesh.castShadow = true;
 				blendMesh.receiveShadow = true;
@@ -301,8 +339,11 @@
 
 				//console.log( animation );
 
-				fromList.setList( animation );
-				toList.setList( animation );
+				fromList.setList( animation, 8 );
+				toList.setList( animation, 13 );
+
+				settings.from = animation[8];
+				settings.to = animation[13];
 
 				start();
 
@@ -383,6 +424,8 @@
 
 			function onCrossfade( a, b ) {
 
+				//onStartAnimation();
+
 				blendMesh.stopAll();
 				blendMesh.crossfade( a, b, settings.crossfade );
 
@@ -391,6 +434,8 @@
 			}
 
 			function onWarp( a, b ) {
+
+				//onStartAnimation();
 
 				blendMesh.stopAll();
 				blendMesh.warp( a, b, settings.crossfade );
