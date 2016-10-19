@@ -46,7 +46,11 @@
         rough.needsUpdate = true;
 
         var sphere = createSphere( 1, 64, env, metal, rough, norm );
-        indexScreen.add(sphere);
+        //indexScreen.add(sphere);
+        ;
+
+        indexScreen.setCenter( sphere );
+
 
     }
 

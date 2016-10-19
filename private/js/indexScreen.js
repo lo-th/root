@@ -10,6 +10,10 @@ var indexScreen = ( function () {
     var big = null;
     var bigScreen = null;
 
+    var center,centerin,  mouseDown = false;
+    var or = {x:0, y:0};
+    var dr = {x:0, y:0};
+
     // 3D
 
     var vsize = { x: window.innerWidth, y: window.innerHeight, z:1 };
@@ -68,6 +72,51 @@ var indexScreen = ( function () {
 
         },
 
+        setCenter: function ( o ) {
+
+            controls.enableRotate = false;
+
+            center = new THREE.Group();
+            center.position.y = -1;
+            center.add(o);
+            scene.add(center);
+
+            centerin = o;
+
+            document.addEventListener( 'mouseup', indexScreen.up, false );
+            document.addEventListener( 'mousedown', indexScreen.down, false );
+            document.addEventListener( 'mousemove', indexScreen.move, false );
+
+        },
+
+        up:function ( e ) {
+
+            mouseDown = false;
+
+
+        },
+
+        down:function ( e ) {
+
+            mouseDown = true;
+            or.x = e.clientX;
+            or.y = e.clientY;
+
+        },
+
+
+        move:function ( e ) {
+
+            if(!mouseDown) return;
+
+            centerin.rotation.y -= (( or.x - e.clientX )*0.01);
+            center.rotation.x -= (( or.y - e.clientY )*0.01);
+
+            or.x = e.clientX;
+            or.y = e.clientY;
+
+        },
+
         //
 
         resize: function () {
@@ -98,7 +147,7 @@ var indexScreen = ( function () {
 
             if(!isPause) requestAnimationFrame( indexScreen.render );
 
-            light.rotation.y = controls.getAzimuthalAngle();
+            //light.rotation.y = controls.getAzimuthalAngle();
 
             renderer.render( scene, camera );
             if( isCSS ) renderer_css.render( scene_css, camera_css );
@@ -130,7 +179,7 @@ var indexScreen = ( function () {
             controls = new THREE.OrbitControls( camera, canvas );
             controls.update();
 
-            camera.position.z = 5;
+            camera.position.z = 2;
             camera.lookAt( new THREE.Vector3());
 
             scene.add(new THREE.AmbientLight(0x808080));
@@ -151,11 +200,8 @@ var indexScreen = ( function () {
             //camera.add(light);
             light2.lookAt( new THREE.Vector3(0,0,0));
 
-            scene.add(camera)
-            scene.add(light)
-
-
-
+            scene.add(camera);
+            scene.add(light);
 
         },
 
