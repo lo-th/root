@@ -14,6 +14,8 @@ var indexScreen = ( function () {
     var or = {x:0, y:0};
     var dr = {x:0, y:0};
 
+    var torad = 0.0174532925199432957;
+
     // 3D
 
     var vsize = { x: window.innerWidth, y: window.innerHeight, z:1 };
@@ -81,6 +83,8 @@ var indexScreen = ( function () {
             center.add(o);
             scene.add(center);
 
+            center.rotation.z = -21.4 * torad;
+
             centerin = o;
 
             document.addEventListener( 'mouseup', indexScreen.up, false );
@@ -110,7 +114,7 @@ var indexScreen = ( function () {
             if(!mouseDown) return;
 
             centerin.rotation.y -= (( or.x - e.clientX )*0.01);
-            center.rotation.x -= (( or.y - e.clientY )*0.01);
+            //center.rotation.x -= (( or.y - e.clientY )*0.01);
 
             or.x = e.clientX;
             or.y = e.clientY;
@@ -148,6 +152,8 @@ var indexScreen = ( function () {
             if(!isPause) requestAnimationFrame( indexScreen.render );
 
             //light.rotation.y = controls.getAzimuthalAngle();
+
+            if(centerin) centerin.rotation.y -= 0.005;
 
             renderer.render( scene, camera );
             if( isCSS ) renderer_css.render( scene_css, camera_css );
