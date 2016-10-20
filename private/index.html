@@ -15,74 +15,16 @@
 <script src="js/controls/OrbitControls.js"></script>
 <script src="js/renderers/CSS3DRenderer.js"></script>
 <script src="js/pool.js"></script>
-<script src="js/indexScreen.js"></script>
-
+<script src="js/user.js"></script>
+<script src="js/radialGradient.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/world.js"></script>
+<script src="js/menu.js"></script>
 </head>
 <body>
 <script type="text/javascript">
-    indexScreen.init();
-
-    //pool.load(['assets/models/earth_m.sea', 'assets/textures/earth.png', 'assets/textures/earth_n.png'], gogo );
-
-    pool.load(['assets/textures/env.png', 'assets/textures/earth_metal.png', 'assets/textures/earth_rough.png', 'assets/textures/earth_n.png'], gogo );
-
-
-    function gogo ( p ) {
-
-        //var light = new THREE.DirectionalLight(0xffffff, 1);
-        //light.position.set(5,3,5);
-        //indexScreen.add(light);
-        var env = new THREE.Texture( p.env );
-        env.mapping = THREE.SphericalReflectionMapping;
-        env.needsUpdate = true;
-
-        var norm = new THREE.Texture( p.earth_n );
-        norm.needsUpdate = true;
-
-        var metal = new THREE.Texture( p.earth_metal );
-        metal.needsUpdate = true;
-
-        var rough = new THREE.Texture( p.earth_rough );
-        rough.needsUpdate = true;
-
-        var sphere = createSphere( 1, 64, env, metal, rough, norm );
-        //indexScreen.add(sphere);
-        ;
-
-        indexScreen.setCenter( sphere );
-
-
-    }
-
-    function createSphere( radius, segments, env, metal, rough, norm ) {
-        return new THREE.Mesh(
-            new THREE.SphereGeometry(radius, segments, segments),
-            //new THREE.MeshPhongMaterial({
-            new THREE.MeshStandardMaterial({
-                color:0xFFFFFF,
-                envMap:env,
-                metalnessMap:metal,
-                roughnessMap:rough,
-                metalness:1,
-                roughness:1,
-                //map:         map,
-                //aoMap:     bump,
-                //aoMapIntensity: 1,
-               // bumpScale:   0.005,
-                //emissiveMap: spec,
-                //specular:    new THREE.Color('grey'),
-
-                normalScale:new THREE.Vector2( 2, -2 ),
-                normalMap:norm,
-
-                //alphaMap:mask,
-                //transparent: trans,
-                //depthWrite:false
-
-            })
-        );
-    }
-
+    scene.init();
+    world.init();
 </script>
 </body>
 </html>

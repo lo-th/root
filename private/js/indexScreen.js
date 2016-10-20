@@ -10,7 +10,7 @@ var indexScreen = ( function () {
     var big = null;
     var bigScreen = null;
 
-    var center,centerin,  mouseDown = false;
+    var center, centerin, mouseDown = false;
     var or = {x:0, y:0};
     var dr = {x:0, y:0};
 
@@ -193,6 +193,7 @@ var indexScreen = ( function () {
             light = new THREE.Group();
 
             var light1 = new THREE.SpotLight(0xffffff, 2, 20, Math.PI / 3, 0, 2);
+            //var light1 = new THREE.DirectionalLight(0xffffff, 1);
 
             light.add(light1);
             light1.position.set(4,7,4);
