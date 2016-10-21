@@ -11,7 +11,7 @@ var hub = ( function () {
             title = document.createElement('div');
             title.setAttribute( 'class', 'title' );
             document.body.appendChild( title );
-            title.textContent = 'UBS Neo';
+            title.textContent = 'Demo';
 
             subtitle = document.createElement('div');
             subtitle.setAttribute( 'class', 'subtitle' );
