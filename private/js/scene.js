@@ -12,6 +12,8 @@ var scene = ( function () {
 
     var extra = [];
 
+    var env;
+
     scene = {
 
         init: function () {
@@ -31,10 +33,57 @@ var scene = ( function () {
             this.init3DView();
             //this.initCSS3DView();
 
+            //this.initInterface();
+
             window.addEventListener( 'resize', scene.resize, false );
 
             this.render();
 
+
+        },
+
+        preload: function ( ) {
+
+            var res = [
+                'assets/textures/env.png', 'assets/textures/earth_metal.png', 'assets/textures/earth_rough.png', 'assets/textures/earth_n.png',
+                'assets/models/icons.sea', 'assets/textures/icon.png', 'assets/textures/plane.png', 'assets/textures/base.png',
+            ];
+
+            pool.load( res, scene.endLoad );
+
+        },
+
+        endLoad: function ( p ) {
+
+            env = new THREE.Texture( p.env );
+            env.mapping = THREE.SphericalReflectionMapping;
+            env.needsUpdate = true;
+
+            world.init();
+            menu.init();
+
+            //world.add();
+            menu.add();
+
+        },
+
+        goToMenu: function ( e ){
+
+            world.clear();
+            menu.add();
+
+        },
+
+        goToWorld: function ( e ){
+
+            menu.clear();
+            world.add();
+
+        },
+
+        getEnv: function () {
+
+            return env;
 
         },
 
@@ -44,9 +93,22 @@ var scene = ( function () {
 
         },
 
+        clearUpdate: function () {
+
+            extra = [];
+
+        },
+
+
         add: function ( o ) {
             
             scene3d.add( o );
+
+        },
+
+        remove: function ( o ) {
+            
+            scene3d.remove( o );
 
         },
 
@@ -133,10 +195,13 @@ var scene = ( function () {
             renderer.toneMappingExposure = 3.0;
             renderer.toneMappingWhitePoint = 5.0;*/
 
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
             scene3d = new THREE.Scene();
             scene3d.background = scene.backImage();
 
-            camera = new THREE.PerspectiveCamera( 45, vsize.z, 0.1, 1000 );
+            camera = new THREE.PerspectiveCamera( 40, vsize.z, 0.1, 1000 );
 
             //controls = new THREE.OrbitControls( camera, canvas );
             //controls.update();
@@ -144,7 +209,8 @@ var scene = ( function () {
             camera.position.z = 2;
             camera.lookAt( new THREE.Vector3());
 
-            scene.initLight();
+            this.initLight();
+            this.preload();
 
         },
 
@@ -152,11 +218,20 @@ var scene = ( function () {
 
             var ambient = new THREE.AmbientLight( 0x333333 );
 
-            var light1 = new THREE.SpotLight(0xffffFF, 0.6, 4, Math.PI / 3, 0, 1);
-            light1.position.set(0,3,0);
+            var light1 = new THREE.SpotLight(0xffffFF, 0.3, 4, Math.PI / 3, 0, 1);
+            light1.position.set(0,3,2);
             light1.lookAt( new THREE.Vector3(0,-1,0));
 
-            var light2 = new THREE.SpotLight(0xffffff, 0.6, 8, Math.PI / 3, 0, 2);
+            light1.castShadow = true;
+
+                light1.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 50, 1, 1, 4 ) );
+
+                light1.shadow.bias = 0.0001;
+
+                light1.shadow.mapSize.width = 1024;
+                light1.shadow.mapSize.height = 1024;
+
+            var light2 = new THREE.SpotLight(0xC0C0C0, 0.6, 8, Math.PI / 3, 0, 2);
             light2.position.set(-2,-1,-3);
             light2.lookAt( new THREE.Vector3(0,-1,0));
 
@@ -176,6 +251,7 @@ var scene = ( function () {
             scene.add(ambient);
           //  scene.add(light1);
             scene.add( hemiLight );
+            scene.add(light1);
             scene.add(light2);
             scene.add(light3);
 

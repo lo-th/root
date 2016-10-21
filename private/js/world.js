@@ -1,9 +1,8 @@
 var world = ( function () {
     
     'use strict';
-
    
-    var center, sphere;
+    var center, sphere, material;
     var isMouseDown = false;
     var torad = 0.0174532925199432957;
     var or = {x:0, y:0};
@@ -14,15 +13,7 @@ var world = ( function () {
 
         init: function () {
 
-            pool.load(['assets/textures/env.png', 'assets/textures/earth_metal.png', 'assets/textures/earth_rough.png', 'assets/textures/earth_n.png'], world.add );
-
-        },
-
-        add: function ( p ) {
-
-            var env = new THREE.Texture( p.env );
-            env.mapping = THREE.SphericalReflectionMapping;
-            env.needsUpdate = true;
+            var p = pool.getResult();    
 
             var norm = new THREE.Texture( p.earth_n );
             norm.needsUpdate = true;
@@ -33,16 +24,29 @@ var world = ( function () {
             var rough = new THREE.Texture( p.earth_rough );
             rough.needsUpdate = true;
 
-            sphere = world.createSphere( 1, 64, env, metal, rough, norm );
+            material = new THREE.MeshStandardMaterial({
+                metalness:1,
+                roughness:0.8,
+                color:0xFFFFFF,
+                envMap: scene.getEnv(),
+                metalnessMap:metal,
+                roughnessMap:rough,
+                normalScale:new THREE.Vector2( 4, -4 ),
+                normalMap:norm,
+            })
 
-            //scene.setCenter( sphere );
+            sphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 1, 64, 48 ), material );
 
             center = new THREE.Group();
             center.position.y = -1;
-            center.add( sphere );
-            scene.add( center );
-
             center.rotation.z = -21.4 * torad;
+            center.add( sphere );
+
+        },
+
+        add: function () {
+
+            scene.add( center );
 
             document.addEventListener( 'mouseup', world.up, false );
             document.addEventListener( 'mousedown', world.down, false );
@@ -50,27 +54,17 @@ var world = ( function () {
 
             scene.addUpdate( world.update );
 
-            menu.init( env );
-
         },
 
-        createSphere : function ( radius, segments, env, metal, rough, norm ) {
-            return new THREE.Mesh(
-                new THREE.SphereGeometry(radius, segments, segments),
-                //new THREE.MeshPhongMaterial({
-                new THREE.MeshStandardMaterial({
-                    color:0xFFFFFF,
-                    envMap:env,
-                    metalnessMap:metal,
-                    roughnessMap:rough,
-                    metalness:1,
-                    roughness:0.8,
+        clear: function () {
 
-                    normalScale:new THREE.Vector2( 4, -4 ),
-                    normalMap:norm,
+            scene.remove( center );
+            document.removeEventListener( 'mouseup', world.up, false );
+            document.removeEventListener( 'mousedown', world.down, false );
+            document.removeEventListener( 'mousemove', world.move, false );
 
-                })
-            );
+            scene.clearUpdate();
+
         },
 
         update: function () {
