@@ -31,7 +31,7 @@
 		</div>
 
 		<script src="js/three.min.js"></script>
-		<script src="js/sea3d.js"></script>
+		<script src="js/sea3d2.js"></script>
 		<script src="js/uil.min.js"></script>
 		<script src="js/OrbitControls.js"></script>
 		<script src="js/ShaderShadow.js"></script>
@@ -50,6 +50,8 @@
 			var anims = ['idle', 'walk', 'run'];
 
 			var settings = {
+
+                "Bvh Skelet": true,
 
 				"Skeleton": false,
 				'Woman': false,
@@ -291,8 +293,9 @@
 
             function parseBvhAnimation( result ){
 
+                result.clip.name = 'story';
                 //console.log( result.skeleton );
-                //console.log( result.clip );
+                console.log( result.clip.name );
 
                 skeletonHelper = new THREE.SkeletonHelper( result.skeleton.bones[ 0 ] );
                 skeletonHelper.skeleton = result.skeleton; // allow animation mixer to bind to SkeletonHelper directly
@@ -327,7 +330,8 @@
                 bvhClip = result.clip;
 
 
-                bvhLoader.applyToModel( blendMesh, bvhClip, tPoseMatrix );
+                bvhLoader.applyToModel( man, bvhClip, tPoseMatrix );
+                bvhLoader.applyToModel( woman, bvhClip, tPoseMatrix );
 
 
 
@@ -335,86 +339,13 @@
                 //blendMesh.mixer.clipAction( result.clip ).setEffectiveWeight( 1.0 ).play();
             }
 
-
-            function updateBones () {
-
-                var matrixWorldInv = new THREE.Matrix4().getInverse( blendMesh.matrixWorld );
-                var parentMtx, tmpMtx, worldMtx;
-
-                var globalQuat = new THREE.Quaternion();
-                var globalPos = new THREE.Vector3();
-                var globalMtx = new THREE.Matrix4();
-                var localMtx = new THREE.Matrix4();
-                var tmpPos = new THREE.Vector3();
-
-                var len = bones.length, bone, name, node;
-
-                for( var i = 0; i < len; i++ ){
-
-                    bone = bones[i];
-                    name = bone.name;
-
-                    parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
-
-                    if ( node = nodes[name] ){
-
-                        //console.log(name)
-
-                        tmpMtx = node.matrixWorld.clone();
-                        if( name === 'hip' ) globalPos.setFromMatrixPosition( tmpMtx );
-                        globalQuat.setFromRotationMatrix( tmpMtx );
-
-                        ///if( name === 'hip' ) debug( globalPos.toArray() )
-
-                        // MODIFY TRANSFORM
-                        globalMtx.identity();
-                        globalMtx.makeRotationFromQuaternion( globalQuat );
-                        globalMtx.multiply( bone.baseMatrix );
-                        if( name === 'hip' ) globalMtx.setPosition( globalPos );
-
-                        // PRESERVES BONE SIZE
-
-                        tmpMtx.identity().getInverse( parentMtx );
-                        tmpPos.setFromMatrixPosition( bone.matrix );
-                        localMtx.multiplyMatrices( tmpMtx, globalMtx );
-                        if( name !== 'hip' ) localMtx.setPosition( tmpPos );
-                        globalMtx.multiplyMatrices( parentMtx, localMtx );
-
-                        //} else {
-
-                           // globalMtx.multiplyMatrices( parentMtx, bone.matrix );
-
-                        //}
-//
-                    }
-
-                    if( name.substring(1, 7) !== 'finger' && name.substring(1, 4) !== 'Toe' && name !== 'root' ){
-
-                        // UPDATE BONE
-                        bone.matrixWorld.copy( globalMtx );
-                        bone.matrix.getInverse( bone.parent.matrixWorld );
-                        bone.matrix.multiply( bone.matrixWorld );
-
-                    }
-
-                    //bone.matrixWorldNeedsUpdate = true;
-                    //bone.updateMatrixWorld( true );
-                    //bone.updateMatrix();
-
-                }
-
-
-
-            }
-
-
-
 			function initGUI(){
 
 				gui = new UIL.Gui( { width:280, bg:'rgba(44,44,38,0.1)' } );
 
 				gui.add( 'fps', { res:70 } );
 
+                gui.add(settings, 'Bvh Skelet', { type:'Bool' } ).onChange( onShowBVHSkeleton );
 				gui.add(settings, 'Skeleton', { type:'Bool' } ).onChange( onShowSkeleton );
 				gui.add(settings, 'Woman', { type:'Bool' } ).onChange( onGender );
 
@@ -434,7 +365,7 @@
 
 				g_01.add(settings, 'timeScale', { min:-2, max:2 } );
 				g_01.add(settings, 'stepSize', { min:0.01, max:0.1 } );
-				g_01.add(settings, 'crossfade', { min:0.1, max:6 } );
+				//g_01.add(settings, 'crossfade', { min:0.1, max:6 } );
 
 				//g_01.add( settings, 'idle', { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
 				//g_01.add( settings, 'walk', { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
@@ -456,7 +387,7 @@
 				g_04.add(settings, 'roughness', { min:0, max:1, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.roughness = settings.roughness; });
 
 
-				//g_01.open();
+				g_01.open();
 				//g_01.open();
 				g_04.open();
 
@@ -495,19 +426,16 @@
 				
 
 
-				var list = [], name;
+				//var list = [], name;
 				bones = blendMesh.skeleton.bones;
 
 
-				for( var i = 0; i < bones.length; i++ ){
-
-                    //bones[ i ].baseMatrix = bones[ i ].matrixWorld.clone();
-                    //bones[ i ].matrixAutoUpdate = false;
+				/*for( var i = 0; i < bones.length; i++ ){
 
                     name = bones[i].name;
                     if( name.substring(1, 7) !== 'finger' ) list.push( i + '__' + name );
 
-				}
+				}*/
 
 				//console.log( list );
 
@@ -526,10 +454,7 @@
                 }
 
 
-                 if( isBVHLoaded ) bvhLoader.applyToModel( blendMesh, bvhClip, tPoseMatrix );
-
-
-
+    
                 if( animation.length < 1 ) return;
 
 				//console.log( animation );
@@ -571,12 +496,14 @@
 				blendMesh.stopAll();
 				blendMesh.unPauseAll();
 
+                blendMesh.playw( 'story', 1 );
+
 				// the blend mesh will combine 1 or more animations
-				for ( var i = 0; i < anims.length; ++i ) {
+				/*for ( var i = 0; i < anims.length; ++i ) {
 
 					blendMesh.playw( anims[ i ], settings[ anims[ i ] ] );
 
-				}
+				}*/
 
 				isFrameStepping = false;
 
@@ -603,7 +530,7 @@
 				timeToStep = settings.stepSize;
 			}
 
-			function onWeightAnimation() {
+			/*function onWeightAnimation() {
 
 				var sum = settings.idle + settings.walk + settings.run;
 
@@ -635,7 +562,13 @@
 
 				isFrameStepping = false;
 
-			}
+			}*/
+
+            function onShowBVHSkeleton( b ) {
+
+                skeletonHelper.visible = b;
+
+            }
 
 			function onShowSkeleton( b ) {
 
@@ -646,9 +579,9 @@
 			function start() {
 
 				// Set default weights
-				blendMesh.setWeight( 'idle', settings.idle );
-				blendMesh.setWeight( 'walk', settings.walk );
-				blendMesh.setWeight( 'run', settings.run );
+				//blendMesh.setWeight( 'idle', settings.idle );
+				//blendMesh.setWeight( 'walk', settings.walk );
+				//blendMesh.setWeight( 'run', settings.run );
 
 			}
 
@@ -823,8 +756,16 @@
 
                 // 4° apply new clip
 
-                var newClip = new THREE.AnimationClip( "animation", - 1, tracks );
-                model.mixer.clipAction( newClip ).setEffectiveWeight( 1.0 ).play();
+                //console.log(clip.name)
+
+                var newClip = new THREE.AnimationClip( clip.name, - 1, tracks );
+                newClip.loop = true;
+                newClip.timeScale = 1;
+
+                model.addAnimation( newClip );
+                model.playw( clip.name, 1 );
+
+                //model.mixer.clipAction( newClip ).setEffectiveWeight( 1.0 ).play();
 
             };
 
