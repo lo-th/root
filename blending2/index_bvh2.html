@@ -327,7 +327,7 @@
                 bvhClip = result.clip;
 
 
-                bvhLoader.applyToModel( blendMesh, bvhClip );
+                bvhLoader.applyToModel( blendMesh, bvhClip, tPoseMatrix );
 
 
 
@@ -526,7 +526,7 @@
                 }
 
 
-                 if( isBVHLoaded ) bvhLoader.applyToModel( blendMesh, bvhClip );
+                 if( isBVHLoaded ) bvhLoader.applyToModel( blendMesh, bvhClip, tPoseMatrix );
 
 
 
@@ -693,42 +693,42 @@
 
             // ADDON BVHLoader
 
-            THREE.BVHLoader.prototype.applyToModel = function ( model, clip ) {
+            THREE.BVHLoader.prototype.applyToModel = function ( model, clip, tPose ) {
 
-                var tracks = [], lng, n;
+                var tracks = [], lng, n, i, j, bone, name;
 
-                var matrixWorldInv = new THREE.Matrix4().getInverse( model.matrixWorld )
-                var baseQuat = new THREE.Quaternion();
+                var bones = model.skeleton.bones;
+                var baseTracks = clip.tracks;
+                var nodeTracks = []; // 0:position, 1:quaternion
+
+                var times, positions, resultPositions, rotations, resultRotations, pos, rot;
+
+                var matrixWorldInv = new THREE.Matrix4().getInverse( model.matrixWorld );
+                //var baseQuat = new THREE.Quaternion();
                 var globalQuat = new THREE.Quaternion();
                 var resultQuat = new THREE.Quaternion();
                 var globalMtx = new THREE.Matrix4();
                 var localMtx = new THREE.Matrix4();
                 var parentMtx;
 
+                var globalPos = new THREE.Vector3();
+                var resultPos = new THREE.Vector3();
+                var resultScale = new THREE.Vector3();
+
+                
+
                 // 1° get bones worldMatxix in Tpose
 
-                var bones = model.skeleton.bones;
-                var baseMatrixs = tPoseMatrix;
-                /*var baseMatrixs = [];
-                var basequats = [];
-                for( var i=0; i < bones.length; i++ ){
+                if( tPose === undefined ){
 
-                    baseMatrixs[i] = bones[ i ].matrixWorld.clone();
-                    //baseMatrixs[i] = bones[ i ].matrix.clone();
-                    //basequats[i] = bones[ i ].quaternion.clone();
+                    tPose = [];
+                    for( i = 0; i < bones.length; i++ ) tPose[i] = bones[ i ].matrixWorld.clone();
 
-                }*/
+                }
 
                 // 2° find same name bones 
 
-                var bone, name;
-                var baseTracks = clip.tracks;
-                var nodeTracks = []; // 0:position, 1:quaternion
-
-                this.findBoneTrack('yo', baseTracks)
-
-
-                for ( var i = 0; i < bones.length; ++ i ) {
+                for ( i = 0; i < bones.length; ++ i ) {
 
                     bone = bones[ i ];
                     name = bone.name;
@@ -736,65 +736,77 @@
 
                 }
 
-                // 3° find same name bones 
+                // 3° copy track to track with correct matrix
 
-                for ( var i = 0; i < bones.length; ++ i ) {
+                for ( i = 0; i < bones.length; ++ i ) {
 
                     bone = bones[ i ];
                     name = bone.name;
+                    
 
                     if( nodeTracks[i].length === 2 ){
-                        var times = [];
-                        var positions = [];
-                        var rotations = [], resultRotations = [];
 
-                        var pos = nodeTracks[i][0];
-                        var rot = nodeTracks[i][1];
+                        parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
 
                         // position
 
-                        times =  baseTracks[pos].times;
-                        positions = baseTracks[pos].values;
+                        if( name === 'hip' ) {
 
-                        //tracks.push( new THREE.VectorKeyframeTrack( ".bones[" + name + "].position", times, positions ) );
+                            pos = nodeTracks[i][0];
+                            resultPositions = [];
 
-                        //times =  Array.prototype.slice.call( baseTracks[pos].times );
-                        //positions = Array.prototype.slice.call( baseTracks[pos].values );
+                            times =  baseTracks[pos].times;
+                            positions = baseTracks[pos].values;
 
-                        times = baseTracks[rot].times;//Array.prototype.slice.call( baseTracks[rot].times );
-                        rotations = baseTracks[rot].values;//Array.prototype.slice.call( baseTracks[rot].values );
-                        //resultRotations = baseTracks[rot].values;
+                            lng  = times.length;
 
-                        lng  = rotations.length / 4;
+                            for( j = 0; j < lng; j++ ){
 
-                        for(var j=0; j < lng; j++ ){
+                                n = j*3;
+
+                                globalPos.set( positions[n], positions[n+1], positions[n+2] );
+
+                                globalMtx.identity();
+                                //globalMtx.multiply( baseMatrixs[i] );
+                                globalMtx.setPosition( globalPos );
+
+                                localMtx.identity().getInverse( parentMtx );
+                                localMtx.multiply( globalMtx );
+
+                                localMtx.decompose( resultPos, resultQuat, resultScale );
+
+                                resultPositions[n] = resultPos.x;
+                                resultPositions[n+1] = resultPos.y;
+                                resultPositions[n+2] = resultPos.z;
+
+                            }
+
+                            tracks.push( new THREE.VectorKeyframeTrack( ".bones[" + name + "].position", times, resultPositions ) );
+
+                        }
+
+                        // rotation
+
+                        rot = nodeTracks[i][1];
+                        resultRotations = [];
+
+                        times = baseTracks[rot].times;
+                        rotations = baseTracks[rot].values;
+
+                        lng  = times.length;
+
+                        for( j = 0; j < lng; j++ ){
 
                             n = j*4;
 
-                            parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
-
-                            //baseQuat = basequats[i]
-
-                            //baseMatrixs[i].decompose( new THREE.Vector3(), baseQuat, new THREE.Vector3() );
-
                             globalQuat.set( rotations[n], rotations[n+1], rotations[n+2], rotations[n+3] );
 
-                            //globalMtx = baseMatrixs[i].clone()
-                            globalMtx.identity();
-                            //globalMtx.makeRotationFromQuaternion( globalQuat );
-                            //globalMtx.multiplyMatrices( matrixWorldInv, baseMatrixs[i] );
-                            globalMtx.makeRotationFromQuaternion( globalQuat );
-                            globalMtx.multiply( baseMatrixs[i] );
+                            globalMtx.identity().makeRotationFromQuaternion( globalQuat );
+                            globalMtx.multiply( tPose[i] );
 
                             localMtx.identity().getInverse( parentMtx );
                             localMtx.multiply( globalMtx );
-
-                            //globalMtx.decompose( new THREE.Vector3(), resultQuat, new THREE.Vector3() );
-                            localMtx.decompose( new THREE.Vector3(), resultQuat, new THREE.Vector3() );
-
-                            //resultQuat.setFromRotationMatrix( globalMtx );
-
-                            //resultQuat.multiplyQuaternions( globalQuat, baseQuat )
+                            localMtx.decompose( resultPos, resultQuat, resultScale );
 
                             resultRotations[n] = resultQuat.x;
                             resultRotations[n+1] = resultQuat.y;
@@ -804,26 +816,12 @@
 
                         }
 
-
-
                         tracks.push( new THREE.QuaternionKeyframeTrack( ".bones[" + name + "].quaternion", times, resultRotations ) );
-
-
-
-                        //tracks.push( new THREE.VectorKeyframeTrack( ".bones[" + name + "].position", baseTracks[nodeTracks[i][0]].times, baseTracks[nodeTracks[i][0]].values ) );
-                        //tracks.push( new THREE.QuaternionKeyframeTrack( ".bones[" + name + "].quaternion", baseTracks[nodeTracks[i][1]].times, baseTracks[nodeTracks[i][1]].values ) );
-
-
 
                     }
                 }
 
-
-                //console.log(nodeTracks)
-
-
-
-                // apply new clip
+                // 4° apply new clip
 
                 var newClip = new THREE.AnimationClip( "animation", - 1, tracks );
                 model.mixer.clipAction( newClip ).setEffectiveWeight( 1.0 ).play();
