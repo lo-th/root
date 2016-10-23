@@ -333,10 +333,6 @@
                 bvhLoader.applyToModel( man, bvhClip, tPoseMatrix );
                 bvhLoader.applyToModel( woman, bvhClip, tPoseMatrix );
 
-
-
-
-                //blendMesh.mixer.clipAction( result.clip ).setEffectiveWeight( 1.0 ).play();
             }
 
 			function initGUI(){
@@ -349,14 +345,7 @@
 				gui.add(settings, 'Skeleton', { type:'Bool' } ).onChange( onShowSkeleton );
 				gui.add(settings, 'Woman', { type:'Bool' } ).onChange( onGender );
 
-
-				
-
-				
-
 				var g_01 = gui.add('group', { name:'TIME' });
-				//var g_02 = gui.add('group', { name:'ANIMATIONS' });
-				//var g_03 = gui.add('group', { name:'BLEND' });
 				var g_04 = gui.add('group', { name:'MATERIAL' });
 
 				g_01.add( 'button', { name:'play' }).onChange( onStartAnimation );
@@ -365,20 +354,6 @@
 
 				g_01.add(settings, 'timeScale', { min:-2, max:2 } );
 				g_01.add(settings, 'stepSize', { min:0.01, max:0.1 } );
-				//g_01.add(settings, 'crossfade', { min:0.1, max:6 } );
-
-				//g_01.add( settings, 'idle', { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
-				//g_01.add( settings, 'walk', { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
-				//g_01.add( settings, 'run' , { min:0, max:1, fontColor:'#33AAFF' } ).onChange( onWeightAnimation ).listen();
-
-				//
-
-				/*fromList = g_02.add( 'list', { name:'from', list:animation }).onChange( function(v){ settings.from = v; } );
-				toList   = g_02.add( 'list', { name:'to',   list:animation }).onChange( function(v){ settings.to = v; } );
-
-				g_02.add('button', { name:'Crossfade' }).onChange( function(){ onCrossfade( settings.from, settings.to ); } );
-				g_02.add('button', { name:'Warp' }).onChange( function(){ onWarp( settings.from, settings.to ); } );
-                */
 
 				//
 
@@ -423,53 +398,14 @@
 				eyes.matrixAutoUpdate = false;
 				scene.add( eyes );
 
-				
-
-
-				//var list = [], name;
-				bones = blendMesh.skeleton.bones;
-
-
-				/*for( var i = 0; i < bones.length; i++ ){
-
-                    name = bones[i].name;
-                    if( name.substring(1, 7) !== 'finger' ) list.push( i + '__' + name );
-
-				}*/
-
-				//console.log( list );
-
-                animation = [];
-
                 // Create the debug visualization
                 if( helper ) scene.remove( helper );
                 helper = new THREE.SkeletonHelper( blendMesh );
                 helper.visible = settings.Skeleton;
                 scene.add( helper );
 
-                
-
-                for(var a in blendMesh.animations ){
-                    animation.push( a );
-                }
-
 
     
-                if( animation.length < 1 ) return;
-
-				//console.log( animation );
-
-				fromList.setList( animation, 8 );
-				toList.setList( animation, 13 );
-
-				settings.from = animation[8];
-				settings.to = animation[13];
-				
-				start();
-
-
-
-
 			};
 
 			// special mid revers for symetrics character
@@ -530,39 +466,6 @@
 				timeToStep = settings.stepSize;
 			}
 
-			/*function onWeightAnimation() {
-
-				var sum = settings.idle + settings.walk + settings.run;
-
-				settings.idle /= sum;
-				settings.walk /= sum;
-				settings.run /= sum;
-
-				for ( var i = 0; i < anims.length; ++i ) {
-
-					blendMesh.setWeight( anims[ i ], settings[ anims[ i ] ] );
-
-				}
-
-			}
-
-			function onCrossfade( a, b ) {
-
-				blendMesh.stopAll();
-				blendMesh.crossfade( a, b, settings.crossfade );
-
-				isFrameStepping = false;
-
-			}
-
-			function onWarp( a, b ) {
-
-				blendMesh.stopAll();
-				blendMesh.warp( a, b, settings.crossfade );
-
-				isFrameStepping = false;
-
-			}*/
 
             function onShowBVHSkeleton( b ) {
 
@@ -576,22 +479,9 @@
 
 			}
 
-			function start() {
-
-				// Set default weights
-				//blendMesh.setWeight( 'idle', settings.idle );
-				//blendMesh.setWeight( 'walk', settings.walk );
-				//blendMesh.setWeight( 'run', settings.run );
-
-			}
-
 			function animate() {
 
 				requestAnimationFrame( animate, renderer.domElement );
-
-
-
-
 
 				// step forward in time based on whether we're stepping and scale
 
