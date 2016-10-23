@@ -41,6 +41,8 @@
 
 		    var animation = [];
 
+            var tPoseMatrix = [];
+
             var isBVHLoaded = false, bvhClip;
 
             var normMan, normWom;
@@ -210,14 +212,22 @@
 
 					}
 
-                    //console.log(woman)
+                    // man and woman have same skeleton
+
+                    var bones = man.skeleton.bones;
+
+                    for( var i = 0; i < bones.length; i++ ){
+
+                        tPoseMatrix[i] = bones[ i ].matrixWorld.clone();
+
+                    }
+
+                    // for symetrique mapping
 
 					reversUV( woman.geometry );
 					reversUV( man.geometry );
 
-					//man.skeleton = woman.skeleton;
-					//man.skeleton.bones = woman.skeleton.bones;
-
+                    // textures
 
 					var envMap = new THREE.TextureLoader().load( 'textures/spherical/smooth.jpg' );
                     envMap.mapping = THREE.SphericalReflectionMapping;
@@ -268,7 +278,6 @@
 
 				}
 
-				//loader.load( 'models/avatar.sea' );
                 loader.load( 'models/avatar_no_anim.sea' );
 
 			}
@@ -699,15 +708,16 @@
                 // 1° get bones worldMatxix in Tpose
 
                 var bones = model.skeleton.bones;
-                var baseMatrixs = [];
+                var baseMatrixs = tPoseMatrix;
+                /*var baseMatrixs = [];
                 var basequats = [];
                 for( var i=0; i < bones.length; i++ ){
 
-                    //baseMatrixs[i] = bones[ i ].matrixWorld.clone();
-                    baseMatrixs[i] = bones[ i ].matrix.clone();
-                    basequats[i] = bones[ i ].quaternion.clone();
+                    baseMatrixs[i] = bones[ i ].matrixWorld.clone();
+                    //baseMatrixs[i] = bones[ i ].matrix.clone();
+                    //basequats[i] = bones[ i ].quaternion.clone();
 
-                }
+                }*/
 
                 // 2° find same name bones 
 
@@ -746,7 +756,7 @@
                         times =  baseTracks[pos].times;
                         positions = baseTracks[pos].values;
 
-                        tracks.push( new THREE.VectorKeyframeTrack( ".bones[" + name + "].position", times, positions ) );
+                        //tracks.push( new THREE.VectorKeyframeTrack( ".bones[" + name + "].position", times, positions ) );
 
                         //times =  Array.prototype.slice.call( baseTracks[pos].times );
                         //positions = Array.prototype.slice.call( baseTracks[pos].values );
@@ -763,25 +773,28 @@
 
                             parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
 
-                            baseQuat = basequats[i]
+                            //baseQuat = basequats[i]
 
                             //baseMatrixs[i].decompose( new THREE.Vector3(), baseQuat, new THREE.Vector3() );
 
                             globalQuat.set( rotations[n], rotations[n+1], rotations[n+2], rotations[n+3] );
 
-                            globalMtx = baseMatrixs[i].clone()
-                           // globalMtx.identity();
+                            //globalMtx = baseMatrixs[i].clone()
+                            globalMtx.identity();
                             //globalMtx.makeRotationFromQuaternion( globalQuat );
                             //globalMtx.multiplyMatrices( matrixWorldInv, baseMatrixs[i] );
                             globalMtx.makeRotationFromQuaternion( globalQuat );
-                            //globalMtx.multiply( baseMatrixs[i] );
+                            globalMtx.multiply( baseMatrixs[i] );
 
-                            //localMtx.identity().getInverse( parentMtx );
-                            //localMtx.multiply( globalMtx );
+                            localMtx.identity().getInverse( parentMtx );
+                            localMtx.multiply( globalMtx );
 
-                            globalMtx.decompose( new THREE.Vector3(), resultQuat, new THREE.Vector3() );
+                            //globalMtx.decompose( new THREE.Vector3(), resultQuat, new THREE.Vector3() );
+                            localMtx.decompose( new THREE.Vector3(), resultQuat, new THREE.Vector3() );
 
                             //resultQuat.setFromRotationMatrix( globalMtx );
+
+                            //resultQuat.multiplyQuaternions( globalQuat, baseQuat )
 
                             resultRotations[n] = resultQuat.x;
                             resultRotations[n+1] = resultQuat.y;

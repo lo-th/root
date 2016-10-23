@@ -210,6 +210,8 @@
 
 					}
 
+                    // man and woman have same skeleton
+
                     var bones = man.skeleton.bones;
 
                     for( var i = 0; i < bones.length; i++ ){
@@ -218,17 +220,12 @@
 
                     }
 
-                    //console.log(woman)
+                    // for symetrique mapping
 
 					reversUV( woman.geometry );
 					reversUV( man.geometry );
 
-					//man.skeleton = woman.skeleton;
-					//man.skeleton.bones = woman.skeleton.bones;
-
-                    /*var textureCube = new THREE.CubeTextureLoader()
-                    .setPath( 'textures/cube/pisa/' )
-                    .load( [ 'px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png' ] );*/
+                    // textures
 
 					var envMap = new THREE.TextureLoader().load( 'textures/spherical/smooth.jpg' );
                     envMap.mapping = THREE.SphericalReflectionMapping;
@@ -236,10 +233,6 @@
 					var txt =  new THREE.TextureLoader().load( 'textures/avatar_2.png' );
 					txt.wrapS = THREE.MirroredRepeatWrapping;
 					txt.flipY = false;
-
-			
-
-
 
                     normMan =  new THREE.TextureLoader().load( 'textures/avatar_n_man.png' );
                     normMan.wrapS = THREE.RepeatWrapping;
