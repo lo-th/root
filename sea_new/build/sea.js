@@ -4974,17 +4974,18 @@ THREE.SEA3D.Mesh.prototype = Object.assign( Object.create( THREE.Mesh.prototype 
 
 	constructor : THREE.SEA3D.Mesh,
 
+
 	setWeight : function( name, val ) {
 
         if( this.animations && this.animations[ name ] ) this.mixer.clipAction( name ).setEffectiveWeight( val );
-		if( this.morphTargetDictionary && this.morphTargetDictionary[ name ] ) this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ] = val;
+		if( this.morphTargetInfluences && this.morphTargetDictionary[ name ] !== undefined ) this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ] = val;
 
 	},
 
 	getWeight : function( name ) {
 
         if( this.animations && this.animations[ name ] ) return this.mixer.clipAction( name ).getEffectiveWeight();
-        if( this.morphTargetDictionary && this.morphTargetDictionary[ name ] ) return this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ];
+        if( this.morphTargetDictionary && this.morphTargetDictionary[ name ] !== undefined ) return this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ];
 
 	},
 
