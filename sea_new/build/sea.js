@@ -4434,7 +4434,7 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 				this.pause();
 
-				if ( this.currentAnimationData.onComplete ) this.currentAnimationData.onComplete( this );
+				if ( this.currentAnimationData && this.currentAnimationData.onComplete ) this.currentAnimationData.onComplete( this );
 
 			}
 		}
@@ -4578,7 +4578,7 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 	//________________________________
 	//
 
-	/*getStateByName : function( name ) {
+	getStateByName : function( name ) {
 
 		return this.animations.indexOf( this.animations[ name ] );
 
@@ -4586,9 +4586,9 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 	getStateNameByIndex : function( index ) {
 
-		return this.animations[ index ].name;
+		return this.animations[ this.animId[index] ].name;
 
-	},*/
+	},
 
 	pause : function() {
 
@@ -4977,14 +4977,14 @@ THREE.SEA3D.Mesh.prototype = Object.assign( Object.create( THREE.Mesh.prototype 
 	setWeight : function( name, val ) {
 
         if( this.animations && this.animations[ name ] ) this.mixer.clipAction( name ).setEffectiveWeight( val );
-		if( this.morphTargetDictionary[ name ] ) this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ] = val;
+		if( this.morphTargetDictionary && this.morphTargetDictionary[ name ] ) this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ] = val;
 
 	},
 
 	getWeight : function( name ) {
 
         if( this.animations && this.animations[ name ] ) return this.mixer.clipAction( name ).getEffectiveWeight();
-        if( this.morphTargetDictionary[ name ] ) return this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ];
+        if( this.morphTargetDictionary && this.morphTargetDictionary[ name ] ) return this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ];
 
 	},
 

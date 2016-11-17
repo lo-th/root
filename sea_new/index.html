@@ -16,37 +16,18 @@
 			body {
 				font-family: Monospace;
 				background-color: #171717;
-				color: #fff;
+				color: #ccc;
 				margin: 0px;
 				overflow: hidden;
+				font-size:11px;
 			}
-			#info {
-				color: #fff;
-				position: absolute;
-				top: 10px;
-				left:10px;
-				width: 300px;
-				text-align: left;
-				z-index: 100;
-				display:block;
-			}			
-			#loading {
-			  position: fixed;
-			  top: 50%;
-			  left: 50%;
-			}
-			#info a, .button { color: #999; font-weight: bold; text-decoration: underline; cursor: pointer }
+		
+		
+			 a { font-weight:bold; text-decoration: none; cursor: pointer; }
 		</style>
 	</head>
 
 	<body>		
-		<div id="info">
-		<a href="https://github.com/sunag/sea3d" style="color:#0099FF" target="_blank">SEA3D Format</a> • <a href="http://github.com/mrdoob/three.js" style="color:#f00" target="_blank">Three.JS.	
-		</div>
-
-		<div id="loading">
-			<img src="loader.gif" alt="Loading...">
-		</div>
 		
 		<script src="build/three.dev.min.js"></script>	
 		<script src="build/sea.js"></script>
@@ -68,14 +49,16 @@
 
 			var container, gui;
 
-			var camera, scene, renderer, controls, clock;
+			var camera, scene, renderer, controls, clock, req;
+
+			var title, info, loadPic;
 
 			var loader;
 
 			// Initialize Three.JS
 
 			init();
-			initGui();
+			
 			//animate();
 
 			//
@@ -103,8 +86,8 @@
 
 				controls.update();
 
-				document.getElementById('loading').style.visibility = 'hidden';
-				console.log( "SEA3D Loaded:", loader.file.timer.elapsedTime + "ms" );
+				loadPic.style.visibility = 'hidden';
+				info.innerHTML = "SEA3D Loaded in " + loader.file.timer.elapsedTime + "ms";
 
 				animate();
 
@@ -150,6 +133,28 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
+				// interface
+
+				title = document.createElement('div');
+				title.style.cssText = 'position:absolute; left:10px; top:10px; text-decoration: none; font-size:14px;'
+				title.innerHTML = "<a href='https://github.com/sunag/sea3d' style='color:#0099FF' target='_blank'>SEA3D Format</a> • <a href='http://github.com/mrdoob/three.js' style='color:#f90' target='_blank'>THREE.JS</a>";
+
+				container.appendChild(title);
+
+
+				info = document.createElement('div');
+				info.style.cssText = 'position:absolute; left:10px; top:30px;'
+				container.appendChild(info);
+
+				loadPic = document.createElement('img');
+				loadPic.src = 'loader.gif';
+				loadPic.style.cssText = 'position:absolute; left:50%; top:50%;'
+				container.appendChild(loadPic);
+
+				// gui
+
+				initGui();
+
 			}
 
 			function initGui(){
@@ -165,6 +170,11 @@
 			}
 
 			function clearAll() {
+
+				cancelAnimationFrame( req );
+				loadPic.style.visibility = 'block';
+
+
 
 				var o;
 				for (var i = scene.children.length - 1; i >= 0 ; i--) {
@@ -209,7 +219,7 @@
 
 				var delta = clock.getDelta();
 
-				requestAnimationFrame( animate );
+				req = requestAnimationFrame( animate );
 
 				// Update sea3d Animations
 				THREE.SEA3D.AnimationHandler.update( delta );
