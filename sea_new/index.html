@@ -112,7 +112,7 @@
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 				camera.position.set( 1000, - 300, 1000 );
 
-				renderer = new THREE.WebGLRenderer();
+				renderer = new THREE.WebGLRenderer({antialias:true});
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setClearColor( 0x171717, 1 );
@@ -165,7 +165,7 @@
 
 			function initGui(){
 
-				gui = new UIL.Gui( { width:250, bg:'rgba(44,44,38,0.1)' } );
+				gui = new UIL.Gui( { width:250, bg:'rgba(23,23,23,0.25)' } );
 				
 
 				gui.add( 'fps', { res:70 } );
