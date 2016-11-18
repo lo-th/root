@@ -86,8 +86,7 @@ THREE.SEA3D.prototype.readConvexGeometry = function( sea ) {
 
 		var shape = THREE.AMMO.createConvexHull( sea.geometry.tag, sea.subGeometryIndex );
 
-	}
-	else {
+	} else {
 
 		var triMesh = THREE.AMMO.createTriangleMesh( sea.geometry.tag, sea.subGeometryIndex );
 
@@ -129,7 +128,7 @@ THREE.SEA3D.prototype.readCompound = function( sea ) {
 
 		THREE.SEA3D.MTXBUF.elements = compound.transform;
 
-		var transform = THREE.AMMO.transformFromMatrix( THREE.SEA3D.MTXBUF );
+		var transform = THREE.AMMO.getTransformFromMatrix( THREE.SEA3D.MTXBUF );
 
 		shape.addChildShape( transform, compound.shape.tag );
 
@@ -151,14 +150,13 @@ THREE.SEA3D.prototype.readRigidBodyBase = function( sea ) {
 
 	if ( sea.target ) {
 
-		transform = THREE.AMMO.transformFromObject3D( sea.target.tag );
+		transform = THREE.AMMO.getTransformFromMatrix( sea.target.tag.matrix );
 
-	}
-	else {
+	} else {
 
-		THREE.SEA3D.MTXBUF.elements = sea.transform;
+		THREE.SEA3D.MTXBUF.elements.set( sea.transform );
 
-		transform = THREE.AMMO.transformFromMatrix( THREE.SEA3D.MTXBUF );
+		transform = THREE.AMMO.getTransformFromMatrix( THREE.SEA3D.MTXBUF );
 
 	}
 
@@ -190,7 +188,7 @@ THREE.SEA3D.prototype.readRigidBody = function( sea ) {
 
 	var rb = this.readRigidBodyBase( sea );
 
-	THREE.AMMO.addRigidBody( rb, sea.target ? sea.target.tag : undefined, sea.offset ? new THREE.Matrix4().elements.set( sea.offset ) : undefined );
+	THREE.AMMO.addRigidBody( rb, sea.target ? sea.target.tag : undefined, sea.offset ? new THREE.Matrix4().elements.set( sea.offset ) : undefined, this.config.enabledPhysics );
 
 };
 
@@ -244,11 +242,11 @@ THREE.SEA3D.prototype.readCarController = function( sea ) {
 
 				target.parent.remove( target );
 
-				if ( this.container ) {
+			}
 
-					this.container.add( target );
+			if ( this.container ) {
 
-				}
+				this.container.add( target );
 
 			}
 
@@ -262,7 +260,7 @@ THREE.SEA3D.prototype.readCarController = function( sea ) {
 	}
 
 	THREE.AMMO.addVehicle( vehicle, wheels );
-	THREE.AMMO.addRigidBody( body, sea.target ? sea.target.tag : undefined, sea.offset ? new THREE.Matrix4().elements.set( sea.offset ) : undefined );
+	THREE.AMMO.addRigidBody( body, sea.target ? sea.target.tag : undefined, sea.offset ? new THREE.Matrix4().elements.set( sea.offset ) : undefined, this.config.enabledPhysics );
 
 	this.domain.vehicles = this.vehicles = this.vehicles || [];
 	this.vehicles.push( this.objects[ "vhc/" + sea.name ] = sea.tag = vehicle );
@@ -323,8 +321,7 @@ THREE.SEA3D.prototype.readHingeConstraint = function( sea ) {
 			false
 		);
 
-	}
-	else {
+	} else {
 
 		ctrt = new Ammo.btHingeConstraint(
 			sea.targetA.tag,
@@ -372,8 +369,7 @@ THREE.SEA3D.prototype.readConeTwistConstraint = function( sea ) {
 			false
 		);
 
-	}
-	else {
+	} else {
 
 		ctrt = new Ammo.btConeTwistConstraint(
 			sea.targetA.tag,
@@ -391,77 +387,157 @@ THREE.SEA3D.prototype.readConeTwistConstraint = function( sea ) {
 };
 
 //
+//	Domain
+//
+
+THREE.SEA3D.Domain.prototype.enabledPhysics = function( enabled ) {
+
+	var i = this.rigidBodies ? this.rigidBodies.length : 0;
+
+	while ( i -- ) {
+
+		THREE.AMMO.setEnabledRigidBody( this.rigidBodies[ i ], enabled );
+
+	}
+
+};
+
+THREE.SEA3D.Domain.prototype.applyContainerTransform = function() {
+
+	this.container.updateMatrix();
+
+	var matrix = this.container.matrix.clone();
+
+	this.container.position.set( 0, 0, 0 );
+	this.container.rotation.set( 0, 0, 0 );
+	this.container.scale.set( 1, 1, 1 );
+
+	this.applyTransform( matrix );
+
+};
+
+THREE.SEA3D.Domain.prototype.applyTransform = function( matrix ) {
+
+	var mtx = THREE.SEA3D.MTXBUF, vec = THREE.SEA3D.VECBUF;
+
+	var i = this.rigidBodies ? this.rigidBodies.length : 0,
+		childs = this.container ? this.container.children : [],
+		targets = [];
+
+	while ( i -- ) {
+
+		var rb = this.rigidBodies[ i ],
+			target = THREE.AMMO.getTargetByRigidBody( rb ),
+			transform = rb.getWorldTransform(),
+			transformMatrix = THREE.AMMO.getMatrixFromTransform( transform );
+
+		transformMatrix.multiplyMatrices( transformMatrix, matrix );
+
+		transform = THREE.AMMO.getTransformFromMatrix( transformMatrix );
+
+		rb.setWorldTransform( transform );
+
+		if ( target ) targets.push( target );
+
+	}
+
+	for ( i = 0; i < childs.length; i ++ ) {
+
+		var obj3d = childs[ i ];
+
+		if ( targets.indexOf( obj3d ) > - 1 ) continue;
+
+		obj3d.updateMatrix();
+
+		mtx.copy( obj3d.matrix );
+
+		mtx.multiplyMatrices( matrix, mtx );
+
+		obj3d.position.setFromMatrixPosition( mtx );
+		obj3d.scale.setFromMatrixScale( mtx );
+
+		// ignore rotation scale
+
+		mtx.scale( vec.set( 1 / obj3d.scale.x, 1 / obj3d.scale.y, 1 / obj3d.scale.z ) );
+		obj3d.rotation.setFromRotationMatrix( mtx );
+
+	}
+
+};
+
+//
 //	Extension
 //
 
-THREE.SEA3D.prototype.getShape = function( name ) {
+THREE.SEA3D.Domain.prototype.getShape = THREE.SEA3D.prototype.getShape = function( name ) {
 
 	return this.objects[ "shpe/" + name ];
 
 };
 
-THREE.SEA3D.prototype.getRigidBody = function( name ) {
+THREE.SEA3D.Domain.prototype.getRigidBody = THREE.SEA3D.prototype.getRigidBody = function( name ) {
 
 	return this.objects[ "rb/" + name ];
 
 };
 
-THREE.SEA3D.prototype.getConstraints = function( name ) {
+THREE.SEA3D.Domain.prototype.getConstraint = THREE.SEA3D.prototype.getConstraint = function( name ) {
 
 	return this.objects[ "ctnt/" + name ];
 
 };
 
-//THREE.SEA3D.Domain.prototype.getShape = THREE.SEA3D.prototype.getShape;
-//THREE.SEA3D.Domain.prototype.getRigidBody = THREE.SEA3D.prototype.getRigidBody;
+THREE.SEA3D.EXTENSIONS_LOADER.push( {
 
-THREE.SEA3D.EXTENSIONS_LOADER.push( function() {
+	parse : function() {
 
-	// CONFIG
+		delete this.shapes;
+		delete this.rigidBodies;
+		delete this.vehicles;
+		delete this.constraints;
 
-	this.config.physics = this.config.physics == undefined ? true : this.config.physics;
-	this.config.convexHull = this.config.convexHull == undefined ? true : this.config.convexHull;
+	},
 
-	if ( this.config.physics ) {
+	setTypeRead : function() {
 
-		// SHAPES
+		// CONFIG
 
-		this.file.typeRead[ SEA3D.Sphere.prototype.type ] = this.readSphere;
-		this.file.typeRead[ SEA3D.Box.prototype.type ] = this.readBox;
-		this.file.typeRead[ SEA3D.Capsule.prototype.type ] = this.readCapsule;
-		this.file.typeRead[ SEA3D.Cone.prototype.type ] = this.readCone;
-		this.file.typeRead[ SEA3D.Cylinder.prototype.type ] = this.readCylinder;
-		this.file.typeRead[ SEA3D.ConvexGeometry.prototype.type ] = this.readConvexGeometry;
-		this.file.typeRead[ SEA3D.TriangleGeometry.prototype.type ] = this.readTriangleGeometry;
-		this.file.typeRead[ SEA3D.Compound.prototype.type ] = this.readCompound;
+		this.config.physics = this.config.physics !== undefined ? this.config.physics : true;
+		this.config.convexHull = this.config.convexHull !== undefined ? this.config.convexHull : true;
+		this.config.enabledPhysics = this.config.enabledPhysics !== undefined ? this.config.enabledPhysics : true;
 
-		// CONSTRAINTS
+		if ( this.config.physics ) {
 
-		this.file.typeRead[ SEA3D.P2PConstraint.prototype.type ] = this.readP2PConstraint;
-		this.file.typeRead[ SEA3D.HingeConstraint.prototype.type ] = this.readHingeConstraint;
-		this.file.typeRead[ SEA3D.ConeTwistConstraint.prototype.type ] = this.readConeTwistConstraint;
+			// SHAPES
 
-		// PHYSICS
+			this.file.typeRead[ SEA3D.Sphere.prototype.type ] = this.readSphere;
+			this.file.typeRead[ SEA3D.Box.prototype.type ] = this.readBox;
+			this.file.typeRead[ SEA3D.Capsule.prototype.type ] = this.readCapsule;
+			this.file.typeRead[ SEA3D.Cone.prototype.type ] = this.readCone;
+			this.file.typeRead[ SEA3D.Cylinder.prototype.type ] = this.readCylinder;
+			this.file.typeRead[ SEA3D.ConvexGeometry.prototype.type ] = this.readConvexGeometry;
+			this.file.typeRead[ SEA3D.TriangleGeometry.prototype.type ] = this.readTriangleGeometry;
+			this.file.typeRead[ SEA3D.Compound.prototype.type ] = this.readCompound;
 
-		this.file.typeRead[ SEA3D.RigidBody.prototype.type ] = this.readRigidBody;
-		this.file.typeRead[ SEA3D.CarController.prototype.type ] = this.readCarController;
+			// CONSTRAINTS
+
+			this.file.typeRead[ SEA3D.P2PConstraint.prototype.type ] = this.readP2PConstraint;
+			this.file.typeRead[ SEA3D.HingeConstraint.prototype.type ] = this.readHingeConstraint;
+			this.file.typeRead[ SEA3D.ConeTwistConstraint.prototype.type ] = this.readConeTwistConstraint;
+
+			// PHYSICS
+
+			this.file.typeRead[ SEA3D.RigidBody.prototype.type ] = this.readRigidBody;
+			this.file.typeRead[ SEA3D.CarController.prototype.type ] = this.readCarController;
+
+		}
 
 	}
-
 } );
-/*
-THREE.SEA3D.EXTENSIONS_PARSE.push( function() {
-
-	delete this.shapes;
-	delete this.rigidBodies;
-	delete this.vehicles;
-	delete this.constraints;
-
-} );*/
 
 THREE.SEA3D.EXTENSIONS_DOMAIN.push( {
 
-	dispose : function () {
+	dispose : function() {
 
 		var i;
 

@@ -11,6 +11,7 @@
 'use strict';
 
 THREE.AMMO = {
+	world:null,
 	rigidBodies : [],
 	rigidBodiesTarget : [],
 	rigidBodiesOffset : [],
@@ -28,7 +29,8 @@ THREE.AMMO = {
 
 	init : function( gravity, worldScale, broadphase ) {
 
-		this.gravity = gravity == undefined ? -90.8 : gravity;
+		gravity = gravity !== undefined ? gravity : - 90.8;
+
 		this.worldScale = worldScale == undefined ? 1 : worldScale;
 		this.broadphase = broadphase == undefined ? 'bvt' : broadphase;
 
@@ -41,12 +43,12 @@ THREE.AMMO = {
 			case 'bvt':
 				this.broadphase = new Ammo.btDbvtBroadphase();
 				break;
-		
+
 			case 'sap':
-				this.broadphase = new Ammo.btAxisSweep3( 
-					new Ammo.btVector3( - this.worldScale, - this.worldScale, - this.worldScale ), 
-					new Ammo.btVector3( this.worldScale, this.worldScale, this.worldScale ), 
-					4096 
+				this.broadphase = new Ammo.btAxisSweep3(
+					new Ammo.btVector3( - this.worldScale, - this.worldScale, - this.worldScale ),
+					new Ammo.btVector3( this.worldScale, this.worldScale, this.worldScale ),
+					4096
 				);
 				break;
 
@@ -57,28 +59,47 @@ THREE.AMMO = {
 		}
 
 		this.world = new Ammo.btDiscreteDynamicsWorld( this.dispatcher, this.broadphase, this.solver, this.collisionConfig );
-		this.world.setGravity( new Ammo.btVector3( 0, this.gravity, 0 ) );
-		
-		console.log("THREE.AMMO " + this.VERSION);
-		
+
+		this.setGravity( gravity );
+
+		console.log( "THREE.AMMO " + this.VERSION );
+
 	},
+
+	setGravity : function( gravity ) {
+
+		this.gravity = gravity;
+
+		this.world.setGravity( new Ammo.btVector3( 0, gravity, 0 ) );
+
+		return this;
+
+	},
+	getGravity : function() {
+
+		return this.gravity;
+
+	},
+
 	setEnabledRigidBody : function( rb, enabled ) {
-		
-		if (this.getEnabledRigidBody( rb ) == enabled) return;
-		
-		if (enabled) this.world.addRigidBody( rb );
+
+		if ( this.getEnabledRigidBody( rb ) == enabled ) return;
+
+		if ( enabled ) this.world.addRigidBody( rb );
 		else this.world.removeRigidBody( rb );
-	
+
+		return this;
+
 	},
 	getEnabledRigidBody : function( rb ) {
-		
+
 		return this.rigidBodiesEnabled[ this.rigidBodies.indexOf( rb ) ] === true;
-	
+
 	},
 	addRigidBody : function( rb, target, offset, enabled ) {
 
 		enabled = enabled !== undefined ? enabled : true;
-	
+
 		this.rigidBodies.push( rb );
 		this.rigidBodiesTarget.push( target );
 		this.rigidBodiesOffset.push( offset );
@@ -86,19 +107,23 @@ THREE.AMMO = {
 
 		this.setEnabledRigidBody( rb, enabled );
 
+		return this;
+
 	},
 	removeRigidBody : function( rb, destroy ) {
 
 		var index = this.rigidBodies.indexOf( rb );
 
 		this.setEnabledRigidBody( rb, false );
-		
+
 		this.rigidBodies.splice( index, 1 );
 		this.rigidBodiesTarget.splice( index, 1 );
 		this.rigidBodiesOffset.splice( index, 1 );
 		this.rigidBodiesEnabled.splice( index, 1 );
-		
+
 		if ( destroy ) Ammo.destroy( rb );
+
+		return this;
 
 	},
 	containsRigidBody : function( rb ) {
@@ -114,6 +139,8 @@ THREE.AMMO = {
 		this.constraints.push( ctrt );
 		this.world.addConstraint( ctrt, disableCollisionsBetweenBodies );
 
+		return this;
+
 	},
 	removeConstraint : function( ctrt, destroy ) {
 
@@ -121,6 +148,8 @@ THREE.AMMO = {
 		this.world.removeConstraint( ctrt );
 
 		if ( destroy ) Ammo.destroy( ctrt );
+
+		return this;
 
 	},
 	containsConstraint : function( ctrt ) {
@@ -136,6 +165,8 @@ THREE.AMMO = {
 
 		this.world.addAction( vehicle );
 
+		return this;
+
 	},
 	removeVehicle : function( vehicle, destroy ) {
 
@@ -148,15 +179,18 @@ THREE.AMMO = {
 
 		if ( destroy ) Ammo.destroy( vehicle );
 
+		return this;
+
 	},
 	containsVehicle : function( vehicle ) {
 
 		return this.vehicles.indexOf( vehicle ) > - 1;
 
 	},
+
 	createTriangleMesh : function( geometry, index, removeDuplicateVertices ) {
 
-		index = index == undefined ? -1 : index;
+		index = index == undefined ? - 1 : index;
 		removeDuplicateVertices = removeDuplicateVertices == undefined ? false : removeDuplicateVertices;
 
 		var mTriMesh = new Ammo.btTriangleMesh();
@@ -171,9 +205,9 @@ THREE.AMMO = {
 		var group = index >= 0 ? geometry.groups[ index ] : undefined,
 			start = group ? group.start : 0,
 			count = group ? group.count : indexes.length;
-		
+
 		var scale = 1 / this.worldScale;
-		
+
 		for ( var idx = start; idx < count; idx += 3 ) {
 
 			var vx1 = indexes[ idx ] * 3,
@@ -193,7 +227,7 @@ THREE.AMMO = {
 	},
 	createConvexHull : function( geometry, index ) {
 
-		index = index == undefined ? -1 : index;
+		index = index == undefined ? - 1 : index;
 
 		var mConvexHull = new Ammo.btConvexHullShape();
 
@@ -205,15 +239,15 @@ THREE.AMMO = {
 		var group = index >= 0 ? geometry.groups[ index ] : undefined,
 			start = group ? group.start : 0,
 			count = group ? group.count : indexes.length;
-		
+
 		var scale = 1 / this.worldScale;
-		
+
 		for ( var idx = start; idx < count; idx += 3 ) {
 
 			var vx1 = indexes[ idx ] * 3;
-			
-			var point = new Ammo.btVector3( 
-				vertex[ vx1 ] * scale, vertex[ vx1 + 1 ] * scale, vertex[ vx1 + 2 ] * scale 
+
+			var point = new Ammo.btVector3(
+				vertex[ vx1 ] * scale, vertex[ vx1 + 1 ] * scale, vertex[ vx1 + 2 ] * scale
 			);
 
 			mConvexHull.addPoint( point );
@@ -223,6 +257,7 @@ THREE.AMMO = {
 		return mConvexHull;
 
 	},
+
 	getTargetByRigidBody : function( rb ) {
 
 		return this.rigidBodiesTarget[ this.rigidBodies.indexOf( rb ) ];
@@ -260,24 +295,25 @@ THREE.AMMO = {
 		var quaternion = new THREE.Quaternion();
 		var scale = new THREE.Vector3( 1, 1, 1 );
 
-		return function ( transform, matrix ) {
-			
+		return function( transform, matrix ) {
+
 			matrix = matrix || new THREE.Matrix4();
-			
+
 			var pos = transform.getOrigin(),
 				quat = transform.getRotation();
 
 			position.set( pos.x(), pos.y(), pos.z() );
 			quaternion.set( quat.x(), quat.y(), quat.z(), quat.w() );
-			
+
 			matrix.compose( position, quaternion, scale );
-				
+
 			return matrix;
 
 		};
 
 	}(),
-	updateTargetTransform : function( obj3d, transform, offset ) {
+
+	updateTargetTransform : function() {
 
 		var matrix = new THREE.Matrix4();
 
@@ -285,7 +321,7 @@ THREE.AMMO = {
 		var quaternion = new THREE.Quaternion();
 		var scale = new THREE.Vector3( 1, 1, 1 );
 
-		return function ( obj3d, transform, offset ) {
+		return function( obj3d, transform, offset ) {
 
 			var pos = transform.getOrigin(),
 				quat = transform.getRotation();
@@ -295,8 +331,7 @@ THREE.AMMO = {
 				obj3d.position.set( pos.x(), pos.y(), pos.z() );
 				obj3d.quaternion.set( quat.x(), quat.y(), quat.z(), quat.w() );
 
-			}
-			else {
+			} else {
 
 				position.set( pos.x(), pos.y(), pos.z() )
 				quaternion.set( quat.x(), quat.y(), quat.z(), quat.w() );
@@ -310,12 +345,14 @@ THREE.AMMO = {
 
 			}
 
+			return this;
+
 		};
 
 	}(),
 	update : function( delta, iteration, fixedDelta ) {
 
-		this.world.stepSimulation( delta, iteration || 0, fixedDelta || (60 / 1000) );
+		this.world.stepSimulation( delta, iteration || 0, fixedDelta || ( 60 / 1000 ) );
 
 		var i, j;
 
@@ -328,7 +365,7 @@ THREE.AMMO = {
 			for ( j = 0; j < numWheels; j ++ ) {
 
 				vehicle.updateWheelTransform( j, true );
-				
+
 				var wheelsTransform = vehicle.getWheelTransformWS( j ),
 					wheelTarget = wheels[ j ];
 
@@ -355,6 +392,8 @@ THREE.AMMO = {
 			}
 
 		}
+
+		return this;
 
 	}
 }

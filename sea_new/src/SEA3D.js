@@ -5,8 +5,7 @@
 
 'use strict';
 
-
-var SEA3D = { VERSION : 180150 };
+var SEA3D = { VERSION : 18100 }
 
 SEA3D.getVersion = function() {
 
@@ -279,8 +278,7 @@ SEA3D.Stream.prototype.readUTF8 = function( len ) {
 
 	var buffer = this.readBytes( len );
 
-	//return window.TextDecoder ? new TextDecoder().decode( buffer ) : String.fromCharCode.apply( undefined, new Uint16Array( new Uint8Array( buffer ) ) );
-	return String.fromCharCode.apply( undefined, new Uint16Array( new Uint8Array( buffer ) ) );
+	return window.TextDecoder ? new TextDecoder().decode( buffer ) : String.fromCharCode.apply( undefined, new Uint16Array( new Uint8Array( buffer ) ) );
 
 };
 
@@ -1017,7 +1015,7 @@ SEA3D.Geometry = function( name, data, sea3d ) {
 
 			this.groups.push( {
 				start : len,
-				count : j
+				count : j,
 			} );
 
 			len += j;
@@ -1038,7 +1036,7 @@ SEA3D.Geometry = function( name, data, sea3d ) {
 
 			this.groups.push( {
 				start : j,
-				count : len
+				count : len,
 			} );
 
 			j += len;
@@ -1971,7 +1969,7 @@ SEA3D.Light = function( name, data, sea3d ) {
 
 		var shadowHeader = data.readUByte();
 
-		this.shadow = {};
+		this.shadow = {}
 
 		this.shadow.opacity = shadowHeader & 1 ? data.readFloat() : 1;
 		this.shadow.color = shadowHeader & 2 ? data.readUInt24() : 0x000000;
@@ -2096,6 +2094,7 @@ SEA3D.Material = function( name, data, sea3d ) {
 	this.sea3d = sea3d;
 
 	this.technique = [];
+	this.tecniquesDict = {};
 
 	this.attrib = data.readUShort();
 
@@ -2147,7 +2146,6 @@ SEA3D.Material = function( name, data, sea3d ) {
 				break;
 
 			case SEA3D.Material.PHYSICAL:
-				this.physical = true;
 				tech = {
 					color: data.readUInt24(),
 					roughness: data.readFloat(),
@@ -2156,7 +2154,6 @@ SEA3D.Material = function( name, data, sea3d ) {
 				break;
 
 			case SEA3D.Material.ANISOTROPIC:
-				this.anisotropy = true;
 				break;
 
 			case SEA3D.Material.COMPOSITE_TEXTURE:
@@ -2348,6 +2345,24 @@ SEA3D.Material = function( name, data, sea3d ) {
 				};
 				break;
 
+			case SEA3D.Material.REFLECTIVITY:
+				methodAttrib = data.readUByte();
+
+				tech = {
+					strength:data.readFloat()
+				};
+
+				if ( methodAttrib & 1 ) tech.mask = sea3d.getObject( data.readUInt() );
+
+				break;
+				
+			case SEA3D.Material.CLEAR_COAT:
+				tech = {
+					strength:data.readFloat(),
+					roughness:data.readFloat()
+				};
+				break;
+				
 			default:
 				console.warn( "SEA3D: MaterialTechnique not found:", kind.toString( 16 ) );
 
@@ -2358,6 +2373,7 @@ SEA3D.Material = function( name, data, sea3d ) {
 		tech.kind = kind;
 
 		this.technique.push( tech );
+		this.tecniquesDict[ kind ] = tech;
 
 		data.position = pos += size;
 
@@ -2392,6 +2408,8 @@ SEA3D.Material.EMISSIVE = 23;
 SEA3D.Material.PHYSICAL = 24;
 SEA3D.Material.ROUGHNESS_MAP = 25;
 SEA3D.Material.METALNESS_MAP = 26;
+SEA3D.Material.REFLECTIVITY = 27;
+SEA3D.Material.CLEAR_COAT = 28;
 
 SEA3D.Material.prototype.type = "mat";
 
@@ -3019,7 +3037,6 @@ SEA3D.File.prototype.readState = function() {
 
 	} else {
 
-		this.dispatchProgress();
 		this.dispatchComplete();
 
 	}
@@ -3041,7 +3058,9 @@ SEA3D.File.prototype.read = function( buffer ) {
 
 SEA3D.File.prototype.dispatchCompleteObject = function( obj ) {
 
-	if ( this.onCompleteObject ) this.onCompleteObject( {
+	if ( ! this.onCompleteObject ) return;
+
+	this.onCompleteObject( {
 		file: this,
 		object: obj
 	} );
@@ -3050,7 +3069,9 @@ SEA3D.File.prototype.dispatchCompleteObject = function( obj ) {
 
 SEA3D.File.prototype.dispatchProgress = function() {
 
-	if ( this.onProgress ) this.onProgress( {
+	if ( ! this.onProgress ) return;
+
+	this.onProgress( {
 		file: this,
 		loaded: this.position,
 		total: this.length
@@ -3060,7 +3081,9 @@ SEA3D.File.prototype.dispatchProgress = function() {
 
 SEA3D.File.prototype.dispatchDownloadProgress = function( position, length ) {
 
-	if ( this.onDownloadProgress ) this.onDownloadProgress( {
+	if ( ! this.onDownloadProgress ) return;
+
+	this.onDownloadProgress( {
 		file: this,
 		loaded: position,
 		total: length

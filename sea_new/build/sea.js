@@ -1,3 +1,5 @@
+// variable undeclared 
+var THREE, Ammo, TextDecoder;
 /**
  * 	SEA3D SDK
  * 	@author Sunag / http://www.sunag.com.br/
@@ -5,8 +7,7 @@
 
 'use strict';
 
-
-var SEA3D = { VERSION : 180150 };
+var SEA3D = { VERSION : 18100 }
 
 SEA3D.getVersion = function() {
 
@@ -279,8 +280,7 @@ SEA3D.Stream.prototype.readUTF8 = function( len ) {
 
 	var buffer = this.readBytes( len );
 
-	//return window.TextDecoder ? new TextDecoder().decode( buffer ) : String.fromCharCode.apply( undefined, new Uint16Array( new Uint8Array( buffer ) ) );
-	return String.fromCharCode.apply( undefined, new Uint16Array( new Uint8Array( buffer ) ) );
+	return window.TextDecoder ? new TextDecoder().decode( buffer ) : String.fromCharCode.apply( undefined, new Uint16Array( new Uint8Array( buffer ) ) );
 
 };
 
@@ -1017,7 +1017,7 @@ SEA3D.Geometry = function( name, data, sea3d ) {
 
 			this.groups.push( {
 				start : len,
-				count : j
+				count : j,
 			} );
 
 			len += j;
@@ -1038,7 +1038,7 @@ SEA3D.Geometry = function( name, data, sea3d ) {
 
 			this.groups.push( {
 				start : j,
-				count : len
+				count : len,
 			} );
 
 			j += len;
@@ -1971,7 +1971,7 @@ SEA3D.Light = function( name, data, sea3d ) {
 
 		var shadowHeader = data.readUByte();
 
-		this.shadow = {};
+		this.shadow = {}
 
 		this.shadow.opacity = shadowHeader & 1 ? data.readFloat() : 1;
 		this.shadow.color = shadowHeader & 2 ? data.readUInt24() : 0x000000;
@@ -2096,6 +2096,7 @@ SEA3D.Material = function( name, data, sea3d ) {
 	this.sea3d = sea3d;
 
 	this.technique = [];
+	this.tecniquesDict = {};
 
 	this.attrib = data.readUShort();
 
@@ -2147,7 +2148,6 @@ SEA3D.Material = function( name, data, sea3d ) {
 				break;
 
 			case SEA3D.Material.PHYSICAL:
-				this.physical = true;
 				tech = {
 					color: data.readUInt24(),
 					roughness: data.readFloat(),
@@ -2156,7 +2156,6 @@ SEA3D.Material = function( name, data, sea3d ) {
 				break;
 
 			case SEA3D.Material.ANISOTROPIC:
-				this.anisotropy = true;
 				break;
 
 			case SEA3D.Material.COMPOSITE_TEXTURE:
@@ -2348,6 +2347,24 @@ SEA3D.Material = function( name, data, sea3d ) {
 				};
 				break;
 
+			case SEA3D.Material.REFLECTIVITY:
+				methodAttrib = data.readUByte();
+
+				tech = {
+					strength:data.readFloat()
+				};
+
+				if ( methodAttrib & 1 ) tech.mask = sea3d.getObject( data.readUInt() );
+
+				break;
+				
+			case SEA3D.Material.CLEAR_COAT:
+				tech = {
+					strength:data.readFloat(),
+					roughness:data.readFloat()
+				};
+				break;
+				
 			default:
 				console.warn( "SEA3D: MaterialTechnique not found:", kind.toString( 16 ) );
 
@@ -2358,6 +2375,7 @@ SEA3D.Material = function( name, data, sea3d ) {
 		tech.kind = kind;
 
 		this.technique.push( tech );
+		this.tecniquesDict[ kind ] = tech;
 
 		data.position = pos += size;
 
@@ -2392,6 +2410,8 @@ SEA3D.Material.EMISSIVE = 23;
 SEA3D.Material.PHYSICAL = 24;
 SEA3D.Material.ROUGHNESS_MAP = 25;
 SEA3D.Material.METALNESS_MAP = 26;
+SEA3D.Material.REFLECTIVITY = 27;
+SEA3D.Material.CLEAR_COAT = 28;
 
 SEA3D.Material.prototype.type = "mat";
 
@@ -3019,7 +3039,6 @@ SEA3D.File.prototype.readState = function() {
 
 	} else {
 
-		this.dispatchProgress();
 		this.dispatchComplete();
 
 	}
@@ -3041,7 +3060,9 @@ SEA3D.File.prototype.read = function( buffer ) {
 
 SEA3D.File.prototype.dispatchCompleteObject = function( obj ) {
 
-	if ( this.onCompleteObject ) this.onCompleteObject( {
+	if ( ! this.onCompleteObject ) return;
+
+	this.onCompleteObject( {
 		file: this,
 		object: obj
 	} );
@@ -3050,7 +3071,9 @@ SEA3D.File.prototype.dispatchCompleteObject = function( obj ) {
 
 SEA3D.File.prototype.dispatchProgress = function() {
 
-	if ( this.onProgress ) this.onProgress( {
+	if ( ! this.onProgress ) return;
+
+	this.onProgress( {
 		file: this,
 		loaded: this.position,
 		total: this.length
@@ -3060,7 +3083,9 @@ SEA3D.File.prototype.dispatchProgress = function() {
 
 SEA3D.File.prototype.dispatchDownloadProgress = function( position, length ) {
 
-	if ( this.onDownloadProgress ) this.onDownloadProgress( {
+	if ( ! this.onDownloadProgress ) return;
+
+	this.onDownloadProgress( {
 		file: this,
 		loaded: position,
 		total: length
@@ -3952,8 +3977,6 @@ SEA3D.File.setDecompressionEngine( 2, "lzma", SEA3D.File.LZMAUncompress );
 
 'use strict';
 
-var THREE;
-
 THREE.SEA3D = function( config ) {
 
 	this.config = {
@@ -3982,29 +4005,57 @@ THREE.SEA3D = function( config ) {
 
 };
 
+//
+//	Config
+//
 
+THREE.SEA3D.MTXBUF = new THREE.Matrix4();
+THREE.SEA3D.VECBUF = new THREE.Vector3();
+THREE.SEA3D.QUABUF = new THREE.Quaternion();
 
-THREE.SEA3D.prototype = Object.assign( Object.create( THREE.EventDispatcher.prototype ), {
+THREE.SEA3D.BACKGROUND_COLOR = 0x333333;
+THREE.SEA3D.HELPER_COLOR = 0x9AB9E5;
+THREE.SEA3D.RTT_SIZE = 512;
 
-	constructor : THREE.SEA3D,
+THREE.SEA3D.prototype = {
 
-	container : {
+	constructor: THREE.SEA3D,
 
-		set: function( val ) {
+	set container ( val ) {
 
-			this.config.container = val;
+		this.config.container = val;
 
-		},
+	},
 
-		get: function() {
+	get container () {
 
-			return this.config.container;
+		return this.config.container;
 
-		}
+	},
+	
+	setShadowMap : function( light ) {
+
+		light.shadow.mapSize.width = 2048
+		light.shadow.mapSize.height = 1024;
+
+		light.castShadow = true;
+
+		light.shadow.camera.left = - 200;
+		light.shadow.camera.right = 200;
+		light.shadow.camera.top = 200;
+		light.shadow.camera.bottom = - 200;
+
+		light.shadow.camera.near = 1;
+		light.shadow.camera.far = 3000;
+		light.shadow.camera.fov = 45;
+
+		light.shadow.bias = - 0.001;
 
 	}
 
-} );
+};
+
+Object.assign( THREE.SEA3D.prototype, THREE.EventDispatcher.prototype );
 
 //
 //	Domain
@@ -4126,8 +4177,7 @@ Object.assign( THREE.SEA3D.Domain.prototype, {
 				script.params
 			);
 
-		}
-		catch ( e ) {
+		} catch ( e ) {
 
 			console.error( 'SEA3D JavaScript: Error running method "' + script.method + '".' );
 			console.error( e );
@@ -4428,15 +4478,12 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 		this.mixer.update( dt || 0 );
 
-		if ( this.currentAnimationAction ) {
+		if ( this.currentAnimationAction && this.currentAnimationAction.paused ) {
 
-			if ( this.currentAnimationAction.paused ) {
+			this.pause();
 
-				this.pause();
+			if ( this.currentAnimationData && this.currentAnimationData.onComplete ) this.currentAnimationData.onComplete( this );
 
-				if ( this.currentAnimationData && this.currentAnimationData.onComplete ) this.currentAnimationData.onComplete( this );
-
-			}
 		}
 
 		return this;
@@ -4449,18 +4496,18 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 		if ( this.mixer ) THREE.SEA3D.AnimationHandler.removeAnimator( this );
 
-        THREE.SEA3D.AnimationHandler.addAnimator( this );
+		//THREE.SEA3D.AnimationHandler.addAnimator( this ); //////////§§§§!!!
 
 		this.mixer = mixer;
 
 		this.relative = false;
 		this.playing = false;
+		this.paused = false;
 
 		this.timeScale = 1;
 
-		this.animId = [];
-
 		this.animations = {};
+		this.animationsIndex = [];
 		this.animationsData = {};
 
 		// if no geometry animation
@@ -4468,125 +4515,41 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 		this.clips = this instanceof THREE.SEA3D.Animator ? this.clips : this.geometry.animations;
 
-		for ( var i = 0, clips = this.clips; i < clips.length; i ++ ) {
+		for ( var i = 0; i < this.clips.length; i ++ ) {
 
-			this.addAnimation( clips[ i ] );
-
-			//var name = clips[ i ].name;
-
-			//this.animations[ name ] = this.animations[ i ] = clips[ i ];
-			//this.animationsData[ name ] = this.animationsData[ i ] = {};
+			this.addAnimation( this.clips[ i ] );
 
 		}
 
+		return this;
+
 	},
 
-	addAnimation: function ( clip ) {
+	addAnimation: function( clip ) {
 
 		var name = clip.name;
 
 		this.animations[ name ] = clip;
 		this.animationsData[ name ] = {};
+		this.animationsIndex.push( clip );
 
-		this.animId.push( name );
+		this.mixer.clipAction( clip );
+
+		return this;
 
 	},
 
-	removeAnimation: function ( clip ) {
+	removeAnimation: function( clip ) {
 
-		delete this.animations[ clip.name ];
+		var name = clip.name;
+
+		delete this.animations[ name ];
+		delete this.animationsData[ name ];
+		this.animationsIndex.splice( this.animationsIndex.indexOf( clip ), 1 );
+
 		this.mixer.uncacheClip( clip );
 
-	},
-
-	// ADDD
-	//________________________________
-
-	playw: function ( name, weight ) {
-
-        var anim = this.animations[ name ];
-        var clip = this.mixer.clipAction( anim );
-        
-        this.playing = true;
-        clip.setLoop( anim.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity ).reset();
-        clip.clampWhenFinished = !anim.loop;
-        clip.paused = false;
-
-        clip.setEffectiveWeight( weight );
-
-        //THREE.SEA3D.AnimationHandler.addAnimator( this );
-
-		return clip.play();
-
-	},
-
-	crossfade: function( fromAnimName, toAnimName, duration ) {
-
-		this.mixer.stopAllAction();
-
-		var fromAction = this.playw( fromAnimName, 1 );
-		var toAction = this.playw( toAnimName, 1 );
-
-		fromAction.crossFadeTo( toAction, duration, false );
-
-	},
-
-	warp: function( fromAnimName, toAnimName, duration ) {
-
-		this.mixer.stopAllAction();
-
-		var fromAction = this.playw( fromAnimName, 1 );
-		var toAction = this.playw( toAnimName, 1 );
-
-		fromAction.crossFadeTo( toAction, duration, true );
-
-	},
-
-	/*applyWeight: function( animName, weight ) {
-
-		this.mixer.clipAction( this.animations[ animName ] ).setEffectiveWeight( weight );
-
-	},*/
-
-	stopAll: function() {
-
-		this.mixer.stopAllAction();
-
-	},
-
-	unPauseAll: function() {
-
-		this.mixer.timeScale = 1;
-
-	},
-
-    pauseAll: function() {
-
-        this.mixer.timeScale = 0;
-
-    },
-
-    setClipTimeScale: function( name, value ) {
-
-    	var anim = this.animations[ name ];
-        var clip = this.mixer.clipAction( anim );
-
-        clip.setEffectiveTimeScale( value );
-
-    },
-
-	//________________________________
-	//
-
-	getStateByName : function( name ) {
-
-		return this.animations.indexOf( this.animations[ name ] );
-
-	},
-
-	getStateNameByIndex : function( index ) {
-
-		return this.animations[ this.animId[index] ].name;
+		return this;
 
 	},
 
@@ -4599,6 +4562,8 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 			this.playing = false;
 
 		}
+
+		return this;
 
 	},
 
@@ -4622,6 +4587,8 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 		if ( this.currentAnimationAction ) this.updateTimeScale();
 
+		return this;
+
 	},
 
 	getTimeScale : function() {
@@ -4634,11 +4601,15 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 		this.currentAnimationAction.setEffectiveTimeScale( this.timeScale * ( this.currentAnimation ? this.currentAnimation.timeScale : 1 ) );
 
+		return this;
+
 	},
 
 	play : function( name, crossfade, offset, weight ) {
 
-		var animation = isNaN(name) ? this.animations[ name ] : this.animations[ this.animId[name] ];
+		var animation = this.animations[ name ] || this.animationsIndex[ name ];
+
+		name = animation.name;
 
 		if ( animation == this.currentAnimation ) {
 
@@ -4690,12 +4661,14 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 	stop : function() {
 
+		if( this.playing ) THREE.SEA3D.AnimationHandler.removeAnimator( this );
+
 		if ( this.currentAnimation ) {
 
 			this.currentAnimationAction.stop();
 
-			THREE.SEA3D.AnimationHandler.removeAnimator( this );
-
+			//THREE.SEA3D.AnimationHandler.removeAnimator( this );
+			
 			this.previousAnimation = this.currentAnimation;
 			this.previousAnimationData = this.currentAnimationData;
 			this.previousAnimationAction = this.currentAnimationAction;
@@ -4712,6 +4685,81 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 
 	},
 
+	playw: function( name, weight ) {
+
+		if( !this.playing && !this.paused ) THREE.SEA3D.AnimationHandler.addAnimator( this );
+
+		var anim = this.animations[ name ] || this.animationsIndex[ name ];
+
+		this.playing = true;
+
+		var clip = this.mixer.clipAction( anim );
+		clip.setLoop( anim.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity ).reset();
+		clip.clampWhenFinished = ! anim.loop;
+		clip.paused = false;
+
+		clip.setEffectiveWeight( weight ).play();
+
+		return clip;
+
+	},
+
+	crossFade: function( fromAnimName, toAnimName, duration, wrap ) {
+
+		this.mixer.stopAllAction();
+
+		var fromAction = this.playw( fromAnimName, 1 );
+		var toAction = this.playw( toAnimName, 1 );
+
+		fromAction.crossFadeTo( toAction, duration, wrap !== undefined ? wrap : false );
+
+		return this;
+
+	},
+
+	setClipTimeScale: function( name, value ) {
+
+		var anim = this.animations[ name ];
+		var clip = this.mixer.clipAction( anim );
+
+		clip.setEffectiveTimeScale( value );
+
+		return this;
+
+	},
+
+	stopAll: function() {
+
+		this.stop().mixer.stopAllAction();
+
+		this.playing = false;
+
+		return this;
+
+	},
+
+	unPauseAll: function() {
+
+		this.mixer.timeScale = 1;
+
+		this.playing = true;
+		this.paused = false;
+
+		return this;
+
+	},
+
+	pauseAll: function() {
+
+		this.mixer.timeScale = 0;
+
+		this.playing = false;
+		this.paused = true;
+
+		return this;
+
+	},
+
 	setRelative : function( val ) {
 
 		if ( this.relative == val ) return;
@@ -4719,6 +4767,8 @@ Object.assign( THREE.SEA3D.Animator.prototype, {
 		this.stop();
 
 		this.relative = val;
+
+		return this;
 
 	},
 
@@ -4915,8 +4965,6 @@ THREE.SEA3D.Object3D.prototype = Object.assign( Object.create( THREE.Object3D.pr
 //	Dummy
 //
 
-THREE.SEA3D.HELPER_COLOR = 0x9AB9E5;
-
 THREE.SEA3D.Dummy = function( width, height, depth ) {
 
 	this.width = width != undefined ? width : 100;
@@ -4931,7 +4979,6 @@ THREE.SEA3D.Dummy = function( width, height, depth ) {
 	THREE.Mesh.call( this, geo, THREE.SEA3D.Dummy.MATERIAL );
 
 };
-
 
 THREE.SEA3D.Dummy.MATERIAL = new THREE.MeshBasicMaterial( { wireframe: true, color: THREE.SEA3D.HELPER_COLOR } );
 
@@ -4974,17 +5021,16 @@ THREE.SEA3D.Mesh.prototype = Object.assign( Object.create( THREE.Mesh.prototype 
 
 	constructor : THREE.SEA3D.Mesh,
 
-
 	setWeight : function( name, val ) {
 
-        if( this.animations && this.animations[ name ] ) this.mixer.clipAction( name ).setEffectiveWeight( val );
+        if( this.animations && ( this.animations[ name ] || this.animationsIndex[ name ] ) ) this.mixer.clipAction( name ).setEffectiveWeight( val );
 		if( this.morphTargetInfluences && this.morphTargetDictionary[ name ] !== undefined ) this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ] = val;
 
 	},
 
 	getWeight : function( name ) {
 
-        if( this.animations && this.animations[ name ] ) return this.mixer.clipAction( name ).getEffectiveWeight();
+        if( this.animations && ( this.animations[ name ] || this.animationsIndex[ name ] ) ) return this.mixer.clipAction( name ).getEffectiveWeight();
         if( this.morphTargetDictionary && this.morphTargetDictionary[ name ] !== undefined ) return this.morphTargetInfluences[ this.morphTargetDictionary[ name ] ];
 
 	},
@@ -5236,38 +5282,6 @@ THREE.SEA3D.AnimationHandler = {
 };
 
 //
-//	Config
-//
-
-THREE.SEA3D.MTXBUF = new THREE.Matrix4();
-THREE.SEA3D.VECBUF = new THREE.Vector3();
-THREE.SEA3D.QUABUF = new THREE.Quaternion();
-
-THREE.SEA3D.BACKGROUND_COLOR = 0x333333;
-
-THREE.SEA3D.RTT_SIZE = 512;
-
-THREE.SEA3D.prototype.setShadowMap = function( light ) {
-
-	light.shadow.mapSize.width = 2048;
-	light.shadow.mapSize.height = 1024;
-
-	light.castShadow = true;
-
-	light.shadow.camera.left = - 200;
-	light.shadow.camera.right = 200;
-	light.shadow.camera.top = 200;
-	light.shadow.camera.bottom = - 200;
-
-	light.shadow.camera.near = 1;
-	light.shadow.camera.far = 3000;
-	light.shadow.camera.fov = 45;
-
-	light.shadow.bias = - 0.001;
-
-};
-
-//
 //	Output
 //
 
@@ -5435,9 +5449,9 @@ THREE.SEA3D.prototype.updateScene = function() {
 
 };
 
-THREE.SEA3D.prototype.addSceneObject = function( sea ) {
+THREE.SEA3D.prototype.addSceneObject = function( sea, obj3d ) {
 
-	var obj3d = sea.tag;
+	obj3d = obj3d || sea.tag;
 
 	obj3d.visible = sea.visible;
 
@@ -5532,7 +5546,7 @@ THREE.SEA3D.prototype.readAnimation = function( sea ) {
 		for ( var j = 0; j < sea.dataList.length; j ++ ) {
 
 			var anm = sea.dataList[ j ],
-				k, t, times, values,
+				t, k, times, values, 
 				data = anm.data,
 				start = seq.start * anm.blockSize,
 				end = start + ( seq.count * anm.blockSize ),
@@ -5610,7 +5624,7 @@ THREE.SEA3D.prototype.readAnimation = function( sea ) {
 
 				case SEA3D.Stream.VECTOR4D:
 
-					values = data.subarray( start, end );
+				    values = data.subarray( start, end );
 					times = new Float32Array( values.length / anm.blockSize );
 					t = 0;
 
@@ -5709,8 +5723,6 @@ THREE.SEA3D.prototype.readGeometryBuffer = function( sea ) {
 
 		}
 
-		
-
 	}
 
 	if ( this.config.bounding ) {
@@ -5754,7 +5766,8 @@ THREE.SEA3D.prototype.readLine = function( sea ) {
 
 	var	geo = new THREE.BufferGeometry();
 
-	if ( sea.closed ) sea.vertex.push( sea.vertex[ 0 ], sea.vertex[ 1 ], sea.vertex[ 2 ] );
+	if ( sea.closed )
+		sea.vertex.push( sea.vertex[ 0 ], sea.vertex[ 1 ], sea.vertex[ 2 ] );
 
 	if( THREE.Float32BufferAttribute ){ // three dev
 
@@ -5764,7 +5777,7 @@ THREE.SEA3D.prototype.readLine = function( sea ) {
 
    	    geo.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( sea.vertex ), 3 ) );
 
-    } 
+    }
 
 	var line = new THREE.Line( geo, new THREE.LineBasicMaterial( { color: THREE.SEA3D.HELPER_COLOR, linewidth: 3 } ) );
 	line.name = sea.name;
@@ -5818,7 +5831,6 @@ THREE.SEA3D.prototype.readSprite = function( sea ) {
 
 			mat.color.set( sea.material.tag.color );
 			mat.opacity = sea.material.tag.opacity;
-			mat.blending = sea.material.tag.blending;
 			mat.fog = sea.material.receiveFog;
 
 		}
@@ -5878,10 +5890,6 @@ THREE.SEA3D.prototype.readMesh = function( sea ) {
 				skeletonAnimation = anm.tag;
 
 				geo.animations = this.getSkeletonAnimation( skeletonAnimation, skeleton );
-
-				// test inverse
-				//this.getSkeletonAnimationInvers( geo.animations, skeletonAnimation, skeleton );
-
 				break;
 
 			case SEA3D.VertexAnimation.prototype.type:
@@ -6026,13 +6034,13 @@ THREE.SEA3D.prototype.readCubeRender = function( sea ) {
 	var cube = new THREE.CubeCamera( 0.1, 5000, THREE.SEA3D.RTT_SIZE );
 	cube.renderTarget.cubeCamera = cube;
 
+	sea.tag = cube.renderTarget;
+
 	this.domain.cubeRenderers = this.cubeRenderers = this.cubeRenderers || [];
-	this.cubeRenderers.push( this.objects[ "rttc/" + sea.name ] = sea.tag = cube.renderTarget );
+	this.cubeRenderers.push( this.objects[ "rttc/" + sea.name ] = cube );
 
-	this.addSceneObject( sea );
+	this.addSceneObject( sea, cube );
 	this.updateTransform( cube, sea );
-
-	this.applyDefaultAnimation( sea, THREE.SEA3D.Object3DAnimator );
 
 };
 
@@ -6129,7 +6137,9 @@ THREE.SEA3D.prototype.readScriptURL = function( sea ) {
 
 	this.file.resume = false;
 
-	this.request( sea.url, function( src ) {
+	var loader = new THREE.FileLoader();
+
+	loader.setResponseType( "text" ).load( sea.url, function( src ) {
 
 		this.file.resume = true;
 
@@ -6266,7 +6276,7 @@ THREE.SEA3D.prototype.readJavaScriptMethod = function( sea ) {
 			'hasEventListener = $SRC.hasEventListener.bind( $SRC ),\n' +
 			'removeEventListener = $SRC.removeEventListener.bind( $SRC ),\n' +
 			'dispatchEvent = $SRC.dispatchEvent.bind( $SRC ),\n' +
-			'dispose = $SRC.dispose.bind( $SRC );\n';
+			'dispose = $SRC.dispose.bind( $SRC );\n'
 
 		for ( var name in sea.methods ) {
 
@@ -6274,12 +6284,11 @@ THREE.SEA3D.prototype.readJavaScriptMethod = function( sea ) {
 
 		}
 
-		src += 'return $METHOD; })';
+		src += 'return $METHOD; })'
 
 		this.domain.methods = eval( src )();
 
-	}
-	catch ( e ) {
+	} catch ( e ) {
 
 		console.error( 'SEA3D JavaScriptMethod: Error running "' + sea.name + '".' );
 		console.error( e );
@@ -6306,7 +6315,7 @@ THREE.SEA3D.prototype.readGLSL = function( sea ) {
 THREE.SEA3D.prototype.materialTechnique =
 ( function() {
 
-	var techniques = {};
+	var techniques = {}
 
 	// FINAL
 	techniques.onComplete = function( mat, sea ) {
@@ -6330,6 +6339,23 @@ THREE.SEA3D.prototype.materialTechnique =
 
 	};
 
+	// REFLECTIVITY
+	techniques[ SEA3D.Material.REFLECTIVITY ] =
+	function( mat, tech ) {
+
+		mat.reflectivity = tech.strength;
+
+	};
+
+	// CLEAR_COAT
+	techniques[ SEA3D.Material.CLEAR_COAT ] =
+	function( mat, tech ) {
+
+		mat.clearCoat = tech.strength;
+		mat.clearCoatRoughness = tech.roughness;
+
+	};
+	
 	// PHONG
 	techniques[ SEA3D.Material.PHONG ] =
 	function( mat, tech ) {
@@ -6346,6 +6372,8 @@ THREE.SEA3D.prototype.materialTechnique =
 
 		mat.map = tech.texture.tag;
 		mat.color.setHex( 0xFFFFFF );
+		
+		mat.map.wrapS = mat.map.wrapT = sea.repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
 
 		if ( tech.texture.transparent ) {
 
@@ -6440,10 +6468,12 @@ THREE.SEA3D.prototype.materialTechnique =
 
 	// ALPHA_MAP
 	techniques[ SEA3D.Material.ALPHA_MAP ] =
-	function( mat, tech ) {
+	function( mat, tech, sea ) {
 
 		mat.alphaMap = tech.texture.tag;
 		mat.transparent = true;
+		
+		mat.alphaMap.wrapS = mat.alphaMap.wrapT = sea.repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
 
 	};
 
@@ -6453,13 +6483,23 @@ THREE.SEA3D.prototype.materialTechnique =
 
 THREE.SEA3D.prototype.createMaterial = function( sea ) {
 
-	return sea.physical ? new THREE.MeshStandardMaterial() : new THREE.MeshPhongMaterial();
+	if (sea.tecniquesDict[ SEA3D.Material.REFLECTIVITY ] || sea.tecniquesDict[ SEA3D.Material.CLEAR_COAT ]) {
+
+		return new THREE.MeshPhysicalMaterial();
+
+	} else if (sea.tecniquesDict[ SEA3D.Material.PHYSICAL ]) {
+
+		return new THREE.MeshStandardMaterial();
+
+	}
+
+	return new THREE.MeshPhongMaterial();
 
 };
 
 THREE.SEA3D.prototype.setBlending = function( mat, blendMode ) {
 
-	if ( blendMode == "normal" ) return;
+	if ( blendMode === "normal" ) return;
 
 	switch ( blendMode ) {
 
@@ -6495,8 +6535,6 @@ THREE.SEA3D.prototype.readMaterial = function( sea ) {
 
 	mat.premultipliedAlpha = this.config.premultipliedAlpha;
 	mat.side = sea.bothSides ? THREE.DoubleSide : THREE.FrontSide;
-	//mat.shading = sea.smooth ? THREE.SmoothShading : THREE.FlatShading;
-	//sea.repeat
 
 	this.setBlending( mat, sea.blendMode );
 
@@ -6723,10 +6761,7 @@ THREE.SEA3D.prototype.readJointObject = function( sea ) {
 
 THREE.SEA3D.prototype.readMorpher = function( sea ) {
 
-	var attribs = {
-			position : []
-		},
-		targets = [];
+	var attribs = { position : [] }, targets = [];
 
 	if( THREE.Float32BufferAttribute ){ // three dev
 
@@ -6832,10 +6867,7 @@ THREE.SEA3D.prototype.getSkeletonAnimation = function( sea, skl ) {
 		anm.loop = seq.repeat;
 		anm.timeScale = 1;
 
-
-
 		animations.push( anm );
-
 
 	}
 
@@ -6849,12 +6881,7 @@ THREE.SEA3D.prototype.getSkeletonAnimation = function( sea, skl ) {
 
 THREE.SEA3D.prototype.readVertexAnimation = function( sea ) {
 
-	var attribs = {
-			position : []
-		},
-		targets = [],
-		animations = [],
-		i, j, l;
+	var attribs = { position : [] }, targets = [], animations = [], i, j, l;
 
 	if( THREE.Float32BufferAttribute ){ // three dev
 
@@ -6927,6 +6954,27 @@ THREE.SEA3D.prototype.readVertexAnimation = function( sea ) {
 //	Actions
 //
 
+THREE.SEA3D.prototype.applyEnvironment = function( envMap ) {
+
+	for ( var j = 0, l = this.materials.length; j < l; ++ j ) {
+
+		var mat = this.materials[ j ];
+
+		if ( mat instanceof THREE.MeshStandardMaterial ) {
+
+			if ( mat.envMap ) continue;
+
+			mat.envMap = envMap;
+			mat.envMap.mapping = THREE.CubeReflectionMapping;
+
+			mat.needsUpdate = true;
+
+		}
+
+	}
+
+};
+
 THREE.SEA3D.prototype.readActions = function( sea ) {
 
 	for ( var i = 0; i < sea.actions.length; i ++ ) {
@@ -6959,30 +7007,15 @@ THREE.SEA3D.prototype.readActions = function( sea ) {
 
 			case SEA3D.Actions.ENVIRONMENT:
 
-				if ( this.config.useEnvironment && this.materials != undefined ) {
-
-					for ( var j = 0, l = this.materials.length; j < l; ++ j ) {
-
-						var mat = this.materials[ j ];
-
-						if ( mat instanceof THREE.MeshStandardMaterial ) {
-
-							if ( mat.envMap ) continue;
-
-							mat.envMap = act.texture.tag;
-							mat.envMap.mapping = THREE.CubeReflectionMapping;
-
-							mat.needsUpdate = true;
-
-						}
-
-					}
-
-				}
-
 				this.domain.background = this.background = this.background || {};
 
 				this.background.texture = act.texture.tag;
+
+				if ( this.config.useEnvironment && this.materials != undefined ) {
+
+					this.applyEnvironment( act.texture.tag );
+
+				}
 
 				break;
 
@@ -7129,6 +7162,7 @@ THREE.SEA3D.prototype.parse = function( onParseComplete, onParseProgress ) {
 	delete this.sounds;
 	delete this.glsl;
 	delete this.dummy;
+	delete this.background;
 
 	delete this.domain;
 
@@ -7140,7 +7174,7 @@ THREE.SEA3D.prototype.parse = function( onParseComplete, onParseProgress ) {
 
 		if ( this.config.manager ) this.config.manager.add( this.domain );
 
-		( onParseComplete || this.onParseComplete ).call( this.file, e );
+		( onParseComplete || this.onParseComplete ).call( this, e );
 
 	} ).bind( this );
 
@@ -7246,35 +7280,6 @@ THREE.SEA3D.prototype.setTypeRead = function() {
 
 };
 
-THREE.SEA3D.prototype.request = function( url, callback, format ) {
-
-	var xhr = new XMLHttpRequest();
-
-	xhr.open( "GET", url, true );
-	if ( format ) xhr.responseType = format;
-
-	xhr.onreadystatechange = function() {
-
-		if ( xhr.readyState === 4 ) {
-
-			if ( xhr.status === 200 || xhr.status === 0 ) {
-
-				callback( this.response );
-
-			} else {
-
-				console.error( 1001, "Couldn't load [" + url + "] [" + xhr.status + "]" );
-
-			}
-
-		}
-
-	}
-
-	xhr.send();
-
-};
-
 THREE.SEA3D.prototype.load = function( data ) {
 
 	this.file = new SEA3D.File();
@@ -7302,6 +7307,8 @@ THREE.SEA3D.prototype.load = function( data ) {
 
 	this.setTypeRead();
 
+	if(data===undefined) return;
+
 	if ( typeof data == "string" ) this.file.load( data );
 	else this.file.read( data );
 
@@ -7318,13 +7325,17 @@ THREE.SEA3D.prototype.load = function( data ) {
 //	Header
 //
 
-THREE.SEA3D.prototype._onHead = THREE.SEA3D.prototype.onHead;
-THREE.SEA3D.prototype._updateTransform = THREE.SEA3D.prototype.updateTransform;
-THREE.SEA3D.prototype._readVertexAnimation = THREE.SEA3D.prototype.readVertexAnimation;
-THREE.SEA3D.prototype._readGeometryBuffer = THREE.SEA3D.prototype.readGeometryBuffer;
-THREE.SEA3D.prototype._readLine = THREE.SEA3D.prototype.readLine;
-THREE.SEA3D.prototype._getSkeletonAnimation = THREE.SEA3D.prototype.getSkeletonAnimation;
-THREE.SEA3D.prototype._applyDefaultAnimation = THREE.SEA3D.prototype.applyDefaultAnimation;
+Object.assign( THREE.SEA3D.prototype, {
+
+	_onHead : THREE.SEA3D.prototype.onHead,
+	_updateTransform : THREE.SEA3D.prototype.updateTransform,
+	_readVertexAnimation : THREE.SEA3D.prototype.readVertexAnimation,
+	_readGeometryBuffer : THREE.SEA3D.prototype.readGeometryBuffer,
+	_readLine : THREE.SEA3D.prototype.readLine,
+	_getSkeletonAnimation : THREE.SEA3D.prototype.getSkeletonAnimation,
+	_applyDefaultAnimation : THREE.SEA3D.prototype.applyDefaultAnimation
+
+} );
 
 //
 //	Utils
@@ -7765,7 +7776,7 @@ THREE.SEA3D.prototype.readSkeleton = function( sea ) {
 
 		for ( var i = 0; i < sea.joint.length; i ++ ) {
 
-			var bone = sea.joint[ i ];
+			var bone = sea.joint[ i ]
 
 			// get world inverse matrix
 
@@ -7928,8 +7939,6 @@ THREE.SEA3D.prototype.getSkeletonAnimationLegacy = function( sea, skl ) {
 
 			animations.push( anm );
 
-			//this.addInvertAnimation( animations, animation, skl.tag, seq );
-
 		}
 
 		return sea.tag = animations;
@@ -7937,30 +7946,6 @@ THREE.SEA3D.prototype.getSkeletonAnimationLegacy = function( sea, skl ) {
 	};
 
 }();
-
-/*THREE.SEA3D.prototype.addInvertAnimation = function( animations, animation, skl, seq ) {
-
-	animation.name += 'Inv';
-
-	var i = animation.hierarchy.length, keys;
-	while(i--){
-
-		keys = animation.hierarchy[i].keys;
-
-		for( var o in keys ){
-			//console.log(keys[o].pos)
-		}
-
-
-	}
-
-	var anm = THREE.AnimationClip.parseAnimation( animation, skl );
-	anm.loop = seq.repeat;
-	anm.timeScale = 1;
-	animations.push( anm );
-
-
-}*/
 
 THREE.SEA3D.prototype.readVertexAnimation = function( sea ) {
 
@@ -8026,4 +8011,989 @@ THREE.SEA3D.EXTENSIONS_LOADER.push( { setTypeRead: function() {
 	this.file.typeRead[ SEA3D.Skeleton.prototype.type ] = this.readSkeleton;
 
 } } );
+
+/**
+ * 	SEA3D - Delta Lossy Compression
+ * 	@author Sunag / http://www.sunag.com.br/
+ */
+
+'use strict';
+
+//
+//	Sphere
+//
+
+SEA3D.Sphere = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.radius = data.readFloat();
+
+};
+
+SEA3D.Sphere.prototype.type = "sph";
+
+//
+//	Box
+//
+
+SEA3D.Box = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.width = data.readFloat();
+	this.height = data.readFloat();
+	this.depth = data.readFloat();
+
+};
+
+SEA3D.Box.prototype.type = "box";
+
+//
+//	Cone
+//
+
+SEA3D.Cone = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.radius = data.readFloat();
+	this.height = data.readFloat();
+
+};
+
+SEA3D.Cone.prototype.type = "cone";
+
+//
+//	Capsule
+//
+
+SEA3D.Capsule = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.radius = data.readFloat();
+	this.height = data.readFloat();
+
+};
+
+SEA3D.Capsule.prototype.type = "cap";
+
+//
+//	Cylinder
+//
+
+SEA3D.Cylinder = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.radius = data.readFloat();
+	this.height = data.readFloat();
+
+};
+
+SEA3D.Cylinder.prototype.type = "cyl";
+
+//
+//	Convex Geometry
+//
+
+SEA3D.ConvexGeometry = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.geometry = sea3d.getObject( data.readUInt() );
+	this.subGeometryIndex = data.readUByte();
+
+};
+
+SEA3D.ConvexGeometry.prototype.type = "gs";
+
+//
+//	Triangle Geometry
+//
+
+SEA3D.TriangleGeometry = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.geometry = sea3d.getObject( data.readUInt() );
+	this.subGeometryIndex = data.readUByte();
+
+};
+
+SEA3D.TriangleGeometry.prototype.type = "sgs";
+
+//
+//	Compound
+//
+
+SEA3D.Compound = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.compounds = [];
+
+	var count = data.readUByte();
+
+	for ( var i = 0; i < count; i ++ ) {
+
+		this.compounds.push( {
+			shape : sea3d.getObject( data.readUInt() ),
+			transform : data.readMatrix()
+		} );
+
+	}
+
+};
+
+SEA3D.Compound.prototype.type = "cmps";
+
+//
+//	Physics
+//
+
+SEA3D.Physics = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.attrib = data.readUShort();
+
+	this.shape = sea3d.getObject( data.readUInt() );
+
+	if ( this.attrib & 1 ) this.target = sea3d.getObject( data.readUInt() );
+	else this.transform = data.readMatrix();
+
+};
+
+SEA3D.Physics.prototype.readTag = function( kind, data, size ) {
+
+};
+
+//
+//	Rigidy Body Base
+//
+
+SEA3D.RigidBodyBase = function( name, data, sea3d ) {
+
+	SEA3D.Physics.call( this, name, data, sea3d );
+
+	if ( this.attrib & 32 ) {
+
+		this.linearDamping = data.readFloat();
+		this.angularDamping = data.readFloat();
+
+	} else {
+
+		this.linearDamping = 0;
+		this.angularDamping = 0;
+
+	}
+
+	this.mass = data.readFloat();
+	this.friction = data.readFloat();
+	this.restitution = data.readFloat();
+
+};
+
+SEA3D.RigidBodyBase.prototype = Object.create( SEA3D.Physics.prototype );
+SEA3D.RigidBodyBase.prototype.constructor = SEA3D.RigidBodyBase;
+
+//
+//	Rigidy Body
+//
+
+SEA3D.RigidBody = function( name, data, sea3d ) {
+
+	SEA3D.RigidBodyBase.call( this, name, data, sea3d );
+
+	data.readTags( this.readTag.bind( this ) );
+
+};
+
+SEA3D.RigidBody.prototype = Object.create( SEA3D.RigidBodyBase.prototype );
+SEA3D.RigidBody.prototype.constructor = SEA3D.RigidBody;
+
+SEA3D.RigidBody.prototype.type = "rb";
+
+//
+//	Car Controller
+//
+
+SEA3D.CarController = function( name, data, sea3d ) {
+
+	SEA3D.RigidBodyBase.call( this, name, data, sea3d );
+
+	this.suspensionStiffness = data.readFloat();
+	this.suspensionCompression = data.readFloat();
+	this.suspensionDamping = data.readFloat();
+	this.maxSuspensionTravelCm = data.readFloat();
+	this.frictionSlip = data.readFloat();
+	this.maxSuspensionForce = data.readFloat();
+
+	this.dampingCompression = data.readFloat();
+	this.dampingRelaxation = data.readFloat();
+
+	var count = data.readUByte();
+
+	this.wheel = [];
+
+	for ( var i = 0; i < count; i ++ ) {
+
+		this.wheel[ i ] = new SEA3D.CarController.Wheel( data, sea3d );
+
+	}
+
+	data.readTags( this.readTag.bind( this ) );
+
+};
+
+SEA3D.CarController.Wheel = function( data, sea3d ) {
+
+	this.data = data;
+	this.sea3d = sea3d;
+
+	var attrib = data.readUShort();
+
+	this.isFront = ( attrib & 1 ) != 0,
+
+	this.target = sea3d.getObject( data.readUInt() );
+
+	this.pos = data.readVector3();
+	this.dir = data.readVector3();
+	this.axle = data.readVector3();
+
+	this.radius = data.readFloat();
+	this.suspensionRestLength = data.readFloat();
+
+};
+
+SEA3D.CarController.prototype = Object.create( SEA3D.RigidBodyBase.prototype );
+SEA3D.CarController.prototype.constructor = SEA3D.CarController;
+
+SEA3D.CarController.prototype.type = "carc";
+
+//
+//	Constraints
+//
+
+SEA3D.Constraints = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	this.attrib = data.readUShort();
+
+	this.disableCollisionsBetweenBodies = this.attrib & 1 != 0;
+
+	this.targetA = sea3d.getObject( data.readUInt() );
+	this.pointA = data.readVector3();
+
+	if ( this.attrib & 2 ) {
+
+		this.targetB = sea3d.getObject( data.readUInt() );
+		this.pointB = data.readVector3();
+
+	}
+
+};
+
+//
+//	P2P Constraint
+//
+
+SEA3D.P2PConstraint = function( name, data, sea3d ) {
+
+	this.name = name;
+	this.data = data;
+	this.sea3d = sea3d;
+
+	SEA3D.Constraints.call( this, name, data, sea3d );
+
+};
+
+SEA3D.P2PConstraint.prototype = Object.create( SEA3D.Constraints.prototype );
+SEA3D.P2PConstraint.prototype.constructor = SEA3D.P2PConstraint;
+
+SEA3D.P2PConstraint.prototype.type = "p2pc";
+
+//
+//	Hinge Constraint
+//
+
+SEA3D.HingeConstraint = function( name, data, sea3d ) {
+
+	SEA3D.Constraints.call( this, name, data, sea3d );
+
+	this.axisA = data.readVector3();
+
+	if ( this.attrib & 1 ) {
+
+		this.axisB = data.readVector3();
+
+	}
+
+	if ( this.attrib & 4 ) {
+
+		this.limit = {
+			low : data.readFloat(),
+			high : data.readFloat(),
+			softness : data.readFloat(),
+			biasFactor : data.readFloat(),
+			relaxationFactor : data.readFloat()
+		}
+
+	}
+
+	if ( this.attrib & 8 ) {
+
+		this.angularMotor = {
+			velocity : data.readFloat(),
+			impulse : data.readFloat()
+		}
+
+	}
+
+};
+
+SEA3D.HingeConstraint.prototype = Object.create( SEA3D.Constraints.prototype );
+SEA3D.HingeConstraint.prototype.constructor = SEA3D.HingeConstraint;
+
+SEA3D.HingeConstraint.prototype.type = "hnec";
+
+//
+//	Cone Twist Constraint
+//
+
+SEA3D.ConeTwistConstraint = function( name, data, sea3d ) {
+
+	SEA3D.Constraints.call( this, name, data, sea3d );
+
+	this.axisA = data.readVector3();
+
+	if ( this.attrib & 1 ) {
+
+		this.axisB = data.readVector3();
+
+	}
+
+	if ( this.attrib & 4 ) {
+
+		this.limit = {
+			swingSpan1 : data.readFloat(),
+			swingSpan2 : data.readFloat(),
+			twistSpan : data.readFloat(),
+			softness : data.readFloat(),
+			biasFactor : data.readFloat(),
+			relaxationFactor : data.readFloat()
+		};
+
+	}
+
+};
+
+SEA3D.ConeTwistConstraint.prototype = Object.create( SEA3D.Constraints.prototype );
+SEA3D.ConeTwistConstraint.prototype.constructor = SEA3D.ConeTwistConstraint;
+
+SEA3D.ConeTwistConstraint.prototype.type = "ctwc";
+
+//
+//	Extension
+//
+
+SEA3D.File.setExtension(function() {
+
+	// PHYSICS
+	this.addClass( SEA3D.Sphere );
+	this.addClass( SEA3D.Box );
+	this.addClass( SEA3D.Cone );
+	this.addClass( SEA3D.Capsule );
+	this.addClass( SEA3D.Cylinder );
+	this.addClass( SEA3D.ConvexGeometry );
+	this.addClass( SEA3D.TriangleGeometry );
+	this.addClass( SEA3D.Compound );
+	this.addClass( SEA3D.RigidBody );
+	this.addClass( SEA3D.P2PConstraint );
+	this.addClass( SEA3D.HingeConstraint );
+	this.addClass( SEA3D.ConeTwistConstraint );
+	this.addClass( SEA3D.CarController );
+	
+} );
+/**
+ * 	SEA3D+AMMO for Three.JS
+ * 	@author Sunag / http://www.sunag.com.br/
+ */
+
+'use strict';
+
+THREE.SEA3D.prototype.toAmmoVec3 = function( v ) {
+
+	return new Ammo.btVector3( v.x, v.y, v.z );
+
+};
+
+//
+//	Sphere
+//
+
+THREE.SEA3D.prototype.readSphere = function( sea ) {
+
+	var shape = new Ammo.btSphereShape( sea.radius );
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Box
+//
+
+THREE.SEA3D.prototype.readBox = function( sea ) {
+
+	var shape = new Ammo.btBoxShape( new Ammo.btVector3( sea.width * .5, sea.height * .5, sea.depth * .5 ) );
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Cone
+//
+
+THREE.SEA3D.prototype.readCone = function( sea ) {
+
+	var shape = new Ammo.btConeShape( sea.radius, sea.height );
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Cylinder
+//
+
+THREE.SEA3D.prototype.readCylinder = function( sea ) {
+
+	var shape = new Ammo.btCylinderShape( new Ammo.btVector3( sea.height, sea.radius, sea.radius ) );
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Capsule
+//
+
+THREE.SEA3D.prototype.readCapsule = function( sea ) {
+
+	var shape = new Ammo.btCapsuleShape( sea.radius, sea.height );
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Convex Geometry
+//
+
+THREE.SEA3D.prototype.readConvexGeometry = function( sea ) {
+
+	if ( this.config.convexHull ) {
+
+		var shape = THREE.AMMO.createConvexHull( sea.geometry.tag, sea.subGeometryIndex );
+
+	} else {
+
+		var triMesh = THREE.AMMO.createTriangleMesh( sea.geometry.tag, sea.subGeometryIndex );
+
+		var shape = new Ammo.btConvexTriangleMeshShape( triMesh, true );
+
+	}
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Triangle Geometry
+//
+
+THREE.SEA3D.prototype.readTriangleGeometry = function( sea ) {
+
+	var triMesh = THREE.AMMO.createTriangleMesh( sea.geometry.tag, sea.subGeometryIndex );
+
+	var shape = new Ammo.btBvhTriangleMeshShape( triMesh, true, true );
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Compound
+//
+
+THREE.SEA3D.prototype.readCompound = function( sea ) {
+
+	var shape = new Ammo.btCompoundShape();
+
+	for ( var i = 0; i < sea.compounds.length; i ++ ) {
+
+		var compound = sea.compounds[ i ];
+
+		THREE.SEA3D.MTXBUF.elements = compound.transform;
+
+		var transform = THREE.AMMO.getTransformFromMatrix( THREE.SEA3D.MTXBUF );
+
+		shape.addChildShape( transform, compound.shape.tag );
+
+	}
+
+	this.domain.shapes = this.shapes = this.shapes || [];
+	this.shapes.push( this.objects[ "shpe/" + sea.name ] = sea.tag = shape );
+
+};
+
+//
+//	Rigid Body Base
+//
+
+THREE.SEA3D.prototype.readRigidBodyBase = function( sea ) {
+
+	var shape = sea.shape.tag,
+		transform;
+
+	if ( sea.target ) {
+
+		transform = THREE.AMMO.getTransformFromMatrix( sea.target.tag.matrix );
+
+	} else {
+
+		THREE.SEA3D.MTXBUF.elements.set( sea.transform );
+
+		transform = THREE.AMMO.getTransformFromMatrix( THREE.SEA3D.MTXBUF );
+
+	}
+
+	var motionState = new Ammo.btDefaultMotionState( transform );
+	var localInertia = new Ammo.btVector3( 0, 0, 0 );
+
+	shape.calculateLocalInertia( sea.mass, localInertia );
+
+	var info = new Ammo.btRigidBodyConstructionInfo( sea.mass, motionState, shape, localInertia );
+	info.set_m_friction( sea.friction );
+	info.set_m_restitution( sea.restitution );
+	info.set_m_linearDamping( sea.linearDamping );
+	info.set_m_angularDamping( sea.angularDamping );
+
+	var rb = new Ammo.btRigidBody( info );
+
+	this.domain.rigidBodies = this.rigidBodies = this.rigidBodies || [];
+	this.rigidBodies.push( this.objects[ "rb/" + sea.name ] = sea.tag = rb );
+
+	return rb;
+
+};
+
+//
+//	Rigid Body
+//
+
+THREE.SEA3D.prototype.readRigidBody = function( sea ) {
+
+	var rb = this.readRigidBodyBase( sea );
+
+	THREE.AMMO.addRigidBody( rb, sea.target ? sea.target.tag : undefined, sea.offset ? new THREE.Matrix4().elements.set( sea.offset ) : undefined, this.config.enabledPhysics );
+
+};
+
+//
+//	Car Controller
+//
+
+THREE.SEA3D.prototype.readCarController = function( sea ) {
+
+	var body = this.readRigidBodyBase( sea );
+
+	body.setActivationState( THREE.AMMO.DISABLE_DEACTIVATION );
+
+	// Car
+
+	var vehicleRayCaster = new Ammo.btDefaultVehicleRaycaster( THREE.AMMO.world );
+
+	var tuning = new Ammo.btVehicleTuning();
+
+	tuning.set_m_suspensionStiffness( sea.suspensionStiffness );
+	tuning.set_m_suspensionDamping( sea.suspensionDamping );
+	tuning.set_m_suspensionCompression( sea.suspensionCompression );
+	tuning.set_m_maxSuspensionTravelCm( sea.maxSuspensionTravelCm );
+	tuning.set_m_maxSuspensionForce( sea.maxSuspensionForce );
+	tuning.set_m_frictionSlip( sea.frictionSlip );
+
+	var vehicle = new Ammo.btRaycastVehicle( tuning, body, vehicleRayCaster ),
+		wheels = [];
+
+	vehicle.setCoordinateSystem( 0, 1, 2 );
+
+	for ( var i = 0; i < sea.wheel.length; i ++ ) {
+
+		var wheel = sea.wheel[ i ];
+
+		var wheelInfo = vehicle.addWheel(
+			this.toAmmoVec3( wheel.pos ),
+			this.toAmmoVec3( wheel.dir ),
+			this.toAmmoVec3( wheel.axle ),
+			wheel.suspensionRestLength,
+			wheel.radius,
+			tuning,
+			wheel.isFront
+		);
+
+		var target = wheels[ i ] = wheel.target ? wheel.target.tag : undefined;
+
+		if ( target ) {
+
+			if ( target.parent ) {
+
+				target.parent.remove( target );
+
+			}
+
+			if ( this.container ) {
+
+				this.container.add( target );
+
+			}
+
+		}
+
+		wheelInfo.set_m_suspensionStiffness( sea.suspensionStiffness );
+		wheelInfo.set_m_wheelsDampingRelaxation( sea.dampingRelaxation );
+		wheelInfo.set_m_wheelsDampingCompression( sea.dampingCompression );
+		wheelInfo.set_m_frictionSlip( sea.frictionSlip );
+
+	}
+
+	THREE.AMMO.addVehicle( vehicle, wheels );
+	THREE.AMMO.addRigidBody( body, sea.target ? sea.target.tag : undefined, sea.offset ? new THREE.Matrix4().elements.set( sea.offset ) : undefined, this.config.enabledPhysics );
+
+	this.domain.vehicles = this.vehicles = this.vehicles || [];
+	this.vehicles.push( this.objects[ "vhc/" + sea.name ] = sea.tag = vehicle );
+
+};
+
+//
+//	P2P Constraint
+//
+
+THREE.SEA3D.prototype.readP2PConstraint = function( sea ) {
+
+	var ctrt;
+
+	if ( sea.targetB ) {
+
+		ctrt = new Ammo.btPoint2PointConstraint(
+			sea.targetA.tag,
+			sea.targetB.tag,
+			this.toAmmoVec3( sea.pointA ),
+			this.toAmmoVec3( sea.pointB )
+		);
+
+	}
+	else {
+
+		ctrt = new Ammo.btPoint2PointConstraint(
+			sea.targetA.tag,
+			this.toAmmoVec3( sea.pointA )
+		);
+
+	}
+
+	THREE.AMMO.addConstraint( ctrt );
+
+	this.domain.constraints = this.constraints = this.constraints || [];
+	this.constraints.push( this.objects[ "ctnt/" + sea.name ] = sea.tag = ctrt );
+
+};
+
+//
+//	Hinge Constraint
+//
+
+THREE.SEA3D.prototype.readHingeConstraint = function( sea ) {
+
+	var ctrt;
+
+	if ( sea.targetB ) {
+
+		ctrt = new Ammo.btHingeConstraint(
+			sea.targetA.tag,
+			sea.targetB.tag,
+			this.toAmmoVec3( sea.pointA ),
+			this.toAmmoVec3( sea.pointB ),
+			this.toAmmoVec3( sea.axisA ),
+			this.toAmmoVec3( sea.axisB ),
+			false
+		);
+
+	} else {
+
+		ctrt = new Ammo.btHingeConstraint(
+			sea.targetA.tag,
+			this.toAmmoVec3( sea.pointA ),
+			this.toAmmoVec3( sea.axisA ),
+			false
+		);
+
+	}
+
+	if ( sea.limit ) {
+
+		ctrt.setLimit( sea.limit.low, sea.limit.high, sea.limit.softness, sea.limit.biasFactor, sea.limit.relaxationFactor );
+
+	}
+
+	if ( sea.angularMotor ) {
+
+		ctrt.enableAngularMotor( true, sea.angularMotor.velocity, sea.angularMotor.impulse );
+
+	}
+
+	THREE.AMMO.addConstraint( ctrt );
+
+	this.domain.constraints = this.constraints = this.constraints || [];
+	this.constraints.push( this.objects[ "ctnt/" + sea.name ] = sea.tag = ctrt );
+
+};
+
+//
+//	Cone Twist Constraint
+//
+
+THREE.SEA3D.prototype.readConeTwistConstraint = function( sea ) {
+
+	var ctrt;
+
+	if ( sea.targetB ) {
+
+		ctrt = new Ammo.btConeTwistConstraint(
+			sea.targetA.tag,
+			sea.targetB.tag,
+			this.toAmmoVec3( sea.pointA ),
+			this.toAmmoVec3( sea.pointB ),
+			false
+		);
+
+	} else {
+
+		ctrt = new Ammo.btConeTwistConstraint(
+			sea.targetA.tag,
+			this.toAmmoVec3( sea.pointA ),
+			false
+		);
+
+	}
+
+	THREE.AMMO.addConstraint( ctrt );
+
+	this.domain.constraints = this.constraints = this.constraints || [];
+	this.constraints.push( this.objects[ "ctnt/" + sea.name ] = sea.tag = ctrt );
+
+};
+
+//
+//	Domain
+//
+
+THREE.SEA3D.Domain.prototype.enabledPhysics = function( enabled ) {
+
+	var i = this.rigidBodies ? this.rigidBodies.length : 0;
+
+	while ( i -- ) {
+
+		THREE.AMMO.setEnabledRigidBody( this.rigidBodies[ i ], enabled );
+
+	}
+
+};
+
+THREE.SEA3D.Domain.prototype.applyContainerTransform = function() {
+
+	this.container.updateMatrix();
+
+	var matrix = this.container.matrix.clone();
+
+	this.container.position.set( 0, 0, 0 );
+	this.container.rotation.set( 0, 0, 0 );
+	this.container.scale.set( 1, 1, 1 );
+
+	this.applyTransform( matrix );
+
+};
+
+THREE.SEA3D.Domain.prototype.applyTransform = function( matrix ) {
+
+	var mtx = THREE.SEA3D.MTXBUF, vec = THREE.SEA3D.VECBUF;
+
+	var i = this.rigidBodies ? this.rigidBodies.length : 0,
+		childs = this.container ? this.container.children : [],
+		targets = [];
+
+	while ( i -- ) {
+
+		var rb = this.rigidBodies[ i ],
+			target = THREE.AMMO.getTargetByRigidBody( rb ),
+			transform = rb.getWorldTransform(),
+			transformMatrix = THREE.AMMO.getMatrixFromTransform( transform );
+
+		transformMatrix.multiplyMatrices( transformMatrix, matrix );
+
+		transform = THREE.AMMO.getTransformFromMatrix( transformMatrix );
+
+		rb.setWorldTransform( transform );
+
+		if ( target ) targets.push( target );
+
+	}
+
+	for ( i = 0; i < childs.length; i ++ ) {
+
+		var obj3d = childs[ i ];
+
+		if ( targets.indexOf( obj3d ) > - 1 ) continue;
+
+		obj3d.updateMatrix();
+
+		mtx.copy( obj3d.matrix );
+
+		mtx.multiplyMatrices( matrix, mtx );
+
+		obj3d.position.setFromMatrixPosition( mtx );
+		obj3d.scale.setFromMatrixScale( mtx );
+
+		// ignore rotation scale
+
+		mtx.scale( vec.set( 1 / obj3d.scale.x, 1 / obj3d.scale.y, 1 / obj3d.scale.z ) );
+		obj3d.rotation.setFromRotationMatrix( mtx );
+
+	}
+
+};
+
+//
+//	Extension
+//
+
+THREE.SEA3D.Domain.prototype.getShape = THREE.SEA3D.prototype.getShape = function( name ) {
+
+	return this.objects[ "shpe/" + name ];
+
+};
+
+THREE.SEA3D.Domain.prototype.getRigidBody = THREE.SEA3D.prototype.getRigidBody = function( name ) {
+
+	return this.objects[ "rb/" + name ];
+
+};
+
+THREE.SEA3D.Domain.prototype.getConstraint = THREE.SEA3D.prototype.getConstraint = function( name ) {
+
+	return this.objects[ "ctnt/" + name ];
+
+};
+
+THREE.SEA3D.EXTENSIONS_LOADER.push( {
+
+	parse : function() {
+
+		delete this.shapes;
+		delete this.rigidBodies;
+		delete this.vehicles;
+		delete this.constraints;
+
+	},
+
+	setTypeRead : function() {
+
+		// CONFIG
+
+		this.config.physics = this.config.physics !== undefined ? this.config.physics : true;
+		this.config.convexHull = this.config.convexHull !== undefined ? this.config.convexHull : true;
+		this.config.enabledPhysics = this.config.enabledPhysics !== undefined ? this.config.enabledPhysics : true;
+
+		if ( this.config.physics ) {
+
+			// SHAPES
+
+			this.file.typeRead[ SEA3D.Sphere.prototype.type ] = this.readSphere;
+			this.file.typeRead[ SEA3D.Box.prototype.type ] = this.readBox;
+			this.file.typeRead[ SEA3D.Capsule.prototype.type ] = this.readCapsule;
+			this.file.typeRead[ SEA3D.Cone.prototype.type ] = this.readCone;
+			this.file.typeRead[ SEA3D.Cylinder.prototype.type ] = this.readCylinder;
+			this.file.typeRead[ SEA3D.ConvexGeometry.prototype.type ] = this.readConvexGeometry;
+			this.file.typeRead[ SEA3D.TriangleGeometry.prototype.type ] = this.readTriangleGeometry;
+			this.file.typeRead[ SEA3D.Compound.prototype.type ] = this.readCompound;
+
+			// CONSTRAINTS
+
+			this.file.typeRead[ SEA3D.P2PConstraint.prototype.type ] = this.readP2PConstraint;
+			this.file.typeRead[ SEA3D.HingeConstraint.prototype.type ] = this.readHingeConstraint;
+			this.file.typeRead[ SEA3D.ConeTwistConstraint.prototype.type ] = this.readConeTwistConstraint;
+
+			// PHYSICS
+
+			this.file.typeRead[ SEA3D.RigidBody.prototype.type ] = this.readRigidBody;
+			this.file.typeRead[ SEA3D.CarController.prototype.type ] = this.readCarController;
+
+		}
+
+	}
+} );
+
+THREE.SEA3D.EXTENSIONS_DOMAIN.push( {
+
+	dispose : function() {
+
+		var i;
+
+		i = this.rigidBodies ? this.rigidBodies.length : 0;
+		while ( i -- ) THREE.AMMO.removeRigidBody( this.rigidBodies[ i ], true );
+
+		i = this.vehicles ? this.vehicles.length : 0;
+		while ( i -- ) THREE.AMMO.removeVehicle( this.vehicles[ i ], true );
+
+		i = this.constraints ? this.constraints.length : 0;
+		while ( i -- ) THREE.AMMO.removeConstraint( this.constraints[ i ], true );
+
+		i = this.shapes ? this.shapes.length : 0;
+		while ( i -- ) Ammo.destroy( this.shapes[ i ] );
+
+	}
+
+} );
 

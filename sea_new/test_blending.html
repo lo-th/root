@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>animation blending</title>
+		<title>TEST BLENDING</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="shortcut icon" href="http://sunag.github.io/sea3d/favicon.ico" type="image/x-icon" />
 		<style>
 			body {
 				color: #fff;
@@ -16,18 +17,15 @@
 				overflow: hidden;
 			}
 
-			#info {
-				position: absolute;
-				top: 0px; width: 100%;
-				padding: 5px;
-			}
+			#info { position: absolute; line-height:5px; top: 10px; left: 10px; width: 300px; }
+			a { font-weight:bold; text-decoration: none; cursor: pointer; }
 		</style>
 	</head>
 	<body>
 		<div id="container"></div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank">three.js</a> - <a href="https://github.com/sunag/sea3d" target="_blank">sea3d</a><br>Skeletal Animation Blending.
-		</div>
+            <p style="font-size:14px"><a href="https://github.com/sunag/sea3d" style="color:#0099FF" target="_blank">SEA3D Format</a> • <a href="http://threejs.org"  style="color:#f90" target="_blank">THREE.JS</a></p>Animation Blending test.
+        </div>
 
 		<script src="build/three.min.js"></script>
 		<script src="build/sea.js"></script>
@@ -77,7 +75,7 @@
 				scene.add ( new THREE.AmbientLight( 0xffffff ) );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true, alpha: false } );
-				renderer.setClearColor( 0x777777 );
+				renderer.setClearColor( 0x171717 );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.autoClear = true;
@@ -133,8 +131,6 @@
 					var mat = new THREE.MeshStandardMaterial({ map:txt, skinning:true, morphTargets:false, envMap:envMap, metalness:0.66, roughness:0.43, normalMap:tn, normalScale:new THREE.Vector2( 1, 1 )})
 					blendMesh = loader.meshes[0];
 
-					console.log(blendMesh.animations)
-
 					reversUV( blendMesh.geometry );
 
 					blendMesh.material = mat;
@@ -160,6 +156,7 @@
 				gui.add(settings, 'crossfade', { min:0.1, max:6 } ).onChange( onShowSkeleton );
 
 				gui.add('button', { name:'play' }).onChange( function(){ onStartAnimation() } );
+				gui.add('button', { name:'stop' }).onChange( function(){ onStopAnimation() } );
 				gui.add('button', { name:'pause' }).onChange( function(){ onPauseAnimation() } );
 				gui.add('button', { name:'step' }).onChange( function(){ onStepAnimation() } );
 				gui.add('button', { name:'idle to walk' }).onChange( function(){ onCrossfade('idle', 'walk') });
@@ -195,8 +192,8 @@
 
 			function onStartAnimation() {
 
-				blendMesh.stopAll();
-				blendMesh.unPauseAll();
+				//blendMesh.stopAll();
+				
 
 				// the blend mesh will combine 1 or more animations
 				for ( var i = 0; i < anims.length; ++i ) {
@@ -204,6 +201,8 @@
 					blendMesh.playw( anims[ i ], settings[ anims[ i ] ] );
 
 				}
+
+				blendMesh.unPauseAll();
 
 				isFrameStepping = false;
 
@@ -218,6 +217,8 @@
 
 			function onPauseAnimation() {
 
+				//blendMesh.pauseAll();
+
 				( isFrameStepping ) ? blendMesh.unPauseAll(): blendMesh.pauseAll();
 				isFrameStepping = false;
 
@@ -228,6 +229,7 @@
 				blendMesh.unPauseAll();
 				isFrameStepping = true;
 				timeToStep = settings.stepSize;
+
 			}
 
 			function onWeightAnimation() {
@@ -248,8 +250,8 @@
 
 			function onCrossfade( a, b ) {
 
-				blendMesh.stopAll();
-				blendMesh.crossfade( a, b, settings.crossfade );
+				//blendMesh.stopAll();
+				blendMesh.crossFade( a, b, settings.crossfade );
 
 				isFrameStepping = false;
 
@@ -257,9 +259,8 @@
 
 			function onWarp( a, b ) {
 
-				blendMesh.stopAll();
-				blendMesh.warp( a, b, settings.crossfade );
-
+				//blendMesh.stopAll();
+				blendMesh.crossFade( a, b, settings.crossfade, true );
 				isFrameStepping = false;
 
 			}
