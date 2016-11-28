@@ -101,7 +101,7 @@
 	<body>
 		<script src="js/three.min.js"></script>
 		<script src="js/libs/tween.min.js"></script>
-		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
 		<script src="js/renderers/CSS3DRenderer.js"></script>
 
 		<div id="container"></div>
@@ -363,10 +363,10 @@
 
 				//
 
-				controls = new THREE.TrackballControls( camera, renderer.domElement );
-				controls.rotateSpeed = 0.5;
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				/*controls.rotateSpeed = 0.5;
 				controls.minDistance = 500;
-				controls.maxDistance = 6000;
+				controls.maxDistance = 6000;*/
 				controls.addEventListener( 'change', render );
 
 				var button = document.getElementById( 'table' );
