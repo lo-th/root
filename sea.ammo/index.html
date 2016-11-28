@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html><head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=11" />
+<meta http-equiv="Pragma" content="no-cache">
+<title>ammo</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+    * { margin:0; padding:0; border:0; -webkit-user-select:none; -khtml-user-select:none; -moz-user-select:-moz-none; -o-user-select:none; user-select:none; }
+    body { font-family:Monospace; font-size:11px; color:#fff; background:#111; overflow:hidden; }
+    .info { position: absolute; width:200px; height: 100%; color:#0F0; margin: 10px 10px; pointer-events:none; }
+</style>
+<script src="build/three.dev.min.js"></script>
+<script src="build/sea.min.js"></script>
+<script src="js/engine.ammo.js"></script>
+<script src="js/controls/OrbitControls.js"></script>
+<script src="js/view.js"></script>
+</head>
+<body>
+<script>
+
+view.init();
+
+var info = document.createElement('div');
+info.setAttribute("class", "info");
+document.body.appendChild( info );
+var tell = function ( t ){ info.innerHTML += t + '<br>'; };
+
+ammo.load( start, update );
+
+var bodys = [];
+
+function add( o ){
+
+    bodys.push( view.addBox( o ) );
+    ammo.add( o );
+
+}
+
+function start ( t ){
+
+    tell( t );
+    ammo.add( { type:'plane' } );
+    ammo.add( { type:'box', size: [1, 10, 30 ], pos: [15, 5, 0 ] } );
+    ammo.add( { type:'box', size: [1, 10, 30 ], pos: [-15, 5, 0 ] } );
+    ammo.add( { type:'box', size: [30, 10, 1 ], pos: [0, 5, 15 ] } );
+    ammo.add( { type:'box', size: [30, 10, 1 ], pos: [0, 5, -15 ] } );
+
+    var t = 0;
+    for(var i=0; i<500; i++){
+        t = Math.floor( Math.random()*2 );
+        if( t ) add( { type:'box', pos: [-5+Math.random()*10, 5+Math.random()*30, -5+Math.random()*10 ], mass:0.1, size:[0.5+(Math.random()*0.5), 0.5+(Math.random()*0.5), 0.5+(Math.random()*0.5)] } );
+        else add( { type:'sphere', pos: [-5+Math.random()*10, 5+Math.random()*30, -5+Math.random()*10 ], mass:0.1, size:[ 0.25+(Math.random()*0.25) ] } );
+    }
+
+}
+
+function update ( ar ){
+
+    updateBody( ar );
+
+}
+
+function updateBody( ar ) {
+
+    bodys.forEach( function ( b, id ) {
+
+        var n = id * 8;
+        var actif = ar[n];
+        view.setActif( b, actif ); 
+
+        if ( actif ) {
+
+            b.position.fromArray( ar, n + 1 );
+            b.quaternion.fromArray( ar, n + 4 );
+
+        }
+
+    });
+
+};
+
+</script>
+</body>
+</html>
