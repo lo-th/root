@@ -33,6 +33,8 @@ body {
 
 <script>
 
+var time = 0.01;
+
     var camera, scene, renderer, controler;
     
     var meshs = {};
@@ -128,7 +130,7 @@ body {
 
     function dancing () {
 
-        console.log('yoo');
+        time = 0.017;
 
         models[0].play(2);
         models[1].play(2);
@@ -224,7 +226,7 @@ body {
     function animate() {
 
         requestAnimationFrame( animate );
-        THREE.SEA3D.AnimationHandler.update( 0.007 );
+        THREE.SEA3D.AnimationHandler.update( time );
         renderer.render( scene, camera );
 
     }

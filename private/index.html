@@ -16,6 +16,7 @@ body {
 }
 
 .debug { font-family:"Lucida Console", Monaco, monospace; position:absolute; font-size:16px;  top:10px; left:10px; text-align:left; pointer-events:none; width:300px;}
+.yo { font-family:"Lucida Console", Monaco, monospace; position:absolute; font-size:16px;  top:10px; left:10px; text-align:left; cursor:pointer; pointer-events:auto; width:100px;}
 
 </style>
 
@@ -31,11 +32,15 @@ body {
 
 <script>
 
+var time = 0.01;
+
     var camera, scene, renderer, controler;
     
     var meshs = {};
     var mat = {};
     var txt = {};
+
+    var models = [];
 
     var torad = 0.0174532925199432957;
 
@@ -70,8 +75,24 @@ body {
 
         window.addEventListener( 'resize', onWindowResize, false );
 
+        var dd = document.createElement('div');
+        dd.className = 'yo';
+        document.body.appendChild(dd);
+        dd.innerHTML = 'DANCE';
+
+        dd.addEventListener( 'click', dancing, false );
+
 
         pool.load( ['assets/textures/rondo_m.jpg', 'assets/textures/rondo_w.jpg', 'assets/models/rondoid.sea'], onLoadComplete );
+
+    }
+
+    function dancing () {
+
+        time = 0.017;
+
+        models[0].play(2);
+        models[1].play(2);
 
     }
 
@@ -146,7 +167,9 @@ body {
         else m.play(1);
         m.position.copy( pos );
 
-        scene.add( m )
+        scene.add( m );
+
+        models.push(m);
 
 
 
@@ -164,7 +187,7 @@ body {
     function animate() {
 
         requestAnimationFrame( animate );
-        THREE.SEA3D.AnimationHandler.update( 0.007 );
+        THREE.SEA3D.AnimationHandler.update( time );
         renderer.render( scene, camera );
 
     }
