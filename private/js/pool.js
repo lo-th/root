@@ -23,6 +23,30 @@ var pool = ( function () {
 
         },
 
+        meshByName : function ( name ){
+
+            var ar = results[ name ];
+            var meshs = {}
+            var i = ar.length;
+
+            while(i--){
+                meshs[ ar[i].name ] = ar[i];
+            }
+
+            return meshs;
+
+        },
+
+        getMesh : function ( name, meshName ){
+
+            var ar = results[name];
+            var i = ar.length;
+            while(i--){
+                if( ar[i].name === meshName ) return ar[i];
+            }
+
+        },
+
         load: function( Urls, Callback ){
 
             if ( typeof Urls == 'string' || Urls instanceof String ) urls.push( Urls );// = [ Urls ];
