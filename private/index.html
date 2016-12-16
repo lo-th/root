@@ -128,6 +128,10 @@ body {
 
         a1.add(a2);
 
+        console.log(b)
+
+        
+
 
 
         m.material = type === 'man' ? mat.skin0 : mat.skin1;
@@ -135,8 +139,8 @@ body {
         a1.material = type === 'man' ? mat.base0 : mat.base1;
         a2.material = type === 'man' ? mat.base0 : mat.base1;
 
-        b[1].add(a0);
-        b[11].add(a1);
+        b[0].add(a0);
+        b[6].add(a1);
 
         if(type === 'man') m.play(0);
         else m.play(1);
