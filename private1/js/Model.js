@@ -3,6 +3,7 @@ var V = {};
 V.Model = function ( Scene, type, meshs, mat, pos ) {
 
     var tSize = 1.4;
+    var debug = false;
 
     
 
@@ -81,7 +82,7 @@ V.Model = function ( Scene, type, meshs, mat, pos ) {
 
 
     var hand = new THREE.SphereBufferGeometry( 2.5, 16, 12 );
-    hand.translate( 0,-1.5,0 );
+    hand.translate( -1.5,0,0 );
 
     this.handL = new THREE.Mesh( hand, this.skinMat );
     this.handR = new THREE.Mesh( hand, this.skinMat );
@@ -96,10 +97,10 @@ V.Model = function ( Scene, type, meshs, mat, pos ) {
     // new Leg
 
     this.legL = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:3 }, 12, tSize );
-    this.legmeshL = new THREE.Mesh( this.legL, this.pullMat );
+    this.legmeshL = new THREE.Mesh( this.legL, debug ? mat : this.pullMat );
 
     this.legR = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:3 }, 12, tSize );
-    this.legmeshR = new THREE.Mesh( this.legR, this.pullMat );
+    this.legmeshR = new THREE.Mesh( this.legR, debug ? mat : this.pullMat );
 
     Scene.add( this.legmeshL );
     Scene.add( this.legmeshR );
@@ -107,15 +108,18 @@ V.Model = function ( Scene, type, meshs, mat, pos ) {
     // new arm
 
     this.armL = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:4 }, 16, tSize );
-    this.armmeshL = new THREE.Mesh( this.armL, this.pullMat );
+    this.armmeshL = new THREE.Mesh( this.armL, debug ? mat : this.pullMat );
 
     this.armR = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:4 }, 16, tSize );
-    this.armmeshR = new THREE.Mesh( this.armR, this.pullMat );
+    this.armmeshR = new THREE.Mesh( this.armR, debug ? mat : this.pullMat );
 
     Scene.add( this.armmeshL );
     Scene.add( this.armmeshR );
 
-    this.dcs = type === 'man' ? new THREE.Vector3(0,-5,0) : new THREE.Vector3(0,-8,0);
+
+    this.dda = new THREE.Matrix4().makeTranslation(-6,1,0);
+    this.ddd = new THREE.Matrix4().makeTranslation(-6,-1,0);
+    this.ddx = new THREE.Matrix4().makeTranslation(-6,0,0)
 
     //console.log(this.leg.positions)
 
@@ -125,7 +129,7 @@ V.Model = function ( Scene, type, meshs, mat, pos ) {
     this.helper = new THREE.SkeletonHelper( this.b.hip );
     this.helper.skeleton = this.mesh.skeleton;
 
-    this.helper.visible = false;
+    this.helper.visible = debug;
 
     Scene.add( this.helper );
     Scene.add( this.mesh );
@@ -154,20 +158,22 @@ V.Model.prototype = {
         this.legR.updatePath();
 
         this.armL.positions[0].setFromMatrixPosition( this.b.lCollar.matrixWorld );
-        this.armL.positions[1].setFromMatrixPosition( this.b.lShldr.matrixWorld  ).add(this.dcs);
-        this.armL.positions[2].setFromMatrixPosition( this.b.lForeArm.matrixWorld  );
+        this.armL.positions[1].setFromMatrixPosition( this.b.lShldr.matrixWorld.clone().multiply(this.dda)  )//.add(this.dcs);
+        this.armL.positions[2].setFromMatrixPosition( this.b.lForeArm.matrixWorld.clone().multiply(this.ddx)  );
         this.armL.positions[3].setFromMatrixPosition( this.b.lHand.matrixWorld  );
 
         this.handL.position.setFromMatrixPosition( this.b.lHand.matrixWorld );
+        this.handL.quaternion.setFromRotationMatrix( this.b.lHand.matrixWorld );
 
         this.armL.updatePath();
 
         this.armR.positions[0].setFromMatrixPosition( this.b.rCollar.matrixWorld );
-        this.armR.positions[1].setFromMatrixPosition( this.b.rShldr.matrixWorld ).add(this.dcs);
-        this.armR.positions[2].setFromMatrixPosition( this.b.rForeArm.matrixWorld );
+        this.armR.positions[1].setFromMatrixPosition( this.b.rShldr.matrixWorld.clone().multiply(this.ddd) );
+        this.armR.positions[2].setFromMatrixPosition( this.b.rForeArm.matrixWorld.clone().multiply(this.ddx) );
         this.armR.positions[3].setFromMatrixPosition( this.b.rHand.matrixWorld );
 
         this.handR.position.setFromMatrixPosition( this.b.rHand.matrixWorld );
+        this.handR.quaternion.setFromRotationMatrix( this.b.rHand.matrixWorld );
 
         this.armR.updatePath();
 
