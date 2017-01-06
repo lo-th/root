@@ -115,7 +115,7 @@ V.Model = function ( Scene, type, meshs, mat, pos ) {
     Scene.add( this.armmeshL );
     Scene.add( this.armmeshR );
 
-    this.dcs = type === 'man' ? new THREE.Vector3(0,-1,0) : new THREE.Vector3(0,-3,0);
+    this.dcs = type === 'man' ? new THREE.Vector3(0,-5,0) : new THREE.Vector3(0,-8,0);
 
     //console.log(this.leg.positions)
 
