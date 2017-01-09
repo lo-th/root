@@ -27,6 +27,7 @@ body {
 <script src="js/geomerty/Tubex.js"></script>
 <script src="js/Model.js"></script>
 <script src="js/controls/OrbitControls.js"></script>
+<script src="js/BVHLoader.js"></script>
 
 </head>
 <body>
@@ -36,6 +37,14 @@ body {
     var camera, scene, renderer, controler, clock;
 
     var man, woman;
+
+    var bvhLoader;
+
+    var gui, gui2, g_animation = null, g_animation2 = null;
+
+    var setter = {
+
+    }
     
     
     
@@ -76,13 +85,16 @@ body {
         window.addEventListener( 'resize', onWindowResize, false );
 
 
-        pool.load( ['assets/textures/rondo_m.jpg', 'assets/textures/rondo_w.jpg', 'assets/models/rondoid2.sea'], onLoadComplete );
+        pool.load( ['assets/textures/rondo_m.jpg', 'assets/textures/rondo_w.jpg', 'assets/models/rondoid3.sea'], onLoadComplete );
+
+        
 
     }
 
     function onLoadComplete( p ) {
 
-        var mat = {};
+        // textures
+
         var txt = {};
 
         txt['man'] = new THREE.Texture( p.rondo_m );
@@ -93,32 +105,143 @@ body {
         txt['wom'].flipY = false;
         txt['wom'].needsUpdate = true;
 
-        mat['skin0'] = new THREE.MeshBasicMaterial({ map:txt.man, skinning:true });
-        mat['base0'] = new THREE.MeshBasicMaterial({ map:txt.man });
+        // sea meshs
 
-        mat['skin1'] = new THREE.MeshBasicMaterial({ map:txt.wom, skinning:true });
-        mat['base1'] = new THREE.MeshBasicMaterial({ map:txt.wom });
+        var meshs = pool.meshByName ( 'rondoid3' );
 
-        var meshs = pool.meshByName ( 'rondoid2' );
+        //
 
-        /*var meshs = {};
+        man = new V.Model( scene, 'man', meshs, txt, new THREE.Vector3(40, -60, 0 ) );
+        woman = new V.Model( scene, 'wom', meshs, txt, new THREE.Vector3(-40, -60, 0 ) );
 
-        meshs['body'] = m.body;
-        meshs['head'] = m.head;
-        meshs['corps'] = m.corps;
-        meshs['extra_man'] = m.extra_man;
-        meshs['extra_wom'] = m.extra_wom;*/
 
-        //meshs.extra_wom.visible = false;
+        initGUI();
 
-        /*meshs.body.material = mat.skin;
-        meshs.head.material = mat.base;
-        meshs.corps.material = mat.base;
-        meshs.extra_man.material = mat.base;
-        meshs.extra_wom.material = mat.base;*/
+        testAnimationLoad('assets/bvh/base.z')
 
-        man = new V.Model( scene, 'man', meshs, mat, new THREE.Vector3(40, -20, 0 ) );
-        woman = new V.Model( scene, 'wom', meshs, mat, new THREE.Vector3(-40, -20, 0 ) );
+    }
+
+    function testAnimationLoad( file ){
+
+        bvhLoader = new THREE.BVHLoader();
+
+        var xml = new XMLHttpRequest();
+        xml.responseType = 'arraybuffer';
+
+        xml.onload = function () {
+
+            parseBvhAnimation( bvhLoader.parse( SEA3D.File.LZMAUncompress( xml.response ) ) );
+
+        }
+
+        xml.open( 'GET', file, true );
+        xml.send( null );
+
+    }
+
+    function parseBvhAnimation( result ){
+
+        result.clip.name = 'story';
+        var bvhClip = result.clip;
+
+        var seq = [
+
+            ['idle', 5, 25],
+
+            ['walk', 325, 355],
+            ['walk_side_r', 360, 390],
+            ['walk_diag_r', 395, 425],
+            ['walk_side_l', 430, 460],
+            ['walk_diag_l', 465, 495],
+
+            ['run', 500, 530 ],
+            ['run_side_r', 535, 565 ],
+            ['run_diag_r', 570, 600 ],
+            ['run_side_l', 605, 635 ],
+            ['run_diag_l', 640, 670 ],
+
+            ['crouch', 675, 705],
+            ['crouch_side_r', 710, 740 ],
+            ['crouch_diag_r', 745, 775 ],
+            ['crouch_side_l', 780, 810 ],
+            ['crouch_diag_l', 815, 845 ],
+
+        ]
+
+        bvhLoader.applyToModel( man.mesh, bvhClip, seq, man.poseMatrix );
+        bvhLoader.applyToModel( woman.mesh, bvhClip, seq, woman.poseMatrix );
+
+
+        addAnimator( man.mesh );
+        addAnimator( woman.mesh )
+
+    }
+
+    function initGUI(){
+
+        gui = new UIL.Gui( { width:200, bg:'rgba(23,23,23,0.5)' } );
+        gui2 = new UIL.Gui( { css:'top:0px; left:10px;', width:200, bg:'rgba(23,23,23,0.5)' } );
+
+        gui.add('Bool', { name:'Debug' } ).onChange( function(b){man.setDebug(b)} );
+        gui2.add('Bool', { name:'Debug' } ).onChange( function(b){woman.setDebug(b)} );
+
+        //gui.add( 'fps', { res:70 } );
+
+        /*gui.add( 'button', { name:'Man or Woman', fontColor:'#FFFFFF', p:0 }).onChange( function(){  settings.Woman = settings.Woman ? false:true;  onGender(); } );
+
+        gui.add(settings, 'Bvh_Skelet', { type:'Bool' } ).onChange( onShowBVHSkeleton );
+        gui.add(settings, 'Skeleton', { type:'Bool' } ).onChange( onShowSkeleton );
+
+
+        var g_01 = gui.add('group', { name:'TIME' });
+        var g_04 = gui.add('group', { name:'MATERIAL' });
+
+        g_01.add( 'button', { name:'play' }).onChange( onStartAnimation );
+        g_01.add( 'button', { name:'pause' }).onChange( onPauseAnimation );
+        //g_01.add( 'button', { name:'step' }).onChange( onStepAnimation );
+
+        g_01.add(settings, 'timeScale', { min:-2, max:2 } );
+        g_01.add(settings, 'stepSize', { min:0.01, max:0.1 } );
+
+        g_04.add(settings, 'muscles', { min:0, max:2, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.normalScale = new THREE.Vector2( settings.muscles, settings.muscles ) } );
+        g_04.add(settings, 'oamap', { min:0, max:1, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.aoMapIntensity = settings.oamap; });
+        g_04.add(settings, 'metalness', { min:0, max:1, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.metalness = settings.metalness; });
+        g_04.add(settings, 'roughness', { min:0, max:1, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.roughness = settings.roughness; });
+
+        g_04.add(settings, 'skinAlpha', { min:0, max:1, fontColor:'#D4B87B' } ).onChange( function(){ blendMesh.material.uniforms.skinAlpha.value = settings.skinAlpha; });
+
+        //g_01.open();
+        g_04.open();*/
+
+    };
+
+    function addAnimator( model ){
+
+        if(model.name ==='man'){
+            if( g_animation === null ) g_animation = gui.add('group', { name:'ANIMATIONS' });
+            var name;
+            for(var i = 0; i<model.animations.length; i++){
+                name = model.animations[i].name;
+                g_animation.add('button', { name:name, p:0 }).onChange( function(n){  model.stopAll(); model.play(n);  } );
+
+            }
+
+            g_animation.open();
+        } else {
+
+            if( g_animation2 === null ) g_animation2 = gui2.add('group', { name:'ANIMATIONS' });
+            var name;
+            for(var i = 0; i<model.animations.length; i++){
+                name = model.animations[i].name;
+                g_animation2.add('button', { name:name, p:0 }).onChange( function(n){  model.stopAll(); model.play(n);  } );
+
+            }
+
+            g_animation2.open();
+
+        }
+
+        
 
     }
 
