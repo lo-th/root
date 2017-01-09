@@ -2,6 +2,8 @@ var V = {};
 
 V.Model = function ( Scene, type, meshs, txt, pos ) {
 
+    this.position = pos;
+
     var tSize = 1.4;
     this.debug = false;
 
@@ -56,11 +58,9 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
     //this.mesh.position.copy( pos );
 
-    this.mesh.position.copy( pos );
+    this.mesh.position.copy( this.position );
 
-    var pos = [];
-
-
+   
 
     this.footR = meshs.foot.clone();
     this.footL = meshs.foot.clone();
@@ -137,6 +137,14 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
 
 V.Model.prototype = {
+
+    setPosition: function(pos){
+
+        if(pos) this.position = pos;
+        this.mesh.position.copy( this.position );
+
+    },
+
     setDebug: function(b){
 
         this.debug = b;
@@ -148,6 +156,7 @@ V.Model.prototype = {
         this.skinMat.wireframe = this.debug;
 
     },
+
     update: function ( ){
 
         var m;

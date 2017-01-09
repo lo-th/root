@@ -171,9 +171,13 @@ body {
         bvhLoader.applyToModel( man.mesh, bvhClip, seq, man.poseMatrix );
         bvhLoader.applyToModel( woman.mesh, bvhClip, seq, woman.poseMatrix );
 
+        woman.setPosition();
+        man.setPosition();
+
 
         addAnimator( man.mesh );
-        addAnimator( woman.mesh )
+        addAnimator( woman.mesh );
+
 
     }
 
