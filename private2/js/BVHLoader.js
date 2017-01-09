@@ -443,7 +443,7 @@ THREE.BVHLoader.prototype = {
 
     },
 
-    applyToModel: function ( model, clip, seq, tPose ) {
+    applyToModel: function ( model, clip, tPose, seq , py) {
 
         var lng, lngB, lngS, n, i, j, k, bone, name, tmptime, tracks;
 
@@ -467,6 +467,9 @@ THREE.BVHLoader.prototype = {
         var resultQuat = new THREE.Quaternion();
         var resultPos = new THREE.Vector3();
         var resultScale = new THREE.Vector3();
+
+        var rootMtx = new THREE.Matrix4();
+        rootMtx.setPosition( new THREE.Vector3(0,py||0,0) );
 
         // 1° get bones worldMatxix in Tpose
 
@@ -505,9 +508,11 @@ THREE.BVHLoader.prototype = {
         var startId = 0;
         var endId = 0;
 
-        var sequences = seq || [ clip.name, 0, clip.frames ];
+        var sequences = [[ clip.name, 0, clip.frames ]];
 
-        lngS = seq.length;
+        if(seq) sequences = seq;
+
+        lngS = sequences.length;
 
         for( k = 0; k < lngS; k++ ){
 
@@ -569,6 +574,7 @@ THREE.BVHLoader.prototype = {
 
                             localMtx.identity().getInverse( parentMtx );
                             localMtx.multiply( globalMtx );
+                            localMtx.multiply( rootMtx );
                             localMtx.decompose( resultPos, resultQuat, resultScale );
 
                             resultPositions[n] = resultPos.x ;
@@ -577,7 +583,7 @@ THREE.BVHLoader.prototype = {
 
                         }
 
-                        if(times.length>0)tracks.push( new THREE.VectorKeyframeTrack( ".bones[" + name + "].position", times, resultPositions ) );
+                        if( times.length > 0 ) tracks.push( new THREE.VectorKeyframeTrack( ".bones[" + name + "].position", times, resultPositions ) );
 
                     }
 
@@ -659,6 +665,7 @@ THREE.BVHLoader.prototype = {
             model.addAnimation( newClip );
 
             if( clipName === 'idle'){ model.playw( 'idle', 1 ); }
+            else model.play( 0 );
 
         }
 

@@ -29,6 +29,9 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
     }
 
+    this.root = this.b.root;
+    this.root.position.copy(this.position);
+
     var a1 = meshs.head_mesh.clone();
     a1.rotation.set( 180*torad, 180*torad, 0 );
 
@@ -58,7 +61,7 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
     //this.mesh.position.copy( pos );
 
-    this.mesh.position.copy( this.position );
+    //this.mesh.position.copy( this.position );
 
    
 
@@ -141,7 +144,8 @@ V.Model.prototype = {
     setPosition: function(pos){
 
         if(pos) this.position = pos;
-        this.mesh.position.copy( this.position );
+        //this.mesh.position.copy( this.position );
+        this.root.position.copy(this.position);
 
     },
 

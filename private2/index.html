@@ -168,8 +168,8 @@ body {
 
         ]
 
-        bvhLoader.applyToModel( man.mesh, bvhClip, seq, man.poseMatrix );
-        bvhLoader.applyToModel( woman.mesh, bvhClip, seq, woman.poseMatrix );
+        bvhLoader.applyToModel( man.mesh, bvhClip, man.poseMatrix, seq, -20 );
+        bvhLoader.applyToModel( woman.mesh, bvhClip, woman.poseMatrix, seq, -20 );
 
         woman.setPosition();
         man.setPosition();
