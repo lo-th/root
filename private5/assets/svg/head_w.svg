@@ -1,0 +1,40 @@
+
+<svg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' preserveAspectRatio='none' x='0px' y='0px' width='512px' height='256px' viewBox='0 0 512 256'>
+<defs>
+<g id='Layer4_0_FILL'><path fill='#895837' stroke='none' d='M 512 256 L 512 0 0 0 0 256 512 256 Z'/></g>
+
+<g id='Layer2_0_FILL'>
+<path fill='#000000' stroke='none' d='
+M 297.5 128
+Q 297.5 125.3 295.6 123.4 293.7 121.5 291 121.5 288.3 121.5 286.4 123.4 284.5 125.3 284.5 128 284.5 130.7 286.4 132.6 288.3 134.5 291 134.5 293.7 134.5 295.6 132.6 297.5 130.7 297.5 128
+M 228.5 128
+Q 228.5 125.3 226.6 123.4 224.7 121.5 222 121.5 219.3 121.5 217.4 123.4 215.5 125.3 215.5 128 215.5 130.7 217.4 132.6 219.3 134.5 222 134.5 224.7 134.5 226.6 132.6 228.5 130.7 228.5 128 Z'/>
+</g>
+
+<g id='Layer0_0_FILL'><path fill='#3A160A' stroke='none' d='M 512 166 L 512 0 0 0 0 170 Q 23.2884765625 183.2939453125 53 192 74.7611328125 200.3693359375 102 206 122.924609375 209.0083984375 120 197 116.5833984375 165.0119140625 120 134 122.9181640625 115.5015625 140 112 168.8966796875 108.988671875 188 97 216.7982421875 82.7875 228 50 244.8962890625 78.833203125 283 100 324.001953125 112.8609375 369 112 393.0203125 111.997265625 390 140 386.901953125 158.942578125 387 181 384.373046875 200.77421875 413 198 462.5 190.35 512 166 Z'/></g>
+
+<path id='Layer3_0_1_STROKES' stroke='#70472B' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 256 92 L 256 162'/>
+<path id='Layer1_0_1_STROKES' stroke='#3A160A' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 283 87 L 301 87 M 211 87 L 229 87'/>
+
+</defs>
+
+<g transform='matrix( 1, 0, 0, 1, 0,0) '>
+<use xlink:href='#Layer4_0_FILL'/>
+</g>
+
+<g transform='matrix( 1, 0, 0, 1, 0,0) '>
+<use xlink:href='#Layer3_0_1_STROKES'/>
+</g>
+
+<g transform='matrix( 1, 0, 0, 1, 0,0) '>
+<use xlink:href='#Layer2_0_FILL'/>
+</g>
+
+<g transform='matrix( 1, 0, 0, 1, 0,0) '>
+<use xlink:href='#Layer1_0_1_STROKES'/>
+</g>
+
+<g transform='matrix( 1, 0, 0, 1, 0,0) '>
+<use xlink:href='#Layer0_0_FILL'/>
+</g>
+</svg>
