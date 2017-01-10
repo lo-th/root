@@ -2,6 +2,8 @@ var V = {};
 
 V.Model = function ( Scene, type, meshs, txt, pos ) {
 
+    this.f = 0;
+
     this.txt = txt;
     this.type = type;
 
@@ -11,6 +13,8 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
     var tSize = 1.4;
     this.debug = false;
+
+
 
     
     //this.root = Scene;//new THREE.Group();
@@ -49,9 +53,29 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
     //this.root = this.b.root;
     //this.root.position.copy(this.position);
 
+    var headGeo = new THREE.SphereBufferGeometry( 14.5, 32, 28 );
+    var hearGeo = new THREE.SphereBufferGeometry( 1.6, 16, 12 );
+
+    //headGeo.rotateZ( 90*torad );
+    //headGeo.rotateY( 90*torad )
+    
+    headGeo.applyMatrix( new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,0,1), 90*torad))
+    headGeo.applyMatrix( new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0), -90*torad))
+    headGeo.applyMatrix( new THREE.Matrix4().makeTranslation(-14.5,0,0))
+
+    this.headSelf = new THREE.Mesh(headGeo);
+    this.hearL = new THREE.Mesh(hearGeo);
+    this.hearR = new THREE.Mesh(hearGeo);
+
+    this.hearL.position.set(-14.5, 14.9, 0)
+    this.hearR.position.set(-14.5, -14.9, 0)
+
+    this.headSelf.add(this.hearL);
+    this.headSelf.add(this.hearR);
+
    
 
-    this.head = meshs.head_mesh.clone();
+    //this.head = meshs.head_mesh.clone();
     //this.head.rotation.set( 180*torad, 180*torad, 0 );
 
     this.a2 = type === 'man' ? meshs.extra_man.clone() : meshs.extra_wom.clone()
@@ -171,13 +195,16 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
     
     //this.root.add( this.mesh );
 
+    this.head = new V.Head( this.type );
+
     this.setMaterial(1);
 
-    this.head.add( this.a2 );
+    //this.head.add( this.a2 );
+    this.headSelf.add( this.a2 );
 
     this.root = new THREE.Group();
     //this.b.abdomen.add( a0 );
-    this.root.add( this.head );
+    //this.root.add( this.head );
     this.root.add( this.footR );
     this.root.add( this.footL );
     this.root.add( this.handR );
@@ -186,6 +213,8 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
     this.root.add( this.armmeshR );
     this.root.add( this.legmeshL );
     this.root.add( this.legmeshR );
+
+    this.root.add( this.headSelf );
     
     Scene.add( this.helper );
 
@@ -196,6 +225,8 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
     this.mesh.position.copy( this.position );
 
+    //this.makehead();
+
 
     
     
@@ -204,7 +235,27 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
 V.Model.prototype = {
 
+    /*makehead: function(){
+
+        canvg( this.canvas, this.type === 'man' ? SVGman:SVGwom );
+        this.headTexture.needsUpdate = true;
+
+    },
+
+    initCanvas: function(){
+
+        if( this.canvas ) return;
+
+        this.canvas = document.createElement("canvas");
+        this.canvas.width = 512;
+        this.canvas.height = 256;
+        this.headTexture = new THREE.Texture( this.canvas );
+
+    },*/
+
     setMaterial: function( n ){
+
+        //this.initCanvas();
 
         var i = this.mats.length;
         while(i--){
@@ -220,6 +271,8 @@ V.Model.prototype = {
         this.mats[2] = new THREE[mtype]({ color: this.type === 'man' ? 0x010044 : 0x1c1c1c });
         this.mats[3] = new THREE[mtype]({ color: this.type === 'man' ? 0xb1774f : 0x895837 });
 
+        this.mats[4] = new THREE[mtype]({ map:this.head.texture });
+
         if( n===3 ){
             var i = this.mats.length;
             while(i--){
@@ -227,11 +280,15 @@ V.Model.prototype = {
             }
         }
 
+        this.headSelf.material = this.mats[4];
+        this.hearL.material = this.mats[3];
+        this.hearR.material = this.mats[3];
+
         this.footR.material = this.mats[0];
         this.footL.material = this.mats[0];
         this.handL.material = this.mats[3];
         this.handR.material = this.mats[3];
-        this.head.material = this.mats[0];
+        //this.head.material = this.mats[0];
         this.a2.material = this.mats[0];
         this.mesh.material = this.mats[1];
         this.armmeshL.material = this.mats[2];
@@ -264,12 +321,24 @@ V.Model.prototype = {
 
     },
 
-    update: function ( ){
+    update: function ( x,y ){
+
+        this.f++;
+
+        if( this.f === 2 ){ 
+            this.head.update(x,y);
+            this.f = 0;
+        }
+
+
 
         var m;
 
-        this.head.position.setFromMatrixPosition( this.b.head.matrixWorld );
-        this.head.quaternion.setFromRotationMatrix( this.b.head.matrixWorld );
+        this.headSelf.position.setFromMatrixPosition( this.b.head.matrixWorld );
+        this.headSelf.quaternion.setFromRotationMatrix( this.b.head.matrixWorld );
+
+        //this.head.position.setFromMatrixPosition( this.b.head.matrixWorld );
+        //this.head.quaternion.setFromRotationMatrix( this.b.head.matrixWorld );
 
 
         this.legL.positions[0].setFromMatrixPosition( this.b.lThigh.matrixWorld );
@@ -318,3 +387,31 @@ V.Model.prototype = {
 
     }
 }
+
+var SVGman = [
+"<svg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' preserveAspectRatio='none' x='0px' y='0px' width='512px' height='256px' viewBox='0 0 512 256'>",
+"<path id='skin' fill='#B1774F' stroke='none' d='M 512 256 L 512 0 0 0 0 256 512 256 Z'/>",
+"<path id='noz' stroke='#A36D47' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 256 92 L 256 162'/>",
+"<ellipse cx='222' cy='128' rx='14' ry='14' style='fill:white;stroke:#A36D47;stroke-width:4' />",
+"<ellipse cx='290' cy='128' rx='14' ry='6' style='fill:white;stroke:#A36D47;stroke-width:4' />",
+"<ellipse cx='222' cy='128' rx='4' ry='4' style='fill:black;' />",
+"<ellipse cx='290' cy='128' rx='4' ry='4' style='fill:black' />",
+"<ellipse cx='256' cy='190' rx='14' ry='6' style='fill:black;stroke:#A36D47;stroke-width:4' />",
+"<path id='eyebrow' stroke='#613207' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 283 87 L 301 87 M 211 87 L 229 87'/>",
+"<path id='hair' fill='#613207' stroke='none' d='M 512 122 L 512 0 0 0 0 122 Q 34.56171875 122.8705078125 71 135 113.206640625 139.20703125 132 120 143.885546875 76.9451171875 183 55 L 329 55 Q 370.0564453125 79.7216796875 380 120 394.8259765625 136.671484375 438 135 480.665234375 122.834765625 512 122 Z'/>",
+"</svg>",
+].join( "\n" );
+
+var SVGwom = [
+"<svg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' preserveAspectRatio='none' x='0px' y='0px' width='512px' height='256px' viewBox='0 0 512 256'>",
+"<path id='skin' fill='#895837' stroke='none' d='M 512 256 L 512 0 0 0 0 256 512 256 Z'/>",
+"<path id='noz' stroke='#70472B' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 256 92 L 256 162'/>",
+"<ellipse cx='222' cy='128' rx='14' ry='14' style='fill:white;stroke:#70472B;stroke-width:4' />",
+"<ellipse cx='290' cy='128' rx='14' ry='14' style='fill:white;stroke:#70472B;stroke-width:4' />",
+"<ellipse cx='222' cy='128' rx='4' ry='4' style='fill:black;' />",
+"<ellipse cx='290' cy='128' rx='4' ry='4' style='fill:black;' />",
+"<ellipse cx='256' cy='190' rx='14' ry='10' style='fill:black;stroke:#70472B;stroke-width:4' />",
+"<path id='eyebrow' stroke='#3A160A' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 283 87 L 301 87 M 211 87 L 229 87'/>",
+"<path id='hair' fill='#3A160A' stroke='none' d='M 512 166 L 512 0 0 0 0 170 Q 23.2884765625 183.2939453125 53 192 74.7611328125 200.3693359375 102 206 122.924609375 209.0083984375 120 197 116.5833984375 165.0119140625 120 134 122.9181640625 115.5015625 140 112 168.8966796875 108.988671875 188 97 216.7982421875 82.7875 228 50 244.8962890625 78.833203125 283 100 324.001953125 112.8609375 369 112 393.0203125 111.997265625 390 140 386.901953125 158.942578125 387 181 384.373046875 200.77421875 413 198 462.5 190.35 512 166 Z'/>",
+"</svg>",
+].join( "\n" );
