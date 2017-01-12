@@ -22,6 +22,7 @@ body {
 
 <script src="js/three.min.js"></script>
 <script src="js/sea3d.min.js"></script>
+
 <script src="js/uil.min.js"></script>
 <script src="js/pool.js"></script>
 <script src="js/ShaderShadow.js"></script>
@@ -44,6 +45,8 @@ body {
 
 <script>
 
+    var isFull = false;
+
     var camera, scene, renderer, controler, clock;
 
     var man, woman;
@@ -55,10 +58,6 @@ body {
     var mx=0, my=0;
 
     var vx=0, vy=0;
-
-    var setter = {
-
-    }
     
     
     
@@ -122,8 +121,8 @@ body {
         // extra plane shadow
         var planemat = new THREE.ShaderMaterial( THREE.ShaderShadow );
         var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( d*2, d*2, 1, 1 ), planemat );
-        plane.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
-        plane.position.y = -65
+        plane.geometry.applyMatrix( new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
+        plane.position.y = -62;
         plane.castShadow = false;
         plane.receiveShadow = true;
         scene.add( plane );
@@ -145,7 +144,7 @@ body {
         document.addEventListener( 'mousemove', onMouse, false );
 
 
-        pool.load( ['assets/textures/medium.jpg', 'assets/textures/head_m.png', 'assets/textures/head_w.png', 'assets/textures/rondo_m.jpg', 'assets/textures/rondo_w.jpg', 'assets/models/rondoid3.sea'], onLoadComplete );
+        pool.load( ['assets/textures/medium.jpg','assets/textures/rondo_m.jpg', 'assets/textures/rondo_w.jpg', 'assets/models/rondo.sea', 'assets/models/head.sea'], onLoadComplete );
 
         
 
@@ -169,33 +168,48 @@ body {
         txt['wom'].flipY = false;
         txt['wom'].needsUpdate = true;
 
-        txt['hman'] = new THREE.Texture( p.head_m );
-        //txt['man'].flipY = false;
-        txt['hman'].needsUpdate = true;
-
-        txt['hwom'] = new THREE.Texture( p.head_w );
-        //txt['wom'].flipY = false;
-        txt['hwom'].needsUpdate = true;
-
         // sea meshs
 
-        var meshs = pool.meshByName ( 'rondoid3' );
+        var meshs = pool.meshByName ( 'rondo' );
+        var meshs2 = pool.meshByName ( 'head' );
+
+
+        // morph hack
+
+        this.correctMorph('eye', meshs2 );
+        this.correctMorph('eyec', meshs2 );
+        this.correctMorph('eyebrow', meshs2 );
+
+        this.correctMorph('mouth', meshs2 );
+        this.correctMorph('lips', meshs2 );
+        this.correctMorph('tooth', meshs2 );
 
         //
 
-        man = new V.Model( scene, 'man', meshs, txt, new THREE.Vector3(40, -65, 0 ) );
-        woman = new V.Model( scene, 'wom', meshs, txt, new THREE.Vector3(-40, -65, 0 ) );
+        man = new V.Model( 'man', meshs, txt, new THREE.Vector3( 40, -65, 0 ), meshs2 );
+        woman = new V.Model( 'wom', meshs, txt, new THREE.Vector3( -40, -65, 0 ), meshs2 );
 
 
         initGUI();
 
-        //testAnimationLoad('assets/bvh/base.z');
-
-        testAnimationLoad('assets/bvh/action.z');
+        loadAnimation('assets/bvh/action.z');
 
     }
 
-    function testAnimationLoad( file ){
+    function correctMorph( name, meshs ){
+
+        var morph = ['_open', '_close', '_sad', '_happy' ];
+
+        for( var i=0; i < morph.length; i++ ) {
+
+            meshs[name].geometry.morphAttributes.position[i].array = meshs[name+morph[i]].geometry.attributes.position.array;
+            meshs[name].geometry.morphAttributes.normal[i].array = meshs[name+morph[i]].geometry.attributes.normal.array;
+
+        }
+
+    };
+
+    function loadAnimation( file ){
 
         bvhLoader = new THREE.BVHLoader();
 
@@ -205,8 +219,6 @@ body {
         xml.onload = function () {
 
             var name = file.substring( file.lastIndexOf('/')+1,file.lastIndexOf('.') );
-            //console.log(name)
-
             parseBvhAnimation( name, bvhLoader.parse( SEA3D.File.LZMAUncompress( xml.response ) ) );
 
         }
@@ -259,13 +271,23 @@ body {
 
         //
 
-        if(name === 'action') testAnimationLoad('assets/bvh/story.z');
+        if(name === 'action') loadAnimation('assets/bvh/story.z');
         
-        if(name === 'story') testAnimationLoad('assets/bvh/base.z');
+        if(name === 'story') loadAnimation('assets/bvh/base.z');
         
         if(name === 'base') {
+
             addAnimator( man.mesh );
             addAnimator( woman.mesh );
+
+            man.play('idle');
+            woman.play('idle');
+
+            man.addToScene( scene );
+            woman.addToScene( scene );
+
+            isFull = true;
+
         }
 
     }
@@ -280,8 +302,29 @@ body {
         gui.add('Bool', { name:'Debug' } ).onChange( function(b){man.setDebug(b)} );
         gui2.add('Bool', { name:'Debug' } ).onChange( function(b){woman.setDebug(b)} );
 
-        gui.add('button', { name:'Material', height:30, value:[1, 2, 3] }).onChange( function(n){man.setMaterial(n)} );
-        gui2.add('button', { name:'Material', height:30, value:[1, 2, 3] }).onChange( function(n){woman.setMaterial(n)} );
+        gui.add('button', { name:'Material', height:20, value:[1, 2, 3] }).onChange( function(n){man.setMaterial(n)} );
+        gui2.add('button', { name:'Material', height:20, value:[1, 2, 3] }).onChange( function(n){woman.setMaterial(n)} );
+
+        gui.add('slide',  { name:'speed', min:-3, max:3, value:1, precision:2, stype:1 }).onChange( function(v){ man.setSpeed( v ) } );
+        gui2.add('slide',  { name:'speed', min:-3, max:3, value:1, precision:2, stype:1 }).onChange( function(v){ woman.setSpeed( v ) } );
+
+        var m1 = gui.add('group', { name:'MORPH' });
+        var m2 = gui2.add('group', { name:'MORPH' });
+
+        m1.add('slide',  { name:'close eye', min:0, max:1, value:0, precision:2 }).onChange( function(v){ man.head.morphEye('close', v ) } );
+        m1.add('slide',  { name:'close', min:0, max:1, value:1, precision:2 }).onChange( function(v){ man.head.morphMouth('close', v ) } );
+        m1.add('slide',  { name:'open', min:0, max:1, value:0, precision:2 }).onChange( function(v){ man.head.morph('open', v ) } );
+        m1.add('slide',  { name:'happy', min:0, max:1, value:0, precision:2 }).onChange( function(v){ man.head.morph('happy', v ) } );
+        m1.add('slide',  { name:'sad', min:0, max:1, value:0, precision:2 }).onChange( function(v){ man.head.morph('sad', v ) } );
+
+        m2.add('slide',  { name:'close eye', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.head.morphEye('close', v ) } );
+        m2.add('slide',  { name:'close', min:0, max:1, value:1, precision:2 }).onChange( function(v){ woman.head.morphMouth('close', v ) } );
+        m2.add('slide',  { name:'open', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.head.morph('open', v ) } );
+        m2.add('slide',  { name:'happy', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.head.morph('happy', v ) } );
+        m2.add('slide',  { name:'sad', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.head.morph('sad', v ) } );
+
+        m1.open();
+        m2.open();
 
     };
 
@@ -290,13 +333,13 @@ body {
         if(model.name ==='man'){
             if( g_animation === null ) g_animation = gui.add('group', { name:'ANIMATIONS' });
             var name;
-            for(var i = 0; i<model.animations.length; i++){
+            for(var i = 0; i < model.animations.length; i++){
                 name = model.animations[i].name;
                 g_animation.add('button', { name:name, p:0 }).onChange( function(n){  model.stopAll(); model.play(n);  } );
 
             }
 
-            g_animation.open();
+            //g_animation.open();
         } else {
 
             if( g_animation2 === null ) g_animation2 = gui2.add('group', { name:'ANIMATIONS' });
@@ -307,7 +350,7 @@ body {
 
             }
 
-            g_animation2.open();
+            //g_animation2.open();
 
         }
 
@@ -340,15 +383,17 @@ body {
 
         //var delta = clock.getDelta();
 
-        if(man) man.update(mx,my)
-        if(woman) woman.update(mx,my);
+        if( isFull ){
 
-        TWEEN.update();
+            man.update(mx,my);
+            woman.update(mx,my);
 
-        THREE.SEA3D.AnimationHandler.update( 0.007 );
+            TWEEN.update();
 
+            THREE.SEA3D.AnimationHandler.update( 0.007 );
+
+        }
         
-
         renderer.render( scene, camera );
 
     }

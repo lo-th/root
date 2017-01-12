@@ -1,5 +1,7 @@
 
-V.Head = function ( type, txt ) {
+V.Head = function ( type, txt, meshs ) {
+
+    this.type = type;
 
     this.t = 0;
 
@@ -10,8 +12,8 @@ V.Head = function ( type, txt ) {
     var PI90 = 1.570796326794896;
 
     // [ skin, skin2, hair ];
-    var colors = [ 0x895837, 0x70472B, 0x3A160A ];
-    if(type === 'man' ) colors = [ 0xB1774F, 0xA36D47, 0x613207 ];
+    var colors = [ 0x895837, 0x70472B, 0x3A160A, 0x24951b ];
+    if(type === 'man' ) colors = [ 0xB1774F, 0xA36D47, 0x613207, 0x196895];
 
 
     this.w = 512;
@@ -22,24 +24,24 @@ V.Head = function ( type, txt ) {
     // Material
 
     this.mat = {
+
         skin: new THREE.MeshBasicMaterial({ color:colors[0] }),
         skin2: new THREE.MeshBasicMaterial({ color:colors[1] }),
-        eye : new THREE.MeshBasicMaterial({ color:0xFFFFFF }),
-        pupil : new THREE.MeshBasicMaterial({ color:0x000000 }),
+        hair: new THREE.MeshBasicMaterial({ color:colors[2] }),
+        pup : new THREE.MeshBasicMaterial({ color:colors[3] }),
+        white : new THREE.MeshBasicMaterial({ color:0xFFFFFF, side: THREE.DoubleSide }),
+        black : new THREE.MeshBasicMaterial({ color:0x000000 }),
+        inmouth : new THREE.MeshBasicMaterial({ color:0x4f1903 }),
+
+        Mskin: new THREE.MeshBasicMaterial({ color:colors[0], morphTargets:true, side: THREE.DoubleSide }),
+        Mskin2: new THREE.MeshBasicMaterial({ color:colors[1], morphTargets:true, side: THREE.DoubleSide  }),
+        Mhair: new THREE.MeshBasicMaterial({ color:colors[2], morphTargets:true, side: THREE.DoubleSide  }),
+        Mpup : new THREE.MeshBasicMaterial({ color:colors[3], morphTargets:true, side: THREE.DoubleSide  }),
+        Mwhite : new THREE.MeshBasicMaterial({ color:0xFFFFFF, morphTargets:true, side: THREE.DoubleSide  }),
+        Mblack : new THREE.MeshBasicMaterial({ color:0x000000, morphTargets:true, side: THREE.DoubleSide  }),
+
+        
     };
-
-    // Geometry
-
-    this.geo = {
-        eye: new THREE.CylinderBufferGeometry( 5,5,0.1,12,1 ),
-        backEye: new THREE.CylinderBufferGeometry( 14,5,0.1,32,1 ),
-        contEye: new THREE.TorusGeometry(16, 2, 4, 32),//CylinderBufferGeometry( 18,5,0.1,32,1 ),
-        contEye2: new THREE.TorusGeometry(22, 4, 6, 32),
-    };
-
-    this.geo.eye.rotateX( -PI90 );
-    this.geo.backEye.rotateX( -PI90 );
-    //this.geo.contEye.rotateX( -PI90 );
 
     //
 
@@ -50,19 +52,91 @@ V.Head = function ( type, txt ) {
 
     // mesh
 
-    this.eyeL = this.addEye( -35 );
-    this.eyeR = this.addEye( 35 );
+    var m = {
+
+        noz: meshs.noz.clone(),
+        hair: this.type === 'man' ? meshs.hair_m.clone() : meshs.hair_w.clone(),
+        eyeBrowL: meshs.eyebrow.clone(),
+        eyeBrowR: meshs.eyebrow.clone(),
+
+        eyeL: meshs.eye.clone(),
+        eyecL: meshs.eyec.clone(),
+        eyebL: meshs.eyeb.clone(),
+        eyePupL: meshs.pupil.clone(),
+
+        eyeR: meshs.eye.clone(),
+        eyecR: meshs.eyec.clone(),
+        eyebR: meshs.eyeb.clone(),
+        eyePupR: meshs.pupil.clone(),
+
+        mouth: meshs.mouth.clone(),
+        lips: meshs.lips.clone(),
+        mback: meshs.mback.clone(),
+        tooth: meshs.tooth.clone(),
+
+    };
+
+    // apply materials
+
+    m.noz.material = this.mat.skin2;
+    m.hair.material = this.mat.hair;
+    m.eyeBrowL.material = this.mat.Mhair;
+    m.eyeBrowR.material = this.mat.Mhair;
+
+    m.eyeL.material = this.mat.Mskin;
+    m.eyeR.material = this.mat.Mskin;
+
+    m.eyecL.material = this.mat.Mskin2;
+    m.eyecR.material = this.mat.Mskin2;
+
+    m.eyebL.material = this.mat.white;
+    m.eyebR.material = this.mat.white;
+
+    m.eyePupL.material = this.mat.pup;
+    m.eyePupR.material = this.mat.pup;
+
+    m.mouth.material = this.mat.Mskin;
+    m.lips.material = this.mat.Mskin2;
+    m.tooth.material = this.mat.Mwhite;
+
+    m.mback.material = this.mat.inmouth;
+
+    m.eyePupL.children[0].material = this.mat.black;
+    m.eyePupR.children[0].material = this.mat.black;
+
+    // revers right eye
+
+    this.revers( m.eyeBrowR );
+    this.revers( m.eyeR );
+    this.revers( m.eyecR );
+    this.revers( m.eyebR );
+    
+    // add all object to scene
+
+    for ( var o in m ){
+
+        this.scene.add( m[o] );
+
+    }
+
+    // define morph mesh
+
+    this.morphE = [ m.eyeL, m.eyeR, m.eyecL, m.eyecR, m.eyeBrowL, m.eyeBrowR ];
+    this.morphM = [ m.mouth, m.lips, m.tooth ];
 
 
+    this.mesh = m;
 
+    // background
 
-
-    this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( this.w, this.h ), new THREE.MeshBasicMaterial({map:type==='man'? txt.hman: txt.hwom}) );
+    this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( this.w, this.h ), this.mat.skin );
     //this.quad.frustumCulled = false; // Avoid getting clipped
     this.scene.add( this.quad );
 
+    //
+
     var parameters = { minFilter: THREE.LinearMipMapLinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
-    ///var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat, stencilBuffer: false, depthBuffer:true, anisotropy:1 };
+    //var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false, depthBuffer:true, anisotropy:1 };
 
     this.renderTarget = new THREE.WebGLRenderTarget( this.w, this.h, parameters );
     //this.renderTarget.texture.generateMipmaps = false;
@@ -108,6 +182,10 @@ V.Head = function ( type, txt ) {
     //this.texture = this.renderTarget.texture;
 
 
+    this.morphMouth("close", 1 );
+    //this.morphEye("close", 1 );
+
+
 
 
 
@@ -115,60 +193,61 @@ V.Head = function ( type, txt ) {
 
 V.Head.prototype = {
 
-    addEye: function( x ){
+    correctMorph: function ( name, meshs ){
 
-        var eye = new THREE.Group();
-        //eye.position.set( this.mw + x, this.mh, 2 );
+        var morph = ['_open', '_close', '_sad', '_happy' ];
 
-        eye.position.set( x, 0, 2 );
+        for( var i=0; i < morph.length; i++ ) {
 
-        var eyec = new THREE.Mesh( this.geo.contEye, this.mat.skin2 );
-        var eyet = new THREE.Mesh( this.geo.backEye, this.mat.eye );
-        var pupil = new THREE.Mesh( this.geo.eye, this.mat.pupil );
-        var eyec2 = new THREE.Mesh( this.geo.contEye2, this.mat.skin );
+            meshs[name].geometry.morphAttributes.position[i].array = meshs[name+morph[i]].geometry.attributes.position.array;
+            meshs[name].geometry.morphAttributes.normal[i].array = meshs[name+morph[i]].geometry.attributes.normal.array;
 
-        eyet.position.z = 0;
-        pupil.position.z = 0.1;
-
-        eye.add( eyet );
-        eye.add( eyec );
-        eye.add( eyec2 );
-        eye.add( pupil );
-
-        this.scene.add( eye ); 
-
-        return eye;
+        }
 
     },
 
-    upEye: function (){
+    revers: function ( o ) {
 
-        this.eyeL.children[0].scale.y = this.sett.blink;
-        this.eyeL.children[1].scale.y = this.sett.blink;
-        this.eyeL.children[2].scale.y = this.sett.blink;
+        o.position.x *= -1;
+        o.scale.x *= -1;
 
-        this.eyeR.children[0].scale.y = this.sett.blink;
-        this.eyeR.children[1].scale.y = this.sett.blink;
-        this.eyeR.children[2].scale.y = this.sett.blink;
+    },
+
+    morph: function ( t, v ) {
+
+        this.morphEye( t, v );
+        this.morphMouth( t, v );
+        
+    },
+
+    morphEye: function ( t, v ) {
+
+        var i = this.morphE.length;
+        while(i--){
+            this.morphE[i].setWeight( t, v );
+        }
+
+    },
+
+    morphMouth: function ( t, v ) {
+
+        var i = this.morphM.length;
+        while(i--){
+            this.morphM[i].setWeight( t, v );
+        }
 
     },
 
     closeEye: function (){
 
         var _this = this;
-
-        new TWEEN.Tween( this.sett ).to( { blink:0.2 }, 130 ).onUpdate( function(){ _this.upEye() } ).onComplete( function(){ _this.openEye()  }).start();
-        //var b2 = new TWEEN.Tween( this.sett ).to( { blink:1 }, 200 ).delay( 200 ).onUpdate( function(){ _this.upEye() } ).start();
-
-
-
+        new TWEEN.Tween( this.sett ).to( { blink:1 }, 200 ).onUpdate( function(){ _this.blinkEye(); } ).start();
+        new TWEEN.Tween( this.sett ).to( { blink:0 }, 200 ).delay( 200 ).onUpdate( function( v ){ _this.blinkEye(); } ).start();
     },
 
-    openEye: function (){
+    blinkEye: function (){
 
-        var _this = this;
-
-        new TWEEN.Tween( this.sett ).to( { blink:1 }, 130 ).onUpdate( function(){ _this.upEye() } ).start();
+        this.morphEye( 'close', this.sett.blink );
 
     },
 
@@ -176,17 +255,13 @@ V.Head.prototype = {
 
         this.t++;
 
-        this.eyeL.children[3].position.set( x*8, -(y*8), 1 );
-        this.eyeR.children[3].position.set( x*8, -(y*8), 1 );
+        this.mesh.eyePupL.position.set( -35 + x*8, -(y*8), 5 );
+        this.mesh.eyePupR.position.set( 35 + x*8, -(y*8), 5 );
 
         if(this.t === 400 ) {
             this.closeEye();
             this.t = 0;
         }
-
-        //this.eyeL.position.set( -(256 - (222+(x*8))), -(y*8), 2 );
-        //this.eyeR.position.set( -(256 - (290+(x*8))), -(y*8), 2 );
-
 
         this.composer.render();
         //renderer.render( this.scene, this.camera, this.renderTarget, true );

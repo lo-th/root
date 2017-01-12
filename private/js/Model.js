@@ -1,6 +1,10 @@
 var V = {};
 
-V.Model = function ( Scene, type, meshs, txt, pos ) {
+V.Model = function ( type, meshs, txt, pos, meshs2 ) {
+
+    this.isFirst = true;
+
+    this.preTime = 0;
 
     this.f = 0;
 
@@ -63,15 +67,15 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
     headGeo.applyMatrix( new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0), -90*torad))
     headGeo.applyMatrix( new THREE.Matrix4().makeTranslation(-14.5,0,0))
 
-    this.headSelf = new THREE.Mesh(headGeo);
+    this.headMesh = new THREE.Mesh(headGeo);
     this.hearL = new THREE.Mesh(hearGeo);
     this.hearR = new THREE.Mesh(hearGeo);
 
     this.hearL.position.set(-14.5, 14.9, 0)
     this.hearR.position.set(-14.5, -14.9, 0)
 
-    this.headSelf.add(this.hearL);
-    this.headSelf.add(this.hearR);
+    this.headMesh.add(this.hearL);
+    this.headMesh.add(this.hearR);
 
    
 
@@ -195,12 +199,12 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
     
     //this.root.add( this.mesh );
 
-    this.head = new V.Head( this.type, this.txt );
+    this.head = new V.Head( this.type, this.txt, meshs2 );
 
     this.setMaterial(1);
 
     //this.head.add( this.a2 );
-    this.headSelf.add( this.a2 );
+    this.headMesh.add( this.a2 );
 
     this.root = new THREE.Group();
     //this.b.abdomen.add( a0 );
@@ -214,18 +218,21 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
     this.root.add( this.legmeshL );
     this.root.add( this.legmeshR );
 
-    this.root.add( this.headSelf );
+    this.root.add( this.headMesh );
     
-    Scene.add( this.helper );
+    this.root.add( this.helper );
 
     //this.root.add( this.mesh );
-    Scene.add( this.mesh );
-    Scene.add( this.root );
+    //Scene.add( this.mesh );
+    //Scene.add( this.root );
 
 
     this.mesh.position.copy( this.position );
 
     //this.makehead();
+
+    this.root.visible = false;
+    this.mesh.visible = false;
 
 
     
@@ -234,6 +241,26 @@ V.Model = function ( Scene, type, meshs, txt, pos ) {
 
 
 V.Model.prototype = {
+
+    setSpeed: function ( v ) {
+
+        this.mesh.setTimeScale( v );
+
+    },
+
+    addToScene: function ( Scene ){
+
+        Scene.add( this.mesh );
+        Scene.add( this.root );
+        this.isFull = true;
+
+    },
+
+    play: function ( name, a, b, c ){
+
+        this.mesh.play( name, a, b, c );
+
+    },
 
     /*makehead: function(){
 
@@ -280,7 +307,7 @@ V.Model.prototype = {
             }
         }
 
-        this.headSelf.material = this.mats[4];
+        this.headMesh.material = this.mats[4];
         this.hearL.material = this.mats[3];
         this.hearR.material = this.mats[3];
 
@@ -325,16 +352,10 @@ V.Model.prototype = {
 
         this.head.update(x,y);
 
-
-
         var m;
 
-        this.headSelf.position.setFromMatrixPosition( this.b.head.matrixWorld );
-        this.headSelf.quaternion.setFromRotationMatrix( this.b.head.matrixWorld );
-
-        //this.head.position.setFromMatrixPosition( this.b.head.matrixWorld );
-        //this.head.quaternion.setFromRotationMatrix( this.b.head.matrixWorld );
-
+        this.headMesh.position.setFromMatrixPosition( this.b.head.matrixWorld );
+        this.headMesh.quaternion.setFromRotationMatrix( this.b.head.matrixWorld );
 
         this.legL.positions[0].setFromMatrixPosition( this.b.lThigh.matrixWorld );
         this.legL.positions[1].setFromMatrixPosition( this.b.lShin.matrixWorld );
@@ -380,33 +401,11 @@ V.Model.prototype = {
 
         this.helper.update();
 
+        if(this.preTime<10) this.preTime ++; 
+        else if( this.preTime===10 ){
+            this.root.visible = true;
+            this.mesh.visible = true;
+        }
+
     }
 }
-
-var SVGman = [
-"<svg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' preserveAspectRatio='none' x='0px' y='0px' width='512px' height='256px' viewBox='0 0 512 256'>",
-"<path id='skin' fill='#B1774F' stroke='none' d='M 512 256 L 512 0 0 0 0 256 512 256 Z'/>",
-"<path id='noz' stroke='#A36D47' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 256 92 L 256 162'/>",
-"<ellipse cx='222' cy='128' rx='14' ry='14' style='fill:white;stroke:#A36D47;stroke-width:4' />",
-"<ellipse cx='290' cy='128' rx='14' ry='6' style='fill:white;stroke:#A36D47;stroke-width:4' />",
-"<ellipse cx='222' cy='128' rx='4' ry='4' style='fill:black;' />",
-"<ellipse cx='290' cy='128' rx='4' ry='4' style='fill:black' />",
-"<ellipse cx='256' cy='190' rx='14' ry='6' style='fill:black;stroke:#A36D47;stroke-width:4' />",
-"<path id='eyebrow' stroke='#613207' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 283 87 L 301 87 M 211 87 L 229 87'/>",
-"<path id='hair' fill='#613207' stroke='none' d='M 512 122 L 512 0 0 0 0 122 Q 34.56171875 122.8705078125 71 135 113.206640625 139.20703125 132 120 143.885546875 76.9451171875 183 55 L 329 55 Q 370.0564453125 79.7216796875 380 120 394.8259765625 136.671484375 438 135 480.665234375 122.834765625 512 122 Z'/>",
-"</svg>",
-].join( "\n" );
-
-var SVGwom = [
-"<svg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' preserveAspectRatio='none' x='0px' y='0px' width='512px' height='256px' viewBox='0 0 512 256'>",
-"<path id='skin' fill='#895837' stroke='none' d='M 512 256 L 512 0 0 0 0 256 512 256 Z'/>",
-"<path id='noz' stroke='#70472B' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 256 92 L 256 162'/>",
-"<ellipse cx='222' cy='128' rx='14' ry='14' style='fill:white;stroke:#70472B;stroke-width:4' />",
-"<ellipse cx='290' cy='128' rx='14' ry='14' style='fill:white;stroke:#70472B;stroke-width:4' />",
-"<ellipse cx='222' cy='128' rx='4' ry='4' style='fill:black;' />",
-"<ellipse cx='290' cy='128' rx='4' ry='4' style='fill:black;' />",
-"<ellipse cx='256' cy='190' rx='14' ry='10' style='fill:black;stroke:#70472B;stroke-width:4' />",
-"<path id='eyebrow' stroke='#3A160A' stroke-width='8' stroke-linejoin='round' stroke-linecap='round' fill='none' d='M 283 87 L 301 87 M 211 87 L 229 87'/>",
-"<path id='hair' fill='#3A160A' stroke='none' d='M 512 166 L 512 0 0 0 0 170 Q 23.2884765625 183.2939453125 53 192 74.7611328125 200.3693359375 102 206 122.924609375 209.0083984375 120 197 116.5833984375 165.0119140625 120 134 122.9181640625 115.5015625 140 112 168.8966796875 108.988671875 188 97 216.7982421875 82.7875 228 50 244.8962890625 78.833203125 283 100 324.001953125 112.8609375 369 112 393.0203125 111.997265625 390 140 386.901953125 158.942578125 387 181 384.373046875 200.77421875 413 198 462.5 190.35 512 166 Z'/>",
-"</svg>",
-].join( "\n" );
