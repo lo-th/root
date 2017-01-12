@@ -18,20 +18,8 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
     var tSize = 1.4;
     this.debug = false;
 
-
-
-    
-    //this.root = Scene;//new THREE.Group();
-
     this.mesh = meshs.skin.clone();
-
     this.mesh.name = type;
-
-    //this.root = this.mesh;//new THREE.Group();
-   // Scene.add( this.root )
-    //this.root.position.copy( this.position );
-    //this.mesh.position.copy( this.position );
-
 
     this.bones = this.mesh.skeleton.bones;
 
@@ -45,23 +33,12 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
         bone = this.bones[i];
         name = bone.name;
         this.b[ name ] = bone;
-        //if( name === 'root' ) bone.position.copy( this.position );
         this.poseMatrix[i] = bone.matrixWorld.clone();
 
     }
 
-    //this.mesh.position.copy( this.position );
-
-    this.matrixWorldInv = new THREE.Matrix4().getInverse( this.mesh.matrixWorld );
-
-    //this.root = this.b.root;
-    //this.root.position.copy(this.position);
-
     var headGeo = new THREE.SphereBufferGeometry( 14.5, 32, 28 );
     var hearGeo = new THREE.SphereBufferGeometry( 1.6, 16, 12 );
-
-    //headGeo.rotateZ( 90*torad );
-    //headGeo.rotateY( 90*torad )
     
     headGeo.applyMatrix( new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,0,1), 90*torad))
     headGeo.applyMatrix( new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0), -90*torad))
@@ -77,41 +54,7 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
     this.headMesh.add(this.hearL);
     this.headMesh.add(this.hearR);
 
-   
-
-    //this.head = meshs.head_mesh.clone();
-    //this.head.rotation.set( 180*torad, 180*torad, 0 );
-
-    this.a2 = type === 'man' ? meshs.extra_man.clone() : meshs.extra_wom.clone()
-
-    // material
-
-    
-
-    //this.mapSkinMat = new THREE.MeshBasicMaterial({ map:type === 'man' ? txt.man : txt.wom, skinning:true, wireframe:debug });
-    //this.mats.push( new THREE.MeshBasicMaterial({ map:this.type === 'man' ? this.txt.man : this.txt.wom }) );
-    //this.mats.push( this.mats[0].clone() );
-    //this.mats.push( new THREE.MeshBasicMaterial({ color: this.type === 'man' ? 0x010044 : 0x1c1c1c }) );
-    //this.mats.push( new THREE.MeshBasicMaterial({ color: this.type === 'man' ? 0xb1774f : 0x895837 }) );
-    //this.debugMat = new THREE.MeshBasicMaterial({ color:0xFF0000, wireframe:true });
-
-    //this.mats[1].skinning = true;
-
-    //this.head.material = this.mats[0];
-    //this.a2.material = this.mats[0];
-    //this.mesh.material = this.mats[1];
-
-    
-
-    /*if(type === 'man') this.mesh.play(0);
-    else this.mesh.play(1);*/
-
-    //this.mesh.position.copy( this.position );
-    //this.b.root.position.copy( this.position );
-
-    //
-
-   
+    this.headExtra = type === 'man' ? meshs.extra_man.clone() : meshs.extra_wom.clone()
 
     this.footR = meshs.foot.clone();
     this.footL = meshs.foot.clone();
@@ -121,11 +64,6 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
 
     this.footR.material = this.mats[0];
     this.footL.material = this.mats[0];
-
-    //this.b.rFoot.add( this.footR );
-    //this.b.lFoot.add( this.footL );
-
-    
 
     this.footR.castShadow = true;
     this.footR.receiveShadow = true;
@@ -145,31 +83,21 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
     this.handR.castShadow = true;
     this.handR.receiveShadow = true;
 
-    //this.b.rHand.add( this.handR );
-    //this.b.lHand.add( this.handL );
-
-    
-
-
     // new Leg
 
-    this.legL = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:3 }, 12, tSize );
+    this.legL = new THREE.Tubular( { start:[0,0,0], end:[0,1,0], numSegment:3 }, 12, tSize );
     this.legmeshL = new THREE.Mesh( this.legL, this.mats[2] );
 
-    this.legR = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:3 }, 12, tSize );
+    this.legR = new THREE.Tubular( { start:[0,0,0], end:[0,1,0], numSegment:3 }, 12, tSize );
     this.legmeshR = new THREE.Mesh( this.legR, this.mats[2] );
-
-    
 
     // new arm
 
-    this.armL = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:4 }, 16, tSize );
+    this.armL = new THREE.Tubular( { start:[0,0,0], end:[0,1,0], numSegment:4 }, 16, tSize );
     this.armmeshL = new THREE.Mesh( this.armL, this.mats[2] );
 
-    this.armR = new THREE.Tubex( { start:[0,0,0], end:[0,1,0], numSegment:4 }, 16, tSize );
+    this.armR = new THREE.Tubular( { start:[0,0,0], end:[0,1,0], numSegment:4 }, 16, tSize );
     this.armmeshR = new THREE.Mesh( this.armR, this.mats[2] );
-
-    
 
 
     this.dda = new THREE.Matrix4().makeTranslation(-6,1,0);
@@ -187,28 +115,20 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
     this.legmeshR.castShadow = true;
     this.legmeshR.receiveShadow = true;
 
-    //console.log(this.leg.positions)
 
-    
-
-    //this.helper = new THREE.SkeletonHelper( this.mesh );
     this.helper = new THREE.SkeletonHelper( this.b.hip );
     this.helper.skeleton = this.mesh.skeleton;
     this.helper.visible = this.debug;
 
-    
-    //this.root.add( this.mesh );
 
     this.head = new V.Head( this.type, this.txt, meshs2 );
 
     this.setMaterial(1);
 
-    //this.head.add( this.a2 );
-    this.headMesh.add( this.a2 );
+    this.headMesh.add( this.headExtra );
 
     this.root = new THREE.Group();
-    //this.b.abdomen.add( a0 );
-    //this.root.add( this.head );
+
     this.root.add( this.footR );
     this.root.add( this.footL );
     this.root.add( this.handR );
@@ -217,25 +137,17 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
     this.root.add( this.armmeshR );
     this.root.add( this.legmeshL );
     this.root.add( this.legmeshR );
-
     this.root.add( this.headMesh );
     
     this.root.add( this.helper );
 
-    //this.root.add( this.mesh );
-    //Scene.add( this.mesh );
-    //Scene.add( this.root );
-
 
     this.mesh.position.copy( this.position );
 
-    //this.makehead();
+    // hide model
 
     this.root.visible = false;
     this.mesh.visible = false;
-
-
-    
     
 }
 
@@ -261,24 +173,6 @@ V.Model.prototype = {
         this.mesh.play( name, a, b, c );
 
     },
-
-    /*makehead: function(){
-
-        canvg( this.canvas, this.type === 'man' ? SVGman:SVGwom );
-        this.headTexture.needsUpdate = true;
-
-    },
-
-    initCanvas: function(){
-
-        if( this.canvas ) return;
-
-        this.canvas = document.createElement("canvas");
-        this.canvas.width = 512;
-        this.canvas.height = 256;
-        this.headTexture = new THREE.Texture( this.canvas );
-
-    },*/
 
     setMaterial: function( n ){
 
@@ -316,7 +210,7 @@ V.Model.prototype = {
         this.handL.material = this.mats[3];
         this.handR.material = this.mats[3];
         //this.head.material = this.mats[0];
-        this.a2.material = this.mats[0];
+        this.headExtra.material = this.mats[0];
         this.mesh.material = this.mats[1];
         this.armmeshL.material = this.mats[2];
         this.armmeshR.material = this.mats[2];
@@ -328,10 +222,6 @@ V.Model.prototype = {
     setPosition: function(pos){
 
         this.mesh.position.copy( this.position );
-
-        //if(pos) this.position = pos;
-        //this.mesh.position.copy( this.position );
-        //this.root.position.copy(this.position);
 
     },
 

@@ -3,6 +3,9 @@ V.Head = function ( type, txt, meshs ) {
 
     this.type = type;
 
+    this.multy = 1;
+    this.sampling = 4;
+
     this.t = 0;
 
     this.sett = {
@@ -16,8 +19,8 @@ V.Head = function ( type, txt, meshs ) {
     if(type === 'man' ) colors = [ 0xB1774F, 0xA36D47, 0x613207, 0x196895];
 
 
-    this.w = 512;
-    this.h = 256;
+    this.w = 512 * this.multy;
+    this.h = 256 * this.multy;
     this.mw = this.w * 0.5;
     this.mh = this.h * 0.5;
 
@@ -45,10 +48,18 @@ V.Head = function ( type, txt, meshs ) {
 
     //
 
-    this.camera = new THREE.OrthographicCamera( -this.mw, this.mw, this.mh, -this.mh, 0, 200 );
+    //this.camera = new THREE.OrthographicCamera( -this.mw, this.mw, this.mh, -this.mh, 0, 200 );
+    this.camera = new THREE.OrthographicCamera( -256, 256, 128, -128, 0, 200 );
     this.camera.position.z = 100;
 
     this.scene  = new THREE.Scene();
+
+    this.root = new THREE.Group();
+
+    this.scene.add( this.root );
+    this.root.add(this.camera);
+
+    this.root.scale.set( this.multy, this.multy, this.multy );
 
     // mesh
 
@@ -115,7 +126,7 @@ V.Head = function ( type, txt, meshs ) {
 
     for ( var o in m ){
 
-        this.scene.add( m[o] );
+        this.root.add( m[o] );
 
     }
 
@@ -129,9 +140,9 @@ V.Head = function ( type, txt, meshs ) {
 
     // background
 
-    this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( this.w, this.h ), this.mat.skin );
+    this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 512, 256 ), this.mat.skin );
     //this.quad.frustumCulled = false; // Avoid getting clipped
-    this.scene.add( this.quad );
+    this.root.add( this.quad );
 
     //
 
@@ -144,11 +155,10 @@ V.Head = function ( type, txt, meshs ) {
 
 
     this.composer = new THREE.EffectComposer( renderer, this.renderTarget );
-
-    var ssaaRenderPass = new THREE.SSAARenderPass( this.scene, this.camera );
-    ssaaRenderPass.unbiased = false;
-    ssaaRenderPass.sampleLevel = 2;
-    this.composer.addPass( ssaaRenderPass );
+    this.ssaaRenderPass = new THREE.SSAARenderPass( this.scene, this.camera );
+    this.ssaaRenderPass.unbiased = false;
+    this.ssaaRenderPass.sampleLevel = this.sampling * 0.5;
+    this.composer.addPass( this.ssaaRenderPass );
 
 
     //'Level 0: 1 Sample': 0,
@@ -192,6 +202,48 @@ V.Head = function ( type, txt, meshs ) {
 }
 
 V.Head.prototype = {
+
+    setSize: function ( v ) {
+        var n;
+
+        if(v ==='512') n = 1;
+        if(v ==='1024') n = 2;
+
+
+        if( this.multy!==n ) this.multy = n;
+        else return;
+
+        this.w = 512 * this.multy;
+        this.h = 256 * this.multy;
+        this.mw = this.w * 0.5;
+        this.mh = this.h * 0.5;
+
+        //this.camera = new THREE.OrthographicCamera( -this.mw, this.mw, this.mh, -this.mh, 0, 200 );
+        //var parameters = { minFilter: THREE.LinearMipMapLinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+        //this.renderTarget = new THREE.WebGLRenderTarget( this.w, this.h, parameters );
+        this.root.scale.set( this.multy, this.multy, this.multy );
+
+        //this.composer = new THREE.EffectComposer( renderer, this.renderTarget );
+        //this.composer.addPass( this.ssaaRenderPass );
+
+        this.composer.setSize(this.w, this.h);
+
+    },
+
+    setSampling: function ( v ) {
+
+        var n;
+        
+        if(v ==='x0') n = 0;
+        if(v ==='x2') n = 2;
+        if(v ==='x4') n = 4;
+
+        console.log(n)
+
+        this.sampling = n;
+        this.ssaaRenderPass.sampleLevel = this.sampling * 0.5;
+
+    },
 
     correctMorph: function ( name, meshs ){
 
@@ -263,8 +315,8 @@ V.Head.prototype = {
             this.t = 0;
         }
 
-        this.composer.render();
-        //renderer.render( this.scene, this.camera, this.renderTarget, true );
+        if( this.sampling !==0 ) this.composer.render();
+        else renderer.render( this.scene, this.camera, this.renderTarget, true );
 
 
     }

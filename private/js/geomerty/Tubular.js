@@ -6,16 +6,17 @@
  *
  */
 
-THREE.Tubex = function ( pp, tubularSegments, radius, radialSegments, closed, CurveType ) {
+THREE.Tubular = function ( pp, tubularSegments, radius, radialSegments, closed, CurveType ) {
 
     THREE.BufferGeometry.call( this );
 
-    this.type = 'Tubex';
+    this.type = 'Tubular';
 
     this.tubularSegments = tubularSegments || 64;
     this.radius = radius || 1;
     this.radialSegments = radialSegments || 8;
     this.closed = closed || false;
+    this.scalar = 1;
 
     if( pp instanceof Array ) this.positions = pp;
     else {
@@ -63,7 +64,7 @@ THREE.Tubex = function ( pp, tubularSegments, radius, radialSegments, closed, Cu
 
     // create buffer data
 
-    this.generateBufferData();
+    this.generatePath();
 
     // build geometry
 
@@ -75,177 +76,10 @@ THREE.Tubex = function ( pp, tubularSegments, radius, radialSegments, closed, Cu
 
 }
 
-THREE.Tubex.prototype = Object.create( THREE.BufferGeometry.prototype );
-THREE.Tubex.prototype.constructor = THREE.Tubex;
+THREE.Tubular.prototype = Object.create( THREE.BufferGeometry.prototype );
+THREE.Tubular.prototype.constructor = THREE.Tubular;
 
-THREE.Tubex.prototype.generateBufferData = function () {
-
-    for ( var i = 0; i < this.tubularSegments; i ++ ) {
-
-        this.generateSegment( i );
-
-    }
-
-    // if the geometry is not closed, generate the last row of vertices and normals
-    // at the regular position on the given path
-    //
-    // if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
-
-    this.generateSegment( ( this.closed === false ) ? this.tubularSegments : 0 );
-
-    // uvs are generated in a separate function.
-    // this makes it easy compute correct values for closed geometries
-
-    this.generateIndicesAndUv();
-
-    // finally create faces
-
-    //this.generateIndices();
-
-};
-
-THREE.Tubex.prototype.generateSegment = function ( i ) {
-
-    // we use getPointAt to sample evenly distributed points from the given path
-
-    var P = this.path.getPointAt( i / this.tubularSegments );
-
-    // retrieve corresponding normal and binormal
-
-    var N = this.frames.normals[ i ];
-    var B = this.frames.binormals[ i ];
-
-    // generate normals and vertices for the current segment
-
-    for ( var j = 0; j <= this.radialSegments; j ++ ) {
-
-        var v = j / this.radialSegments * Math.PI * 2;
-
-        var sin =   Math.sin( v );
-        var cos = - Math.cos( v );
-
-        // normal
-
-        this.normal.x = ( cos * N.x + sin * B.x );
-        this.normal.y = ( cos * N.y + sin * B.y );
-        this.normal.z = ( cos * N.z + sin * B.z );
-        this.normal.normalize();
-
-        this.normals.push( this.normal.x, this.normal.y, this.normal.z );
-
-        // vertex
-
-        this.vertex.x = P.x + this.radius * this.normal.x;
-        this.vertex.y = P.y + this.radius * this.normal.y;
-        this.vertex.z = P.z + this.radius * this.normal.z;
-
-        this.vertices.push( this.vertex.x, this.vertex.y, this.vertex.z );
-
-        // colors
-
-        this.colors.push( 1, 1, 1 );
-
-    }
-
-}
-
-THREE.Tubex.prototype.generateIndicesAndUv = function (  ) {
-
-    for ( var i = 0; i <= this.tubularSegments; i ++ ) {
-
-        for ( var j = 0; j <= this.radialSegments; j ++ ) {
-
-            if( j > 0 && i > 0 ) {
-
-                var a = ( this.radialSegments + 1 ) * ( i - 1 ) + ( j - 1 );
-                var b = ( this.radialSegments + 1 ) * i + ( j - 1 );
-                var c = ( this.radialSegments + 1 ) * i + j;
-                var d = ( this.radialSegments + 1 ) * ( i - 1 ) + j;
-
-                // faces
-
-                this.indices.push( a, b, d );
-                this.indices.push( b, c, d );
-            }
-
-            // uv
-
-            this.uv.x = i / this.tubularSegments;
-            this.uv.y = j / this.radialSegments;
-
-            this.uvs.push( this.uv.x, this.uv.y );
-
-        }
-
-    }
-
-}
-
-THREE.Tubex.prototype.updatePath = function ( path ) {
-
-    //this.path = path;
-
-    this.frames = this.path.computeFrenetFrames( this.tubularSegments, this.closed );
-
-    this.normals = this.attributes.normal.array;
-    this.vertices = this.attributes.position.array;
-    this.colors = this.attributes.color.array;
-    
-
-    for ( var i = 0; i < this.tubularSegments; i ++ ) {
-
-        this.updateSegment( i );
-
-    }
-
-    // if the geometry is not closed, generate the last row of vertices and normals
-    // at the regular position on the given path
-    //
-    // if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
-
-    this.updateSegment( ( this.closed === false ) ? this.tubularSegments : 0 );
-
-    
-
-
-    this.attributes.color.needsUpdate = true;
-    this.attributes.position.needsUpdate = true;
-    this.attributes.normal.needsUpdate = true;
-
-    this.computeBoundingSphere();
-   
-
-}
-
-THREE.Tubex.prototype.updateUV = function () {
-
-    this.uvs = this.attributes.uv.array;
-
-    var n, n2;
-
-    for ( var i = 0; i <= this.tubularSegments; i ++ ) {
-
-        n = (i*2) * (this.radialSegments+1);
-
-        for ( var j = 0; j <= this.radialSegments; j ++ ) {
-
-            n2 = j * 2;
-
-            this.uv.x = i / this.tubularSegments;
-            this.uv.y = j / this.radialSegments;
-
-            this.uvs[n + n2] = this.uv.x
-            this.uvs[n + n2 + 1] = this.uv.y;
-
-        }
-
-    }
-
-     this.attributes.uv.needsUpdate = true;
-
-}
-
-THREE.Tubex.prototype.updateSegment = function ( i ) {
+THREE.Tubular.prototype.generateSegment = function ( i ) {
 
     // we use getPointAt to sample evenly distributed points from the given path
 
@@ -294,6 +128,121 @@ THREE.Tubex.prototype.updateSegment = function ( i ) {
 
     }
 
-    
+}
+
+THREE.Tubular.prototype.generateIndicesAndUv = function (  ) {
+
+    for ( var i = 0; i <= this.tubularSegments; i ++ ) {
+
+        for ( var j = 0; j <= this.radialSegments; j ++ ) {
+
+            if( j > 0 && i > 0 ) {
+
+                var a = ( this.radialSegments + 1 ) * ( i - 1 ) + ( j - 1 );
+                var b = ( this.radialSegments + 1 ) * i + ( j - 1 );
+                var c = ( this.radialSegments + 1 ) * i + j;
+                var d = ( this.radialSegments + 1 ) * ( i - 1 ) + j;
+
+                // faces
+
+                this.indices.push( a, b, d );
+                this.indices.push( b, c, d );
+            }
+
+            // uv
+
+            this.uv.x = i / this.tubularSegments;
+            this.uv.y = j / this.radialSegments;
+
+            this.uvs.push( this.uv.x, this.uv.y );
+
+        }
+
+    }
 
 }
+
+THREE.Tubular.prototype.generatePath = function ( path ) {
+
+    for ( var i = 0; i < this.tubularSegments; i ++ ) {
+
+        this.generateSegment( i );
+
+    }
+
+    // if the geometry is not closed, generate the last row of vertices and normals
+    // at the regular position on the given path
+    //
+    // if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
+
+    this.generateSegment( ( this.closed === false ) ? this.tubularSegments : 0 );
+
+    // uvs are generated in a separate function.
+    // this makes it easy compute correct values for closed geometries
+
+    this.generateIndicesAndUv();
+
+}
+
+THREE.Tubular.prototype.updatePath = function ( path ) {
+
+    //this.path = path;
+
+    this.frames = this.path.computeFrenetFrames( this.tubularSegments, this.closed );
+
+    this.normals = this.attributes.normal.array;
+    this.vertices = this.attributes.position.array;
+    this.colors = this.attributes.color.array;
+    
+
+    for ( var i = 0; i < this.tubularSegments; i ++ ) {
+
+        this.generateSegment( i );
+
+    }
+
+    // if the geometry is not closed, generate the last row of vertices and normals
+    // at the regular position on the given path
+    //
+    // if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
+
+    this.generateSegment( ( this.closed === false ) ? this.tubularSegments : 0 );
+
+    this.attributes.color.needsUpdate = true;
+    this.attributes.position.needsUpdate = true;
+    this.attributes.normal.needsUpdate = true;
+
+    this.computeBoundingSphere();
+   
+
+}
+
+THREE.Tubular.prototype.updateUV = function () {
+
+    this.uvs = this.attributes.uv.array;
+
+    var n, n2;
+
+    for ( var i = 0; i <= this.tubularSegments; i ++ ) {
+
+        n = (i*2) * (this.radialSegments+1);
+
+        for ( var j = 0; j <= this.radialSegments; j ++ ) {
+
+            n2 = j * 2;
+
+            this.uv.x = i / this.tubularSegments;
+            this.uv.y = j / this.radialSegments;
+
+            this.uvs[n + n2] = this.uv.x
+            this.uvs[n + n2 + 1] = this.uv.y;
+
+        }
+
+    }
+
+     this.attributes.uv.needsUpdate = true;
+
+}
+
+

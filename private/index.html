@@ -26,7 +26,7 @@ body {
 <script src="js/uil.min.js"></script>
 <script src="js/pool.js"></script>
 <script src="js/ShaderShadow.js"></script>
-<script src="js/geomerty/Tubex.js"></script>
+<script src="js/geomerty/Tubular.js"></script>
 <script src="js/Model.js"></script>
 <script src="js/Head.js"></script>
 <script src="js/controls/OrbitControls.js"></script>
@@ -298,6 +298,9 @@ body {
         gui2 = new UIL.Gui( { css:'top:0px; left:10px;', width:200, bg:'rgba(23,23,23,0.5)' } );
 
         gui.add('fps',  { res:70 });
+
+        gui.add('button', { name:'resolution', height:20, value:['512', '1024'] }).onChange( function(n){ man.head.setSize(n); woman.head.setSize(n);} );
+        gui.add('button', { name:'sampling', height:20, value:['x0', 'x2', 'x4'] }).onChange( function(n){man.head.setSampling(n); woman.head.setSampling(n);} );
 
         gui.add('Bool', { name:'Debug' } ).onChange( function(b){man.setDebug(b)} );
         gui2.add('Bool', { name:'Debug' } ).onChange( function(b){woman.setDebug(b)} );
