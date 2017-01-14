@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - cube</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<script src="js/geomerty/Tubular.js"></script>
+		<script src="js/uil.min.js"></script>
+
+		<script>
+
+			var camera, scene, renderer;
+			var mesh;
+			var gui;
+
+			//var positions = [];
+
+			var k, m, a = 0;
+
+			var torad = 0.0174532925199432957;
+
+
+			var spline, tubeGeo, tmpGeo, tubeMesh, tubeMaterial;
+
+			init();
+			animate();
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.z = 100;
+
+				scene = new THREE.Scene();
+
+				var light = new THREE.DirectionalLight( 0xffffff, 1.3 );
+		        light.position.set(60,70,80);
+		        light.lookAt( new THREE.Vector3( 0,0,0) );
+		        scene.add( light );
+
+				var texture = new THREE.TextureLoader().load( 'textures/UV_Grid_Sm.jpg' );
+				var texture2 = new THREE.TextureLoader().load( 'textures/roughness_map.jpg' );
+
+
+				var env = new THREE.TextureLoader().load( 'textures/medium.jpg' );
+				env.mapping = THREE.SphericalReflectionMapping;
+
+				//var geometry = new THREE.BoxBufferGeometry( 200, 200, 200 );
+				tubeMaterial = new THREE.MeshStandardMaterial( { map: texture, wireframe:false, envMap:env, metalness:1, roughnessMap:texture2, side:THREE.DoubleSide } );
+
+				//mesh = new THREE.Mesh( geometry, material );
+				//scene.add( mesh );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				controler = new THREE.OrbitControls( camera, renderer.domElement );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				//
+
+		        tubeGeo = new THREE.Tubular( { start:[-50, 0, 0], end:[50, 0, 0], numSegment:5 }, 100, 10, 12, false, 'sphere' );
+
+		        tubeGeo.addDebug( scene );
+		
+		        tubeMesh = new THREE.Mesh( tubeGeo, tubeMaterial )
+		        scene.add( tubeMesh );
+
+		        initGUI();
+
+
+
+
+			}
+
+			function initGUI () {
+
+				gui = new UIL.Gui( { width:200, bg:'rgba(23,23,23,0.5)' } );
+				gui.add('slide',  { name:'tension', min:0, max:1, value:0.5, precision:2, stype:1 }).onChange( function(v){ tubeGeo.setTension( v ) } );
+
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function updateTube() {
+
+				var p = tubeGeo.positions;
+
+				a+=2;
+
+				a = a > 360 ? 0 : a;
+
+				k = Math.sin(a*torad) * 10;
+				m = Math.cos(a*torad) * 10;
+
+				p[0].y = k;
+				p[0].z = -m;
+
+				p[1].y = -k;
+				
+				p[2].y = k;
+				//p[2].z = m;
+
+				p[3].y = -k;
+
+				p[4].y = k;
+				p[4].z = -m;
+
+				tubeMesh.geometry.updatePath();
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				updateTube();
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
