@@ -47,9 +47,7 @@ body {
 
     var isFull = false;
 
-    var camPers, camOrtho;
-
-    var camera, scene, renderer, controler, clock,controler2;
+    var camera, scene, renderer, controler, clock;
 
     var man, woman;
 
@@ -60,8 +58,6 @@ body {
     var mx=0, my=0;
 
     var vx=0, vy=0;
-
-    var isOrtho = false;
     
     
     
@@ -78,18 +74,8 @@ body {
 
         //clock = new THREE.Clock();
 
-        camPers = new THREE.PerspectiveCamera( 70, vx / vy, 1, 1000 );
-        camOrtho = new THREE.OrthographicCamera( -vx*0.5, vx*0.5, vy*0.5, -vy*0.5, 1, 1000 );
-
-        //if(isOrtho) camera = camOrtho;
-        //else  camera = camPers;
-
-        camOrtho.position.z = 100;
-
-        // = new THREE.PerspectiveCamera( 70, vx / vy, 1, 1000 );
-
-        //camera = new THREE.OrthographicCamera( -vx*0.5, vx*0.5, vy*0.5, -vy*0.5, 1, 1000 );
-        camPers.position.z = 100;
+        camera = new THREE.PerspectiveCamera( 70, vx / vy, 1, 1000 );
+        camera.position.z = 100;
 
         scene = new THREE.Scene();
 
@@ -112,10 +98,7 @@ body {
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.shadowMap.renderReverseSided = false;
 
-        controler = new THREE.OrbitControls( camPers, renderer.domElement );
-        controler2 = new THREE.OrbitControls( camOrtho, renderer.domElement );
-
-        //console.log(controler)
+        controler = new THREE.OrbitControls( camera, renderer.domElement );
 
 
         var ambient = new THREE.AmbientLight( 0x333333 );
@@ -160,19 +143,8 @@ body {
         window.addEventListener( 'resize', onWindowResize, false );
         document.addEventListener( 'mousemove', onMouse, false );
 
-        var res = [
-            'assets/textures/medium.jpg',
-            'assets/textures/corps_m.jpg', 
-            'assets/textures/corps_w.jpg',
-            'assets/textures/rondo_m.jpg', 
-            'assets/textures/rondo_w.jpg', 
 
-            'assets/models/rondo.sea', 
-            'assets/models/head.sea'
-        ]
-
-
-        pool.load( res, onLoadComplete );
+        pool.load( ['assets/textures/medium.jpg','assets/textures/rondo_m.jpg', 'assets/textures/rondo_w.jpg', 'assets/models/rondo.sea', 'assets/models/head.sea'], onLoadComplete );
 
         
 
@@ -195,12 +167,6 @@ body {
         txt['wom'] = new THREE.Texture( p.rondo_w );
         txt['wom'].flipY = false;
         txt['wom'].needsUpdate = true;
-
-        txt['corps_m'] = new THREE.Texture( p.corps_m );
-        txt['corps_m'].needsUpdate = true;
-
-        txt['corps_w'] = new THREE.Texture( p.corps_w );
-        txt['corps_w'].needsUpdate = true;
 
         // sea meshs
 
@@ -333,15 +299,6 @@ body {
 
         gui.add('fps',  { res:70 });
 
-        gui.add('Bool', { name:'ORTHO' } ).onChange( function(b){
-            isOrtho = b; //if(isOrtho) camera = camOrtho; else camera = camPers; 
-            
-            if(isOrtho)controler = new THREE.OrbitControls( camOrtho, renderer.domElement );
-            else controler = new THREE.OrbitControls( camPers, renderer.domElement );
-
-            controler.update()
-        } );
-
         gui.add('button', { name:'resolution', height:20, value:['512', '1024'] }).onChange( function(n){ man.head.setSize(n); woman.head.setSize(n);} );
         gui.add('button', { name:'sampling', height:20, value:['x0', 'x2', 'x4'] }).onChange( function(n){man.head.setSampling(n); woman.head.setSampling(n);} );
 
@@ -417,16 +374,8 @@ body {
         vx = window.innerWidth;
         vy = window.innerHeight;
 
-        camPers.aspect = vx / vy;
-        camPers.updateProjectionMatrix();
-
-        camOrtho.left = -vx*0.5;
-        camOrtho.rigth = vx*0.5;
-        camOrtho.top = vy*0.5;
-        camOrtho.bottom = -vy*0.5;
-        camOrtho.updateProjectionMatrix();
-
-
+        camera.aspect = vx / vy;
+        camera.updateProjectionMatrix();
         renderer.setSize( vx, vy );
 
     }
@@ -434,9 +383,6 @@ body {
     function animate() {
 
         requestAnimationFrame( animate );
-
-        //camOrtho.position.copy(camPers.position)
-        //camOrtho.rotation.copy(camPers.rotation)
 
         //var delta = clock.getDelta();
 
@@ -451,8 +397,7 @@ body {
 
         }
         
-        if( isOrtho ) renderer.render( scene, camOrtho );
-        else renderer.render( scene, camPers );
+        renderer.render( scene, camera );
 
     }
 
