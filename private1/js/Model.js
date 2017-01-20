@@ -46,10 +46,25 @@ V.Model = function ( type, meshs, txt, pos, meshs2 ) {
 
     this.root = new THREE.Group();
 
-    this.head =  meshs.man_head.clone();
+    this.head = type === 'man' ? meshs.man_head.clone() : meshs.wom_head.clone();
     this.head.position.set(0,0,0);
     this.head.rotation.set( 180*torad, 180*torad, 0 );
     this.b.head.add( this.head );
+
+    this.plus = type === 'man' ? meshs.man_plus.clone() : meshs.wom_plus.clone();
+    this.plus.position.set(0,0,0);
+    this.plus.rotation.set( 0*torad, 0*torad, 0*torad );
+    this.head.add( this.plus );
+
+    if(type !== 'man'){
+
+        this.neck = meshs.wom_neck.clone();
+        this.neck.position.set(0,0,0);
+        this.neck.rotation.set( 180*torad, 180*torad, 0 );
+        this.b.neck.add( this.neck );
+
+    }
+
 
     /*var headGeo = new THREE.SphereBufferGeometry( 14.5, 32, 28 );
     var hearGeo = new THREE.SphereBufferGeometry( 1.6, 16, 12 );
@@ -249,7 +264,9 @@ V.Model.prototype = {
 
         this.mats[0] = new THREE[mtype]({ map:this.type === 'man' ? this.txt.corps_m : this.txt.corps_w });
         this.mats[1] = new THREE[mtype]({ map:this.type === 'man' ? this.txt.corps_m : this.txt.corps_w, skinning:true });
-        this.mats[2] = new THREE[mtype]({ color: this.type === 'man' ? 0xb1774f : 0x895837 });
+        this.mats[2] = new THREE[mtype]({ map:this.type === 'man' ? this.txt.head_m : this.txt.head_w });
+
+
         /*this.mats[3] = new THREE[mtype]({ color: this.type === 'man' ? 0xb1774f : 0x895837 });
 
         this.mats[4] = new THREE[mtype]({ map:this.head.renderTarget.texture });
@@ -275,6 +292,9 @@ V.Model.prototype = {
         this.headExtra.material = this.mats[0];*/
         this.head.material = this.mats[2];
         this.mesh.material = this.mats[1];
+        this.plus.material = this.mats[2];
+
+        if( this.type !== 'man') this.neck.material = this.mats[2];
         /*this.armmeshL.material = this.mats[2];
         this.armmeshR.material = this.mats[2];
         this.legmeshL.material = this.mats[2];

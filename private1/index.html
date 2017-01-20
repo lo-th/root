@@ -174,8 +174,8 @@ body {
             'assets/textures/medium.jpg',
             'assets/textures/corps_m.jpg', 
             'assets/textures/corps_w.jpg',
-            //'assets/textures/rondo_m.jpg', 
-            //'assets/textures/rondo_w.jpg', 
+            'assets/textures/head_m.jpg', 
+            'assets/textures/head_w.jpg', 
 
             'assets/models/h-character.sea', 
             //'assets/models/head.sea'
@@ -215,6 +215,14 @@ body {
         txt['corps_w'] = new THREE.Texture( p.corps_w );
         txt['corps_w'].flipY = false;
         txt['corps_w'].needsUpdate = true;
+
+        txt['head_m'] = new THREE.Texture( p.head_m );
+        txt['head_m'].flipY = false;
+        txt['head_m'].needsUpdate = true;
+
+        txt['head_w'] = new THREE.Texture( p.head_w );
+        txt['head_w'].flipY = false;
+        txt['head_w'].needsUpdate = true;
 
         // sea meshs
 
@@ -374,7 +382,7 @@ body {
         gui.add('slide',  { name:'speed', min:-3, max:3, value:1, precision:2, stype:1 }).onChange( function(v){ man.setSpeed( v ) } );
         gui2.add('slide',  { name:'speed', min:-3, max:3, value:1, precision:2, stype:1 }).onChange( function(v){ woman.setSpeed( v ) } );
 
-        /*var m1 = gui.add('group', { name:'MORPH' });
+        var m1 = gui.add('group', { name:'MORPH' });
         var m2 = gui2.add('group', { name:'MORPH' });
 
         m1.add('slide',  { name:'close eye', min:0, max:1, value:0, precision:2 }).onChange( function(v){ man.head.morphEye('close', v ) } );
@@ -390,7 +398,7 @@ body {
         m2.add('slide',  { name:'sad', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.head.morph('sad', v ) } );
 
         m1.open();
-        m2.open();*/
+        m2.open();
 
     };
 
