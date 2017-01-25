@@ -18,8 +18,8 @@ V.Head = function ( type, txt, meshs ) {
     var PI90 = 1.570796326794896;
 
     // [ skin, skin2, hair ];
-    var colors = [ 0x895837, 0x70472B, 0x3A160A, 0x24951b ];
-    if(type === 'man' ) colors = [ 0xB1774F, 0xA36D47, 0x613207, 0x196895];
+    //var colors = [ 0x895837, 0x70472B, 0x3A160A, 0x24951b ];
+    //if(type === 'man' ) colors = [ 0xB1774F, 0xA36D47, 0x613207, 0x196895];
 
 
     this.w = 512 * this.multy;
@@ -34,7 +34,7 @@ V.Head = function ( type, txt, meshs ) {
         skin: new THREE.MeshBasicMaterial({ map: this.type === 'man' ? this.txt.head_m : this.txt.head_w }),
         colors: new THREE.MeshBasicMaterial({ map: this.type === 'man' ? this.txt.color_m : this.txt.color_w , side: THREE.DoubleSide}),
         Mcolors: new THREE.MeshBasicMaterial({ map: this.type === 'man' ? this.txt.color_m : this.txt.color_w , side: THREE.DoubleSide, morphTargets:true }),
-        pup : new THREE.MeshBasicMaterial({ color:colors[3] }),
+        pup : new THREE.MeshBasicMaterial({ color:this.type === 'man' ? 0x280d04 : 0x280d04 }),
         black : new THREE.MeshBasicMaterial({ color:0x000000 }),
         
     };

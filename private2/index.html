@@ -22,17 +22,15 @@ body {
 
 <script src="js/three.min.js"></script>
 <script src="js/sea3d.min.js"></script>
+<script src="js/tween.min.js"></script>
 
 <script src="js/uil.min.js"></script>
 <script src="js/pool.js"></script>
 <script src="js/ShaderShadow.js"></script>
-<script src="js/geomerty/Tubular.js"></script>
 <script src="js/Model.js"></script>
 <script src="js/Head.js"></script>
 <script src="js/controls/OrbitControls.js"></script>
 <script src="js/BVHLoader.js"></script>
-
-<script src="js/tween.min.js"></script>
 
 <script src="js/shaders/CopyShader.js"></script>
 <script src="js/postprocessing/EffectComposer.js"></script>
@@ -355,9 +353,10 @@ body {
 
         gui.add('fps',  { res:70 });
 
-        gui.add('button', { name:'CAPTURE', height:20 }).onChange( function(n){ initCapture(); } );
+        /*gui.add('button', { name:'CAPTURE', height:20 }).onChange( function(n){ initCapture(); } );
         gui.add('button', { name:'START', height:20 }).onChange( function(n){ startCapture(); } );
         gui.add('button', { name:'STOP', height:20 }).onChange( function(n){ saveCapture(); } );
+        */
 
         gui.add('Bool', { name:'ORTHO' } ).onChange( function(b){
             isOrtho = b; //if(isOrtho) camera = camOrtho; else camera = camPers; 
