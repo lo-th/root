@@ -133,6 +133,21 @@ V.Head = function ( type, txt, meshs ) {
 }
 
 V.Head.prototype = {
+    setEyeSize:function ( s ){
+
+        this.mesh.eyeL.scale.set( s, s, s);
+        this.mesh.eyeR.scale.set( s, s, s);
+
+        
+    },
+
+
+    setMouthSize:function ( s ){
+
+        this.mesh.mouth.scale.set( s, s, s);
+        this.mesh.mouth.position.y = ((1-s) * 80)
+        
+    },
 
     setSize: function ( v ) {
         var n;

@@ -97,6 +97,8 @@ V.Model.prototype = {
 
     },
 
+    
+
     addToScene: function ( Scene ){
 
         Scene.add( this.mesh );

@@ -388,11 +388,17 @@ body {
         m1.add('slide',  { name:'happy', min:0, max:1, value:0, precision:2 }).onChange( function(v){ man.headMap.morph('happy', v ) } );
         m1.add('slide',  { name:'sad', min:0, max:1, value:0, precision:2 }).onChange( function(v){ man.headMap.morph('sad', v ) } );
 
+        m1.add('slide',  { name:'mouth', min:0.5, max:2, value:1, precision:2 }).onChange( function(v){ man.headMap.setMouthSize( v ) } );
+        m1.add('slide',  { name:'eye', min:0.5, max:2, value:1, precision:2 }).onChange( function(v){ man.headMap.setEyeSize( v ) } );
+
         m2.add('slide',  { name:'close eye', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.headMap.morphEye('close', v ) } );
         m2.add('slide',  { name:'close', min:0, max:1, value:1, precision:2 }).onChange( function(v){ woman.headMap.morphMouth('close', v ) } );
         m2.add('slide',  { name:'open', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.headMap.morph('open', v ) } );
         m2.add('slide',  { name:'happy', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.headMap.morph('happy', v ) } );
         m2.add('slide',  { name:'sad', min:0, max:1, value:0, precision:2 }).onChange( function(v){ woman.headMap.morph('sad', v ) } );
+
+        m2.add('slide',  { name:'mouth', min:0.5, max:2, value:1, precision:2 }).onChange( function(v){ woman.headMap.setMouthSize( v ) } );
+        m2.add('slide',  { name:'eye', min:0.5, max:2, value:1, precision:2 }).onChange( function(v){ woman.headMap.setEyeSize( v ) } );
 
         m1.open();
         m2.open();
