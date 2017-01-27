@@ -136,7 +136,7 @@ V.Head.prototype = {
     setEyeSize:function ( s ){
 
         this.mesh.eyeL.scale.set( s, s, s);
-        this.mesh.eyeR.scale.set( s, s, s);
+        this.mesh.eyeR.scale.set( -s, s, s);
 
         
     },
