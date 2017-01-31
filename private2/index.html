@@ -70,6 +70,14 @@ body {
     var capturer;
 
     var camFactor = 0.125;
+
+    function testMobile() {
+
+        if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) 
+            || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) return true;
+        else return false;  
+
+    }
     
     
     
@@ -80,6 +88,8 @@ body {
     //animate();
 
     function init() {
+
+        var isMobile = testMobile();
 
         vx = window.innerWidth;
         vy = window.innerHeight;
@@ -109,8 +119,8 @@ body {
         mesh = new THREE.Mesh( geometry, material );
         scene.add( mesh );*/
 
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer = new THREE.WebGLRenderer({ antialias: isMobile ? false : true });
+        renderer.setPixelRatio( isMobile ? 0.5 : window.devicePixelRatio );
         renderer.setSize(vx, vy );
         document.body.appendChild( renderer.domElement );
 
