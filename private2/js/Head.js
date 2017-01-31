@@ -6,8 +6,8 @@ V.Head = function ( type, txt, meshs ) {
 
     this.eyeY =  this.type === 'man' ? -5.76 : -20.75
 
-    this.multy = 1;
-    this.sampling = 4;
+    this.multy = isMobile ? 0.5 : 1;
+    this.sampling = isMobile ? 0 : 4;
 
     this.t = 0;
 
