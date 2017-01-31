@@ -50,11 +50,15 @@ body {
     var count = 0;
     var fps = 0;
 
+    var plane, light;
+
     var dd;
 
     var requestId = undefined;
 
     var isMobile = false;
+
+    var isWithShadow = true;
 
 
     var isFull = false;
@@ -149,7 +153,7 @@ body {
         scene.add( ambient );
 
 
-        var light = new THREE.DirectionalLight( 0xffffff, 0.3 );
+        light = new THREE.DirectionalLight( 0xffffff, 0.3 );
         light.position.set(5,50,40);
         light.lookAt( new THREE.Vector3( 0,0,0) );
         scene.add( light );
@@ -164,7 +168,7 @@ body {
 
         // extra plane shadow
         var planemat = new THREE.ShaderMaterial( THREE.ShaderShadow );
-        var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( d*2, d*2, 1, 1 ), planemat );
+        plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( d*2, d*2, 1, 1 ), planemat );
         plane.geometry.applyMatrix( new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
         plane.position.y = -62;
         plane.castShadow = false;
@@ -208,11 +212,23 @@ body {
         dd.className = 'debug';
         document.body.appendChild(dd);
 
-
-
-        
-
     }
+
+    function shadow ( b ) {
+        isWithShadow = b;
+
+        renderer.shadowMap.enabled = b;
+        light.castShadow = b;
+        plane.visible = b;
+
+        if(b){
+            renderer.shadowMap.soft = isMobile ? false : true;
+            renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
+            renderer.shadowMap.renderReverseSided = false;
+        } 
+
+
+    };
 
     function onLoadComplete( p ) {
 
@@ -379,7 +395,11 @@ body {
         /*gui.add('button', { name:'CAPTURE', height:20 }).onChange( function(n){ initCapture(); } );
         gui.add('button', { name:'START', height:20 }).onChange( function(n){ startCapture(); } );
         gui.add('button', { name:'STOP', height:20 }).onChange( function(n){ saveCapture(); } );
+
+
         */
+
+        gui.add('Bool', { name:'SHADOW', value:true } ).onChange( function(b){ shadow(b)   } );
 
         gui.add('Bool', { name:'ORTHO' } ).onChange( function(b){
             isOrtho = b; //if(isOrtho) camera = camOrtho; else camera = camPers; 
