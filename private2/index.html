@@ -47,6 +47,8 @@ body {
 
     var requestId = undefined;
 
+    var isMobile = false;
+
 
     var isFull = false;
     var isStart = false;
@@ -89,7 +91,7 @@ body {
 
     function init() {
 
-        var isMobile = testMobile();
+        isMobile = testMobile();
 
         vx = window.innerWidth;
         vy = window.innerHeight;
