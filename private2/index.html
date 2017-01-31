@@ -91,7 +91,7 @@ body {
 
     function init() {
 
-        isMobile = true;//testMobile();
+        isMobile = testMobile();
 
         vx = window.innerWidth;
         vy = window.innerHeight;
@@ -129,7 +129,7 @@ body {
         renderer.setClearColor( 0xffd400, 1 );
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.soft = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
         renderer.shadowMap.renderReverseSided = false;
 
         controler = new THREE.OrbitControls( camPers, renderer.domElement );
@@ -151,8 +151,8 @@ body {
         var distance = 100;
         var camShadow = new THREE.OrthographicCamera( d, -d, d, -d,  50, 300 );
         light.shadow = new THREE.LightShadow( camShadow );
-        light.shadow.mapSize.width = 1024;
-        light.shadow.mapSize.height = 1024;
+        light.shadow.mapSize.width = isMobile ? 512 : 1024;
+        light.shadow.mapSize.height = isMobile ? 512 : 1024;
         //light.shadow.bias = 0.0001;
 
         // extra plane shadow
