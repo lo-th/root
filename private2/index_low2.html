@@ -15,7 +15,7 @@ body {
     overflow:hidden; 
 }
 
-.debug { font-family:"Lucida Console", Monaco, monospace; position:absolute; font-size:40px;  top:10px; left:10px; text-align:left; pointer-events:none; width:300px;color:#000;}
+.debug { font-family:"Lucida Console", Monaco, monospace; text-align:center; position:absolute; font-size:30px;  top:10px; left:50%; text-align:left; pointer-events:none; margin-left:-50px; width:100px;color:#000; pointer-event:none;}
 
 </style>
 
@@ -98,7 +98,7 @@ var dd;
 
     function init() {
 
-        isMobile = true;//testMobile();
+        isMobile = testMobile();
 
         vx = window.innerWidth;
         vy = window.innerHeight;
@@ -380,7 +380,7 @@ var dd;
         gui = new UIL.Gui( { width:200, bg:'rgba(23,23,23,0.5)' } );
         gui2 = new UIL.Gui( { css:'top:0px; left:10px;', width:200, bg:'rgba(23,23,23,0.5)' } );
 
-        gui.add('fps',  { res:70 });
+        //gui.add('fps',  { res:70 });
 
         /*gui.add('button', { name:'CAPTURE', height:20 }).onChange( function(n){ initCapture(); } );
         gui.add('button', { name:'START', height:20 }).onChange( function(n){ startCapture(); } );

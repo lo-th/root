@@ -15,8 +15,7 @@ body {
     overflow:hidden; 
 }
 
-.debug { font-family:"Lucida Console", Monaco, monospace; position:absolute; font-size:16px;  top:10px; left:10px; text-align:left; pointer-events:none; width:300px;}
-
+.debug { font-family:"Lucida Console", Monaco, monospace; text-align:center; position:absolute; font-size:30px;  top:10px; left:50%; text-align:left; pointer-events:none; margin-left:-50px; width:100px;color:#000; pointer-event:none;}
 </style>
 
 
@@ -44,6 +43,14 @@ body {
 <body>
 
 <script>
+
+    var time = 0;
+    var temp = 0;
+    var count = 0;
+    var fps = 0;
+
+    var dd;
+
 
     var requestId = undefined;
 
@@ -196,6 +203,10 @@ body {
 
 
         pool.load( res, onLoadComplete );
+
+        dd = document.createElement('div');
+        dd.className = 'debug';
+        document.body.appendChild(dd);
 
 
 
@@ -363,7 +374,7 @@ body {
         gui = new UIL.Gui( { width:200, bg:'rgba(23,23,23,0.5)' } );
         gui2 = new UIL.Gui( { css:'top:0px; left:10px;', width:200, bg:'rgba(23,23,23,0.5)' } );
 
-        gui.add('fps',  { res:70 });
+       // gui.add('fps',  { res:70 });
 
         /*gui.add('button', { name:'CAPTURE', height:20 }).onChange( function(n){ initCapture(); } );
         gui.add('button', { name:'START', height:20 }).onChange( function(n){ startCapture(); } );
@@ -505,6 +516,11 @@ body {
             capturer.capture( renderer.domElement );
             
         }
+
+        time = performance.now();
+        if ( (time - 1000) > temp ){ temp = time; fps = count; count = 0; }; count++;
+
+        dd.innerHTML = fps;
 
         requestAnimationFrame( animate );
 
