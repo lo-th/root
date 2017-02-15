@@ -281,7 +281,7 @@ body {
         woman = new V.Model( 'wom', meshs, txt, new THREE.Vector3( -40, -65, 0 ) );
 
 
-        initGUI();
+        if( !isMobile ) initGUI();
 
         loadAnimation('assets/bvh/action.z');
 
@@ -449,6 +449,8 @@ body {
     };
 
     function addAnimator( model ){
+
+        if( isMobile ) return;
 
         if(model.name ==='man'){
             if( g_animation === null ) g_animation = gui.add('group', { name:'ANIMATIONS' });
