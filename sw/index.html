@@ -44,7 +44,18 @@ body {
 
 <script>
 
-main.init();
+main.init( document.getElementById('container'), afterLoad );
+
+function afterLoad () {
+
+    main.playIntro( 10 );// duration in second
+
+    // for remove character
+    // main.removeCharacter();
+
+}
+
+
 
 </script>
 </body>
