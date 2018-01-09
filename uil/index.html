@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Uil to Three</title>
+<link rel="shortcut icon" href="img/favicon.ico">
+<style>
+/**{ margin: 0; padding: 0; border: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select:none; } */
+html{ overflow:hidden; width:100%; height:100%; }
+body { font-family: "Lucida Console", Monaco, monospace; background-color:#161616; font-size:11px; color:#fff; margin: 0px; }
+
+#version { position:absolute; top:98px; left:50%; width:90px; height:10px; pointer-events:none; text-align:right;  font-size:16px;}
+#logo{ position:absolute; left:50%; margin-left:-128px;  margin-top:-60px; transform: scale(0.5,0.5);}
+</style>
+
+<script type="text/javascript" src="./js/uil.min.js"></script>
+<script type="text/javascript" src="./js/three.min.js"></script>
+<script type="text/javascript" src="./js/sea3d.min.js"></script>
+<script type="text/javascript" src="./js/OrbitControls.js"></script>
+
+</head>
+
+<body>
+<!--<svg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' preserveAspectRatio='none' x='0px' y='0px' width='256px' height='256px' viewBox='0 0 256 256' id='logo'><path id='logoin' fill='#FFFFFF' stroke='none' d='M 183 52 L 170 52 170 167.05 Q 170 184.4 157.75 196.65 145.4 209 128 209 110.6 209 98.35 196.65 86 184.4 86 167.05 L 86 52 73 52 73 167.05 Q 73 189.8 89.15 205.85 105.2 222 128 222 150.75 222 166.95 205.85 183 189.8 183 167.05 L 183 52 M 111 52 L 98 52 98 167.05 Q 98 179.4 106.85 188.15 115.6 197 128 197 140.45 197 149.25 188.15 158 179.4 158 167.05 L 158 52 145 52 145 167.05 Q 145 174 140.05 179 135.05 184 128 184 121 184 116 179 111 174 111 167.05 L 111 52 Z'></path></svg>
+<div id='version'></div>
+<div id='debug'></div>-->
+<script>
+
+var cw = 300, ch=617;
+
+var debug, debug2, camera, scene, renderer, controls, loader, mesh, mat, screen, canvas, interactive, nup = false;
+var temp=0, fps=0, count=0; 
+
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+var mouse2d = new THREE.Vector2();
+var c;
+
+init();
+load();
+animate(0);
+
+function init() {
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0x000000 );
+
+    
+
+    
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.set( 0, 24, 6 );
+    //camera.lookAt( new THREE.Vector3() );
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
+
+    scene.add( new THREE.HemisphereLight( 0x808080, 0x222260, 1 ) );
+
+    var pointLight = new THREE.PointLight( 0xffffff, 2 );
+    pointLight.position.set( -10, 30, -20 );
+    scene.add(pointLight)
+
+    var spotLight = new THREE.SpotLight( 0xffffff, 4 );
+                spotLight.position.set( 10, 30, 20 );
+                spotLight.lookAt(new THREE.Vector3())
+                //spotLight.angle = Math.PI / 4;
+                //spotLight.penumbra = 0.05;
+                spotLight.decay = 2;
+                spotLight.distance = 100;
+                scene.add(spotLight)
+
+    loader = new THREE.TextureLoader();
+
+    var env = loader.load( './assets/textures/env.jpg' );
+    env.mapping = THREE.SphericalReflectionMapping;
+
+    canvas = document.createElement("canvas");
+    canvas.width = cw;
+    canvas.height = ch;
+    screen = new THREE.Texture( canvas );
+    screen.flipY = false;
+    screen.minFilter = THREE.LinearFilter;
+    screen.generateMipmaps = false;
+    screen.premultiplyAlpha = false;
+
+    debug = document.createElement("div");
+    debug.style.cssText = 'position:absolute; top:10px; left:10px; width:100px; pointer-events:none; ';
+    document.body.appendChild(debug);
+
+    debug2 = document.createElement("div");
+    debug2.style.cssText = 'position:absolute; bottom:10px; left:10px; width:100px; pointer-events:none; ';
+    document.body.appendChild(debug2);
+
+   
+
+    mat = {};
+    mat['glass'] = new THREE.MeshStandardMaterial( { roughness:0.25, metalness:0.8, color:0x000000, opacity:0.2, transparent:true, envMap: env } );
+    mat['cadre'] = new THREE.MeshStandardMaterial( { roughness:0, metalness:0.8, color:0x111111, envMap: env } );
+    mat['cadre_side'] =  mat['cadre'];
+    mat['bouton'] =  mat['cadre']
+    mat['screen_back'] = new THREE.MeshBasicMaterial( { color:0x000000 } );
+    mat['screen_border'] = mat['screen_back'];
+    
+    mat['screen'] = new THREE.MeshBasicMaterial( { map:screen } );
+
+    interactive = new THREE.Group();
+    scene.add(interactive);
+
+    // events
+
+    window.addEventListener( 'resize', resize, false );
+    document.addEventListener( 'mouseup', onMouseUp, false );
+    document.addEventListener( 'mousedown', onMouseDown, false );
+    document.addEventListener( 'mousemove', onMouseMove, false );
+
+}
+
+function resize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
+
+
+
+function animate(time) {
+
+    requestAnimationFrame( animate );
+
+    if ( (time - 1000) > temp ){ temp = time; debug2.textContent = count; count = 0; }; count++;
+
+    if(nup){
+        screen.needsUpdate = true;
+        nup = false;
+    }
+    renderer.render( scene, camera );
+
+}
+
+function load() {
+
+    var l = new THREE.SEA3D();
+    meshs = {};
+
+    l.onComplete = function( e ) {
+
+        var i = l.meshes.length, m;
+        while(i--){
+            m = l.meshes[i];
+            meshs[m.name] = m;
+            m.material = mat[m.name];
+            if(m.name === 'screen') interactive.add( m );
+            else scene.add( m );
+
+            //console.log(m.name)
+        }
+
+    };
+
+    l.load( './assets/models/s8.sea' );
+
+}
+
+function onMouseUp( e ){
+
+   //e.preventDefault();
+   if(!controls.enabled){
+        controls.enabled = true;
+        
+    }
+    //raytest( e );
+
+}
+
+function onMouseDown( e ){
+
+   //e.preventDefault();
+    controls.enabled = raytest( e ) ? false : true;
+
+}
+
+function onMouseMove( e ) {
+
+    //e.preventDefault();
+    raytest( e );
+
+}
+
+function raytest ( e ) {
+
+    mouse.set( (e.clientX / window.innerWidth) * 2 - 1, - ( e.clientY / window.innerHeight) * 2 + 1 );
+    raycaster.setFromCamera( mouse, camera );
+    var intersects = raycaster.intersectObjects( interactive.children );
+
+    if ( intersects.length > 0 ){
+
+        var uv = intersects[ 0 ].uv;
+        mouse2d.x = Math.round(uv.x*cw);
+        mouse2d.y = Math.round(uv.y*ch);
+
+        ui.setMouse(mouse2d)
+
+        return true;
+
+    } else {
+        //controls.enabled = true;
+        mouse2d.set(-1,-1);
+        ui.setMouse(mouse2d)
+        //ui.reset()
+        return false;
+    }
+
+
+}
+
+
+
+
+
+
+//canvas.style.cssText = 'position:absolute; left:10px; top:0;';
+//document.body.appendChild(canvas);
+//var ctx = canvas.getContext("2d");
+//ctx.fillStyle = '#000';
+//ctx.fillRect( 0,0, 300, 700); 
+
+var timer = null;
+var display = false;
+var list = ['item-0', 'item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-6', 'item-7', 'item-8', 'item-9', 'item-10', 'item-11', 'item-12'];
+var list2 = ['item-0', 'item-1', 'item-2'];
+
+//document.getElementById('version').innerHTML = 'il '+ UIL.REVISION;
+
+
+
+var callback = function( v ){ 
+    debug.innerHTML = v;
+
+    //UIL.Tools.toCanvas(canvas, ui.content, 300, 600 );
+
+    //UMC.toCanvas(canvas, 'http://lo-th.github.io/uil/index.html', 600, 600 );
+
+}
+
+//var callbackButton = function(){ debug.innerHTML = "i'm a button !!" ; }
+//var callbackSize = function( v ){ ui.setWidth( v ); }
+//var callbackLogo = function( v ){ document.getElementById('logoin').setAttributeNS(null, 'fill', UIL.hexToHtml(v)); document.getElementById('version').style.color = UIL.hexToHtml(v);  }
+
+
+// single UI element
+var b = UIL.add('button', { target:document.body, callback:populate, name:'populate', w:100, pos:{left:'50%', top:'10px', marginLeft:'-50px' }, simple:true });
+
+var cc = document.createElement('div');
+cc.style.cssText = 'position:absolute; left:0px; top:0px; height:617px; width:300px; background:#FF0000; pointer-events:none; opacity:0; visibility:hidden; ';
+document.body.appendChild(cc);
+//cc.style.display = 'hidden'
+// in GUI element
+var ui = new UIL.Gui( { w:cw, maxHeight:ch, parent:cc,  css:'left:0; top:0;' } ).onChange( callback );
+
+
+ui.setEventCallback( redraw ); 
+
+function redraw(){ 
+    UIL.Tools.toCanvas( canvas, ui.content, up3d, cw, ch );
+}
+
+function up3d(){  
+    nup = true;
+}
+
+populate();
+//loop();
+
+///ui.toCanvas();
+
+function populate(){
+
+    if(!display){
+
+        ui.add('title',  { name:'Title', titleColor:'#D4B87B', height:30});
+        ui.add('bool',   { name:'bool', titleColor:'#D4B87B', height:30 });
+        ui.add('color',  { name:'color', type:'html', value:0x000000, fontColor:'#D4B87B'});
+        ui.add('color',  { name:'color', type:'rgb', value:[0,1,1,1], height:40 });
+        ui.add('slide',  { name:'slide',  min:-100, max:100, value:0, precision:0, fontColor:'#D4B87B' });
+        ui.add('slide',  { name:'slide',  min:-1, max:1, value:0, step:0.01, precision:2, height:40 });
+        ui.add('string', { name:'string',  value:'welcome to uil', fontColor:'#D4B87B', height:40});
+        ui.add('list',   { name:'list',  list:list, fontColor:'#D4B87B', height:30});
+        ui.add('list',   { name:'list',  list:list2, height:40});
+        /*ui.add('number', { name:'number',  value:20});
+        ui.add('number', { name:'vector2', value:[0,0], fontColor:'#D4B87B' });
+        ui.add('number', { name:'vector3', value:[0,0,0] });
+        ui.add('number', { name:'vector4', value:[0,0,0,0], step:1, precision:0, height:30 });*/
+        ui.add('button', { name:'button', fontColor:'#D4B87B', height:30 });
+        ui.add('button', { name:'MULTY', fontColor:'#D4B87B', height:30, value:[1, 2, 3, 4] })
+
+        gr0 = ui.add('group', { name:'Group', fontColor:'#D4B87B', height:30 });
+        gr0.add('list',   { name:'listH', list:list, fontColor:'#D4B87B', height:30});
+        gr0.add('slide',  { name:'slide', min:-100, max:100, value:0, precision:0 });
+        gr0.add('slide',  { name:'slide', min:-100, max:100, value:0, precision:0 });
+        gr0.add('slide',  { name:'slide', min:-100, max:100, value:0, precision:0 });
+        gr0.add('slide',  { name:'slide', min:-100, max:100, value:0, precision:0 });
+        gr0.add('slide',  { name:'slide', min:-100, max:100, value:0, precision:0 });
+
+        gr1 = ui.add('group', { name:'circulars', fontColor:'#D4B87B' });
+
+        gr1.add('circular', { name:'circular', w:70, min:0, max:100, step:10, value:20, precision:0 , fontColor:'#D4B87B' });
+        gr1.add('circular', { name:'circular', w:70, min:0, max:100, value:50, precision:2 , fontColor:'#D4B87B' });
+        gr1.add('circular', { name:'circular', w:70, min:0, max:100, value:75, precision:2 , fontColor:'#D4B87B' });
+        gr1.add('circular', { name:'circular', w:70, min:0, max:100, value:100, precision:0 , fontColor:'#D4B87B' });
+
+        gr2 = ui.add('group', { name:'knobs', fontColor:'#D4B87B' });
+
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, step:10, value:20, precision:0 , fontColor:'#D4B87B' });
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:50, precision:2 , fontColor:'#D4B87B' });
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:75, precision:2 , fontColor:'#D4B87B' });
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:100, step:1, precision:0 , fontColor:'#D4B87B' });
+
+        gr3 = ui.add('group', { name:'joysticks', fontColor:'#D4B87B' });
+
+        gr3.add('joystick', { name:'joystick', w:140, multiplicator:1, precision:2, fontColor:'#D4B87B' });
+        gr3.add('joystick', { name:'joystick', w:140, multiplicator:1, precision:2, fontColor:'#D4B87B' });
+
+        //ui.eventCallback()
+
+        //gr0.open();
+
+        display = true;
+        b.label('clear');
+    } else {
+        ui.clear();
+        display = false;
+        b.label('populate');
+    }
+
+
+}
+
+
+/*function loop(){
+
+    window.requestAnimationFrame(loop);
+    UIL.Tools.toCanvas(canvas, ui.content, 300, 600 );
+
+}*/
+
+</script>
+</body>
+</html>
