@@ -208,9 +208,9 @@ function raytest ( e ) {
 
     } else {
         //controls.enabled = true;
-        mouse2d.set(-1,-1);
+        mouse2d.set(-10,-10);
         ui.setMouse(mouse2d)
-        //ui.reset()
+        ui.reset( true );
         return false;
     }
 
@@ -254,12 +254,12 @@ var callback = function( v ){
 // single UI element
 var b = UIL.add('button', { target:document.body, callback:populate, name:'populate', w:100, pos:{left:'50%', top:'10px', marginLeft:'-50px' }, simple:true });
 
-var cc = document.createElement('div');
+/*var cc = document.createElement('div');
 cc.style.cssText = 'position:absolute; left:0px; top:0px; height:617px; width:300px; background:#FF0000; pointer-events:none; opacity:0; visibility:hidden; ';
-document.body.appendChild(cc);
+document.body.appendChild(cc);*/
 //cc.style.display = 'hidden'
 // in GUI element
-var ui = new UIL.Gui( { w:cw, maxHeight:ch, parent:cc,  css:'left:0; top:0;' } ).onChange( callback );
+var ui = new UIL.Gui( { w:cw, maxHeight:ch, parent:false,  css:'left:0; top:0;' } ).onChange( callback );
 
 
 ui.setEventCallback( redraw ); 
