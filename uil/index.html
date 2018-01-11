@@ -25,7 +25,11 @@ body { font-family: "Lucida Console", Monaco, monospace; background-color:#16161
 
 var cw = 300, ch=617;
 
-var debug, debug2, camera, scene, renderer, controls, loader, mesh, mat, screen, canvas, interactive, nup = false;
+var canvas = document.createElement("canvas");
+canvas.width = cw;
+canvas.height = ch;
+
+var debug, debug2, camera, scene, renderer, controls, loader, mesh, mat, screenTexture, interactive, nup = false;
 var temp=0, fps=0, count=0; 
 
 var raycaster = new THREE.Raycaster();
@@ -41,10 +45,6 @@ function init() {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x000000 );
-
-    
-
-    
 
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -75,15 +75,12 @@ function init() {
 
     var env = loader.load( './assets/textures/env.jpg' );
     env.mapping = THREE.SphericalReflectionMapping;
-
-    canvas = document.createElement("canvas");
-    canvas.width = cw;
-    canvas.height = ch;
-    screen = new THREE.Texture( canvas );
-    screen.flipY = false;
-    screen.minFilter = THREE.LinearFilter;
-    screen.generateMipmaps = false;
-    screen.premultiplyAlpha = false;
+    
+    screenTexture = new THREE.Texture( canvas );
+    screenTexture.flipY = false;
+    screenTexture.minFilter = THREE.LinearFilter;
+    screenTexture.generateMipmaps = false;
+    screenTexture.premultiplyAlpha = false;
 
     debug = document.createElement("div");
     debug.style.cssText = 'position:absolute; top:10px; left:10px; width:100px; pointer-events:none; ';
@@ -103,7 +100,7 @@ function init() {
     mat['screen_back'] = new THREE.MeshBasicMaterial( { color:0x000000 } );
     mat['screen_border'] = mat['screen_back'];
     
-    mat['screen'] = new THREE.MeshBasicMaterial( { map:screen } );
+    mat['screen'] = new THREE.MeshBasicMaterial( { map:screenTexture } );
 
     interactive = new THREE.Group();
     scene.add(interactive);
@@ -134,7 +131,7 @@ function animate(time) {
     if ( (time - 1000) > temp ){ temp = time; debug2.textContent = count; count = 0; }; count++;
 
     if(nup){
-        screen.needsUpdate = true;
+        screenTexture.needsUpdate = true;
         nup = false;
     }
     renderer.render( scene, camera );
