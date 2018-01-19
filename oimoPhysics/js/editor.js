@@ -64,13 +64,13 @@ editor = {
 
         // github logo
 
-        var github = document.createElement( 'div' );
+        /*var github = document.createElement( 'div' );
         github.style.cssText = "position:absolute; right:0; top:0; width:1px; height:1px; pointer-events:none;";
         github.innerHTML = icon_Github; 
         document.body.appendChild( github );
 
         octo = document.getElementById('octo');
-        octoArm = document.getElementById('octo-arm');
+        octoArm = document.getElementById('octo-arm');*/
 
         // debug
 
@@ -253,12 +253,16 @@ editor = {
 
     selectBigMenu: function( e ){
 
+        e.preventDefault();
+
         if(isMenu) editor.hideBigMenu();
         else editor.showBigMenu();
 
     },
 
     showBigMenu: function( e ){
+
+        //e.preventDefault();
 
         //bigContent.style.display = "block";
         bigmenu.style.background = bg;//"#252525";
@@ -275,6 +279,8 @@ editor = {
     },
 
     hideBigMenu: function( e ){
+
+        //e.preventDefault();
 
         bigmenu.style.background = "rgba(0,0,0,0)";
         bigmenu.style.borderBottom = "1px solid rgba(255, 255, 255, 0)";
@@ -304,12 +310,16 @@ editor = {
 
     bigDown: function( e ){
 
+        e.preventDefault();
+
         editor.hideBigMenu();
         editor.load('demos/' + e.target.name + '.js');
 
     },
 
     Bover: function( e ){
+
+        e.preventDefault();
 
         e.target.style.border = "1px solid "+selectColor;
         e.target.style.background = selectColor;
@@ -319,6 +329,8 @@ editor = {
     },
 
     Bout: function( e ){
+
+        e.preventDefault();
 
         var style = 0;
         if(e.target.name == 'code' && isWithCode) style = 1;

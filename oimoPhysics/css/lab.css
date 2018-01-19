@@ -24,7 +24,7 @@ html, body {
     overflow:hidden;
     /*font-smooth: never;
     -webkit-font-smoothing : none;*/
-    pointer-events:none;
+    /*pointer-events:none;*/
     /*text-shadow: 0.5px 0.5px 2px #000000;*/
 }
 
@@ -38,9 +38,9 @@ html, body {
     position: absolute;
     padding-top:40px;
     background: rgba(0,0,0,0);
-    transition:background 0.3s ease;
+    /*transition:background 0.3s ease;*/
     border-bottom:  1px solid rgba(255, 255, 255, 0);
-    transition:border 0.3s ease;
+    /*transition:border 0.3s ease;*/
 }
 
 .bigContent {
@@ -63,7 +63,7 @@ html, body {
     text-align: left;
     display: inline-block;
     width:110px;
-    transition:color 0.3s ease;
+    /*transition:color 0.3s ease;*/
 
 }
 
@@ -87,7 +87,7 @@ html, body {
     display: inline-block;
     margin-left: 40px;
     margin-right: -20px;
-    transition:all 0.3s ease;
+    /*transition:all 0.3s ease;*/
     border-radius: 3px;
 }
 
