@@ -16,7 +16,7 @@ function demo() {
 
     cam ( [20, 40, 100, [0,20,0]] );
 
-    //world = new OIMO.World({ info:true });
+    set({});
 
     
 

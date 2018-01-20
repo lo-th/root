@@ -1,5 +1,5 @@
 var demos = [ 
-    'basic', 'compound', 'stacking', 'terrain', 'kinematic2', 'kinematic3'//'tower', 'terrain', 'trimesh', 'building', 'car', 'ragdoll', 'asteroid', 'kinematic', 'water', 'mesh_test'
+    'basic', 'compound', 'stacking', 'terrain', 'kinematic2', 'kinematic3', 'asteroid', 'ragdoll'//, 'terrain', 'trimesh', 'building', 'car', 'ragdoll', 'kinematic', 'water', 'mesh_test'
 ];
 
 demos.sort();

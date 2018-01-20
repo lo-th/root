@@ -13,7 +13,7 @@ function demo() {
     });
 
     // basic geometry box
-    var w = 20, h = 30, m = 2;
+    var w = 20, h = 25, m = 1;
     add({
         type:[ 'box', 'box', 'box', 'box', 'box' ],
         Rsize:[ [w-(2*m), m, w-(m)], [m,h, w-(2*m)], [m,h, w-(2*m)], [w,h, m], [w,h, m] ],

@@ -201,7 +201,7 @@ view = {
         // GROUND
 
         //helper = new THREE.GridHelper( 50, 20, 0x444444, 0x333333 );
-        helper = new THREE.GridHelper( 50, 20, 0x111111, 0x050505 );
+        helper = new THREE.GridHelper( 40, 16, 0x111111, 0x050505 );
         helper.position.y = -0.001;
         scene.add( helper );
         //helper.visible = false;
@@ -506,7 +506,7 @@ view = {
 
         o = o || {};
 
-        if( o.b1 == undefined ) console.log( '!! body1 name not define' );
+        /*if( o.b1 == undefined ) console.log( '!! body1 name not define' );
         if( o.b2 == undefined ) console.log( '!! body1 name not define' );
 
         o.type = o.type == undefined ? 'hinge' : o.type;
@@ -517,7 +517,7 @@ view = {
         o.axe1 = o.axe1 == undefined ? [1,0,0] : o.axe1;
         o.axe2 = o.axe2 == undefined ? [1,0,0] : o.axe2;
 
-        o.param = o.param == undefined ? [] : o.param;
+        o.param = o.param == undefined ? [] : o.param;*/
 
         oimo.send( 'joint', o );
 
