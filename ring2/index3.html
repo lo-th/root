@@ -185,7 +185,7 @@
 					var copyShader = new THREE.ShaderPass(THREE.CopyShader);
 					copyShader.renderToScreen = true;
 
-			    bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);//1.0, 9, 0.5, 512);
+			    bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.4, 0.4, 0.85);//1.0, 9, 0.5, 512);
 				composer = new THREE.EffectComposer(renderer);
 
 			    composer.setSize(window.innerWidth, window.innerHeight);
