@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>my Game</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+* { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; }
+body { 
+    font-family: "Lucida Console", Monaco, monospace;
+    font-size: 11px; 
+    color:#fff;
+    background: #666; 
+    overflow:hidden; 
+}
+#debug { position:absolute; top:10px; left:10px; text-align:left; pointer-events:none; width:300px;}
+</style>
+
+<script src="js/libs/uil.min.js"></script>
+<script src="js/libs/three.min.dev.js"></script>
+<script src="js/libs/sea.min.js"></script>
+
+<script src="js/controls/OrbitControls.js"></script>
+<script src="js/shaders/FresnelShader.js"></script>
+
+<script src="js/effects.js"></script>
+<script src="js/pool.js"></script>
+<script src="js/view.js"></script>
+
+</head>
+<body>
+
+<div id="debug"></div>
+
+<script>
+
+
+
+
+    var ring = null;
+    var mat0, mat1, mat2, mat1f;
+
+    var d = document.getElementById( 'debug' );
+    function debug ( s ) { d.innerHTML = s; };
+
+
+    // init 3D view
+
+    //var dy = -6.5*10;
+
+    view.init();
+    //view.moveCamera( [0,dy,260], [0,dy,0] );
+
+    view.loadAssets();
+
+    initGui();
+
+
+    function initGui () {
+
+        var params = view.getParams(); 
+
+        var ui1 = new UIL.Gui( { width:260, bg:'rgba(44,44,38,0.5)' } );//.onChange( function(){ applySet() } );
+
+        ui1.add( params, 'exposure', { min:0.1, max:2, stype:0, precision:2 } ).onChange( function(){ view.getRenderer().toneMappingExposure = Math.pow( params.exposure, 4.0 ); } );
+
+        var gr1 = ui1.add('group', { name:'Bloom', fontColor:'#D4B87B', height:22 }).onChange( function(){ view.setBloom() } );
+
+        gr1.add( params, 'threshold', { min:0, max:1, stype:0, precision:2 } );
+        gr1.add( params, 'strength', { min:0, max:3, stype:0, precision:2 } );
+        gr1.add( params, 'radius', { min:0, max:1, stype:0, precision:2 } );
+
+        gr1.open();
+
+    }
+
+    // load stuff
+
+    /*var path = "textures/cube/church/";
+    var format = '.jpg';
+    var urls = [
+            path + 'posx' + format, path + 'negx' + format,
+            path + 'posy' + format, path + 'negy' + format,
+            path + 'posz' + format, path + 'negz' + format
+        ]; 
+    urls.push( 'textures/ring_ao.png', 'textures/ring_n.png', 'models/ring.sea' );
+
+    pool.load( urls, init );*/
+
+
+
+    function init(){
+
+        var p = pool.getResult();
+
+        // set cube texture
+        var textureCube = view.setCubeEnv( [ p['posx'], p['negx'], p['posy'], p['negy'], p['posz'], p['negz'] ] );
+
+
+        var aoMap = new THREE.Texture( p['ring_ao'] );
+        aoMap.flipY = false;
+        aoMap.anisotropy = 16;
+        aoMap.needsUpdate = true;
+        //aoMap.minFilter = THREE.LinearFilter;
+        //aoMap.unpackAlignment = 1;
+
+        var normalMap = new THREE.Texture( p['ring_n'] );
+        normalMap.flipY = false;
+        //normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
+        normalMap.anisotropy = 16;
+        normalMap.needsUpdate = true;
+
+        //view.getScene().background = textureCube;
+        //view.getRenderer().autoClear = false;
+
+        
+
+
+        //view.setEnv( p['ceramic'] );
+
+        //console.log( p['ringh'] );
+//mat0 = new THREE.MeshBasicMaterial({
+
+        mat0 = new THREE.MeshStandardMaterial({
+            metalness:1.0, 
+            roughness:0.4, 
+            shading:THREE.SmoothShading,
+            aoMap: aoMap,
+            aoMapIntensity:0.25,
+            normalMap: normalMap,
+            envMap:textureCube,
+        });
+
+        mat1 = new THREE.MeshStandardMaterial({
+            metalness:1, roughness:0, envMap :textureCube, transparent:true, 
+            opacity:0.5, 
+            //shading:THREE.FlatShading,
+            //refractionRatio:0.6,//2.417 
+            envMapIntensity: 2,
+            premultipliedAlpha: true,
+            side: THREE.BackSide,
+            depthWrite:false,
+        });
+
+        mat1f = new THREE.MeshStandardMaterial({
+            metalness:0.5, roughness:0, envMap:textureCube, transparent:true, 
+            opacity:0.15, 
+            //shading:THREE.FlatShading,
+            //refractionRatio:0.6,//2.417 
+            envMapIntensity: 2,
+            premultipliedAlpha: true,
+            side: THREE.FrontSide,
+            depthWrite:false,
+        })
+
+        var shader = THREE.FresnelShader;
+        var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+        uniforms[ "tCube" ].value = textureCube;
+        uniforms.mRefractionRatio.value = 0.6;//1.02;//2.417;
+        uniforms.mFresnelBias.value = 0.1;
+        uniforms.mFresnelPower.value = 2;
+        uniforms.mFresnelScale.value = 1;
+
+        mat2 = new THREE.ShaderMaterial( {
+            uniforms: uniforms,
+            vertexShader: shader.vertexShader,
+            fragmentShader: shader.fragmentShader,
+            //blending:THREE.AdditiveBlending,
+            //blending:THREE.AdditiveMultypli,
+            transparent:true,
+            depthWrite:false,
+            shading:THREE.FlatShading,//,  opacity:0.7//, side:THREE.DoubleSide
+            side: THREE.BackSide,
+            //envMapIntensity: 2,
+            //premultipliedAlpha: true,
+        } );
+
+        var meshs = p['ring'];
+
+        var i = meshs.length, m, name, m2;
+
+        while(i--){
+            m = meshs[i];
+            name = m.name;
+            
+            if( name === 'ring' || name === 'crown' ) {
+                m.material = mat0; 
+                //ring = m; 
+                view.add( m );
+            } else {
+
+                m2 = new THREE.Mesh( m.geometry, mat1f );
+                //m2.position.y = dy;
+                m2.scale.multiplyScalar(10);
+                //m2.material = mat1f;
+
+                m.material = mat2; 
+                //g.push(m);
+                view.add( m );
+
+                //gf.push(m2);
+                view.add( m2 );
+
+            }
+            //m.position.y = dy;
+            m.scale.multiplyScalar(10);
+        }
+
+
+        //view.addUpdate( postUp )
+
+    }
+
+
+</script>
+</body>
+</html>

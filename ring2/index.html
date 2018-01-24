@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>RING</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+* { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; }
+body { 
+    font-family: "Lucida Console", Monaco, monospace;
+    font-size: 11px; 
+    color:#fff;
+    background: #EEE; 
+    overflow:hidden; 
+}
+#debug { position:absolute; top:10px; left:10px; text-align:left; pointer-events:none; width:300px;}
+</style>
+
+<script src="js/libs/uil.min.js"></script>
+<script src="js/libs/three.min.dev.js"></script>
+<script src="js/libs/sea.min.js"></script>
+
+<script src="js/controls/OrbitControls.js"></script>
+<script src="js/shaders/FresnelShader.js"></script>
+
+<script src="js/effects.js"></script>
+<script src="js/pool.js"></script>
+<script src="js/view.js"></script>
+
+</head>
+<body>
+
+<div id="debug"></div>
+
+<script>
+
+    var d = document.getElementById( 'debug' );
+    function debug ( s ) { d.innerHTML = s; };
+
+    view.init();
+    view.loadAssets('skybox');
+
+    initGui();
+
+    function initGui () {
+
+        var params = view.getParams(); 
+
+        var ui1 = new UIL.Gui( { width:260, bg:'rgba(44,44,38,0.5)' } );
+
+        ui1.add( params, 'exposure', { min:0.1, max:2, stype:0, precision:2 } ).onChange( function(){ view.getRenderer().toneMappingExposure = Math.pow( params.exposure, 4.0 ); } );
+        ui1.add( params, 'background', { type:'Bool', inh:14, p:50 } ).onChange( function(){ view.setBackground() } );
+        ui1.add( params, 'sphere', { type:'Bool', inh:14, p:50 } );//.onChange( function(){ view.setBackground() } );
+
+        var gr1 = ui1.add('group', { name:'Bloom', fontColor:'#D4B87B', height:22 }).onChange( function(){ view.setBloom() } );
+
+        gr1.add( params, 'threshold', { min:0, max:1, stype:0, precision:2 } );
+        gr1.add( params, 'strength', { min:0, max:3, stype:0, precision:2 } );
+        gr1.add( params, 'radius', { min:0, max:2, stype:0, precision:2 } );
+
+        gr1.open();
+
+        var gr2 = ui1.add('group', { name:'Fresnel', fontColor:'#D4B87B', height:22 }).onChange( function(){ view.setFresnel() } );
+
+        gr2.add( params, 'reflect', { min:0, max:1, stype:0, precision:2 } );
+        gr2.add( params, 'refract', { min:0, max:1, stype:0, precision:2 } );
+
+        gr2.add( params, 'ratio', { min:0, max:3, stype:0, precision:2 } );
+        gr2.add( params, 'bias', { min:0, max:1, stype:0, precision:2 } );
+        gr2.add( params, 'power', { min:0, max:5, stype:0, precision:2 } );
+        gr2.add( params, 'scale', { min:0, max:1, stype:0, precision:2 } );
+
+        gr2.open();
+
+        var gr3 = ui1.add('group', { name:'Ring', fontColor:'#D4B87B', height:22 }).onChange( function(){ view.setMaterial() } );
+
+        gr3.add( params, 'r_metal', { min:0, max:1, stype:0, precision:2 } );
+        gr3.add( params, 'r_rough', { min:0, max:1, stype:0, precision:2 } );
+        gr3.add( params, 'r_ao', { min:0, max:1, stype:0, precision:2 } );
+        gr3.add( params, "r_color",  { type:'Color', ctype:'hex', height:20 } );
+        //gr3.add( params, 'bias', { min:0, max:1, stype:0, precision:2 } );
+
+        gr3.open();
+
+        var gr4 = ui1.add('group', { name:'Crown', fontColor:'#D4B87B', height:22 }).onChange( function(){ view.setMaterial() } );
+
+        gr4.add( params, 'c_metal', { min:0, max:1, stype:0, precision:2 } );
+        gr4.add( params, 'c_rough', { min:0, max:1, stype:0, precision:2 } );
+        gr4.add( params, 'c_ao', { min:0, max:1, stype:0, precision:2 } );
+        gr4.add( params, "c_color",  { type:'Color', ctype:'hex', height:20 } );
+        //gr3.add( params, 'bias', { min:0, max:1, stype:0, precision:2 } );
+
+        gr4.open();
+
+        var gr5 = ui1.add('group', { name:'Diamond Front', fontColor:'#D4B87B', height:22 }).onChange( function(){ view.setMaterial() } );
+
+        gr5.add( params, 'f_metal', { min:0, max:1, stype:0, precision:2 } );
+        gr5.add( params, 'f_rough', { min:0, max:1, stype:0, precision:2 } );
+        gr5.add( params, 'f_alpha', { min:0, max:1, stype:0, precision:2 } );
+        gr5.add( params, 'f_env', { min:0, max:10, stype:0, precision:2 } );
+
+        gr5.open();
+
+        var gr6 = ui1.add('group', { name:'Diamond Back', fontColor:'#D4B87B', height:22 }).onChange( function(){ view.setMaterial() } );
+
+        gr6.add( params, 'b_metal', { min:0, max:1, stype:0, precision:2 } );
+        gr6.add( params, 'b_rough', { min:0, max:1, stype:0, precision:2 } );
+        gr6.add( params, 'b_alpha', { min:0, max:1, stype:0, precision:2 } );
+        gr6.add( params, 'b_env', { min:0, max:10, stype:0, precision:2 } );
+
+        gr6.open();
+
+    }
+
+</script>
+</body>
+</html>
