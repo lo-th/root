@@ -83,7 +83,8 @@ view = {
             view.update();
 
 			view.bodyStep( Ar, ArPos[0] );
-            view.follow();
+            controler.follow();
+            //view.follow();
 			isNeedUpdate = false;
 
 		}
@@ -138,7 +139,7 @@ view = {
         cam.v = new THREE.Vector3();
         cam.s = new THREE.Spherical();
 
-        controler = new THREE.OrbitControls( camera, canvas );
+        controler = new THREE.OrbitControlsExtra( camera, canvas );//new THREE.OrbitControls( camera, canvas );
         controler.target.set( 0, 0, 0 );
         controler.enableKeys = false;
         //controler.update();
@@ -153,7 +154,7 @@ view = {
 
         loader = new THREE.TextureLoader();
 
-        envmap = loader.load( './assets/textures/chrome.jpg' );
+        envmap = loader.load( './assets/textures/spherical/chrome.jpg' );
         envmap.mapping = THREE.SphericalReflectionMapping;
 
         //var mapCar = loader.load( './assets/textures/cars.png' );
@@ -178,12 +179,12 @@ view = {
 
         mat = {
 
-            statique: new THREE.MeshStandardMaterial({ color:0x333344, name:'statique', wireframe:false, transparent:true, opacity:0.2, depthTest:true, depthWrite: false, shadowSide:false }),
+            statique: new THREE.MeshStandardMaterial({ color:0x333344, name:'statique', wireframe:false, transparent:true, opacity:0.1, depthTest:true, depthWrite: false }),
             plane: new THREE.MeshBasicMaterial({ color:0x111111, name:'plane', wireframe:true }),
-            move: new THREE.MeshStandardMaterial({ color:0x999999, name:'move', wireframe:false, envMap:envmap, metalness:0.6, roughness:0.2, shadowSide:false }),
-            sleep: new THREE.MeshStandardMaterial({ color:0x129317, name:'sleep', wireframe:false, envMap:envmap, metalness:0.6, roughness:0.2, shadowSide:false }),
+            move: new THREE.MeshStandardMaterial({ color:0x999999, name:'move', wireframe:false, envMap:envmap, metalness:0.4, roughness:0.6 }),
+            sleep: new THREE.MeshStandardMaterial({ color:0x129317, name:'sleep', wireframe:false, envMap:envmap, metalness:0.4, roughness:0.6 }),
 
-            kinematic: new THREE.MeshStandardMaterial({ name:'kinematic', color:0xAA9933, envMap:envmap, shadowSide:false }),//, transparent:true, opacity:0.6
+            kinematic: new THREE.MeshStandardMaterial({ name:'kinematic', color:0xAA9933, envMap:envmap,  metalness:0.6, roughness:0.4 }),//, transparent:true, opacity:0.6
 
             //moveCar: new THREE.MeshStandardMaterial({ color:0x999999, map:mapCar, name:'moveCar', wireframe:false, envMap:envmap, metalness:0.6, roughness:0.2 }),
             //sleepCar: new THREE.MeshStandardMaterial({ color:0x129317, map:mapCar, name:'sleepCar', wireframe:false, envMap:envmap, metalness:0.6, roughness:0.2 }),
@@ -193,6 +194,8 @@ view = {
 
         geo.plane.rotateX( -Math.PI90 );
         geo.plane.rotateY( Math.PI90 );
+
+        //geo.wheel.rotateZ( Math.PI90 );
 
         this.addTone();
         this.addLights();
@@ -366,10 +369,10 @@ view = {
 
     addLights: function(){
 
-        light = new THREE.DirectionalLight( 0xffffff, 1.2 );//new THREE.SpotLight( 0xffffff, 2 )//
+        light = new THREE.DirectionalLight( 0xffffff, 1.5 );//new THREE.SpotLight( 0xffffff, 2 )//
         //light.power = 25000;
         light.position.set( 0, 70, 10 );
-        light.lookAt( new THREE.Vector3() );
+       //light.lookAt( new THREE.Vector3() );
         //light.angle = Math.PI / 3;
         //light.penumbra = 0.05;
         //light.decay = 2;
@@ -430,15 +433,20 @@ view = {
         var camShadow = new THREE.OrthographicCamera( d, -d, d, -d,  1, 100 );
         light.shadow = new THREE.LightShadow( camShadow );
 
-        light.shadow.mapSize.width = 1024;
-        light.shadow.mapSize.height = 1024;
+        light.shadow.mapSize.width = 2048;
+        light.shadow.mapSize.height = 2048;
+        light.shadow.bias = 0.001;
+
+        for(var m in mat){
+            mat[m].shadowSide = false;
+        }
 
         /*light.shadow.camera.fov = 2 * light.angle * Math.todeg;
         light.shadow.camera.far = light.distance;
         light.shadow.camera.near = 10;
         light.shadow.mapSize.width = 1024;
         light.shadow.mapSize.height = 1024;
-        light.shadow.bias = 0.001;*/
+        */
 
        // followGroup.add( new THREE.SpotLightHelper( light ));//new THREE.CameraHelper( light.shadow.camera ) );
 
@@ -536,7 +544,12 @@ view = {
         var type = o.type || "box";
         if( type.constructor === String ) type = [ type ];
 
-    	o.density = o.density === undefined ? 0 : o.density;
+        var moveType = 1;
+        if( o.move !== undefined ) moveType = 0;// dynamic
+        if( o.density !== undefined ) moveType = 0;
+        if( o.kinematic !== undefined ) moveType = 2;
+
+    	//o.density = o.density === undefined ? 0 : o.density;
         //o.type = o.type == undefined ? 'box' : o.type;
 
         // position
@@ -600,7 +613,13 @@ view = {
         //if( o.density === 0 && o.type==='box' ) o.type = 'hardbox';
 
         if(o.material !== undefined) material = mat[o.material];
-        else material = o.density ? mat.move : mat.statique;
+        else{ 
+
+            if(moveType===1) material = mat.statique;
+            if(moveType===0) material = mat.move;
+            if(moveType===2) material = mat.kinematic;
+
+        }
 
 
         /*if( type.length > 1 ){
@@ -661,7 +680,7 @@ view = {
                 needScale = false;
 
             } else {
-                g = geo[type[i]];
+                g = geo[ o.geometry || type[i] ];
             }
 
             m = new THREE.Mesh( g, material );
@@ -675,8 +694,8 @@ view = {
             if( o.Rrot[i] !== undefined ) m.quaternion.setFromEuler( new THREE.Euler().fromArray( Math.vectorad( o.Rrot[i] )));
             
 
-            if( o.density !== 0  ) m.castShadow = true;
-            m.receiveShadow = true;
+            if( moveType !== 1 ){ m.castShadow = true; m.receiveShadow = true;}
+            
 
             if( lng === 1 ){
                 mesh = m;
@@ -692,7 +711,7 @@ view = {
         mesh.position.fromArray( o.pos );
         mesh.quaternion.fromArray( o.quat );
 
-        if( o.name === undefined ) o.name =  o.density !== 0 ? 'b'+ bodys.length : 'f'+ solids.length; 
+        if( o.name === undefined ) o.name =  moveType !== 1 ? 'b'+ bodys.length : 'f'+ solids.length; 
         mesh.name = o.name;
 
         //if( o.parent !== undefined ) o.parent.add( mesh );
@@ -700,7 +719,7 @@ view = {
         scene.add( mesh );
 
 
-        if( o.density !== 0  ) bodys.push( mesh );
+        if( moveType !== 1  ) bodys.push( mesh );
         else solids.push( mesh );
 
         if( o.name ) this.byName[ o.name ] = mesh;
@@ -983,6 +1002,8 @@ view = {
 
     reset: function () {
 
+        controler.resetFollow();
+
         isNeedUpdate = false;
 
         helper.visible = true;
@@ -1067,7 +1088,7 @@ view = {
 
     },
 
-    setFollow: function( name ){
+    /*setFollow: function( name ){
 
         cam.target = name;
 
@@ -1200,6 +1221,22 @@ view = {
 
     getControls: function () {
         return controler;
+    },*/
+
+    moveCam: function ( o, callback ) {
+
+        controler.moveCam( o, callback );
+
+    },
+
+    setFollow: function( name ){
+
+        if(!view.byName[ name ]) return
+        controler.cam.rotationOffset = -90;
+        controler.followTarget = view.byName[ name ];//view.getByName( name );
+
+        //cam.target = name;
+
     },
 
 }

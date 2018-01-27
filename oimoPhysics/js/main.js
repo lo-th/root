@@ -1,5 +1,5 @@
 var demos = [ 
-    'basic', 'compound', 'stacking', 'terrain', 'kinematic2', 'kinematic3', 'asteroid', 'ragdoll'//, 'terrain', 'trimesh', 'building', 'car', 'ragdoll', 'kinematic', 'water', 'mesh_test'
+    'basic', 'compound', 'stacking', 'terrain', 'kinematic2', 'kineBody', 'asteroid', 'ragdoll', 'car', 'joints',//, 'terrain', 'trimesh', 'building', 'car', 'ragdoll', 'kinematic', 'water', 'mesh_test'
 ];
 
 demos.sort();
@@ -13,7 +13,7 @@ function init () {
 
 	//user.init();
 	view.init( initOimo );
-    intro.init();
+    intro.init('OimoPhysics: Saharan | Lab: 3th');
 	
 }
 
@@ -26,7 +26,7 @@ function initOimo () {
 function next () {
 
     intro.clear();
-    editor.init( launch, isWithCode );
+    editor.init( launch, isWithCode, '#DE5825' );
 
     oimo.start();
 
@@ -58,17 +58,19 @@ function launch ( name ) {
 
 // editor fonction
 
-function cam ( o ) { return view.moveCam( o ); };
-function follow ( name ) { return view.setFollow( name ); };
+function cam ( o ) { view.moveCam( o ); };
+function follow ( name ) { view.setFollow( name ); };
 
-function add ( o ) { return view.add( o ); };
-function joint ( o ) { return view.joint( o ); };
-function vehicle ( o ) { return view.vehicle( o ); };
+function add ( o ) { view.add( o ); };
+function joint ( o ) { view.joint( o ); };
+function vehicle ( o ) { view.vehicle( o ); };
 
-function set ( o ) { return oimo.send( 'set', o ); };
-function force ( o ) { return oimo.send( 'force', o ); };
-function forces ( o ) { return oimo.send( 'forces', o ); };
-function motion ( o ) { return view.motion( o ); };
-function hideGrid () { return view.hideGrid(); };
-function control ( o ) { return oimo.send('control', o ); };
-function load ( name, callback ) { return view.load( name, callback  ); };
+function set ( o ) { oimo.send( 'set', o ); };
+function force ( o ) { oimo.send( 'force', o ); };
+function forces ( o ) { oimo.send( 'forces', o ); };
+function motion ( o ) { view.motion( o ); };
+function hideGrid () { view.hideGrid(); };
+function control ( o ) { oimo.send('control', o ); };
+function load ( name, callback ) { view.load( name, callback  ); };
+
+function matrix ( o ) { oimo.send('matrix', o ); }
