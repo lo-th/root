@@ -32,9 +32,9 @@ function init () {
 
 function onCrowdReady () {
 
-    //crowd.send( 'set', { fps:60, iteration:10, precision:[ 10, 15, 10, 10 ] });
+    crowd.send( 'set', { fps:60, iteration:10, precision:[ 5, 10, 5, 5 ] });// precision:[ 10, 15, 10, 10 ]
 
-    crowd.send( 'set', { fps:60, forceStep:0.3, iteration:1, precision:[ 10, 15, 5, 5 ] });
+    //crowd.send( 'set', { fps:60, forceStep:0.3, iteration:1, precision:[ 10, 15, 5, 5 ] });
 
     avatar.init();
     avatar.onComplete = onStart;
@@ -61,16 +61,23 @@ function onCrowdUpdate () {
 
     //var heros = view.getHero()
 
-    var speed;
+    var speed, distance;
 
     view.heros.forEach( function( b, id ) {
 
         var n = ( id * 5 );
 
-        b.position.set( Gr[n+1], 0, Gr[n+2] );
-        b.rotation.y = Gr[n+3];
+        speed = Gr[ n ];
+        distance = Gr[ n+4 ];
 
-        speed = Gr[0];
+        //if(id===1) tell( Gr[ n + 4 ] );
+
+        b.position.set( Gr[n+1], 0, Gr[n+2] );
+        if( distance > 1 ){
+            b.rotation.y = Math.lerp(  Gr[n+3], b.rotation.y, 0.5 );
+        }
+
+        
 
         b.setTimescale(0.25+(speed))
         if( speed > 0.1 ) b.play( 'walk', 0.5 )
@@ -108,7 +115,11 @@ function randomGoal () {
 
 function addWayPoint () {
 
+    way({ x:-28, y:-20 })
+    way({ x:-12, y:-20 })
     way({ x:4, y:-20 })
+
+    way({ x:4, y:0 })
 
 }
 
