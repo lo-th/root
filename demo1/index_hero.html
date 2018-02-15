@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Hero</title>
+<meta name="Description" content="" />
+<meta name="Keywords"  content="" />
+<style>
+* { 
+    margin: 0; padding: 0; border: 0; 
+    -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; 
+    /*box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;*/
+    user-select: none;
+}
+body { 
+    font-family: Consolas, Monaco, monospace;
+    font-size: 11px; 
+    color:#fff;
+    background: #333; 
+    overflow:hidden; 
+}
+
+#back{
+    position:absolute; width:100%; height:100%;
+}
+
+#container{
+    position:absolute; width:100%; height:100%;
+}
+#bottom{
+   
+}
+.debug { position:absolute; top:15px; right:15px; pointer-events:none;  color:#FFF; font-size: 14px; font-weight: bold; }
+
+</style>
+
+<script src="./build/lab.min.js"></script>
+<script src="./js/rondo_avatar.js"></script>
+<script src="./js/rondo_model.js"></script>
+
+</head>
+<body>
+
+<script>
+
+//var container = document.getElementById('container');
+
+var view = new View();
+view.camera.fov = 50;
+view.addSky();
+view.updateSky( { hour:14 } );
+view.addShadow();
+
+view.moveCam( [0, 15, 10, [0,4,0]] )
+
+avatar.init();
+
+avatar.onComplete = function(){
+
+    avatar.switchModel( 'Theo', 'idle' );
+
+     addGui ()
+
+}
+
+
+var menu = document.createElement( 'div' );
+menu.style.cssText = ' position:absolute; width:300px; height:90px; top:0px;';
+document.body.appendChild( menu );
+
+var names = [ 'Theo', 'Cynthia', 'Amina', 'Eleanor' ];
+
+for( var i=0; i<names.length; i++ ){
+
+    var z = document.createElement( 'div' );
+    z.style.cssText = 'position:relative; width:60px; height:20px; pointer-events:auto; padding-top:5px; margin:5px 5px; background:#666; cursor:pointer; font-size:12px; color:#ccc; text-align:center; display:inline-block; border-radius: 10px;';
+    z.innerHTML = names[i];
+    z.name = names[i];
+    menu.appendChild( z );
+
+    z.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.background = '#3ee'; this.style.color = '#000'; }, false );
+    z.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.background = '#666'; this.style.color = '#ccc'; }, false );
+    z.addEventListener( 'click', function ( e ) { e.preventDefault(); avatar.switchModel( this.name ); }, false );
+
+
+}
+
+function addGui () {
+
+    var ui = new UIL.Gui( { w:180, bg:'#666', close:false } );
+    ui.add('Bool', { name:'DEBUG', value:false, p:60 } ).onChange( avatar.debug );
+    //ui.add('Bool', { name:'WIREFRAME', value:false, p:60 } ).onChange( function(b){ avatar.getModel().setWirframe(b) } );
+
+    var an = avatar.getAnimations(), name;
+
+    for(var i=0; i<an.length; i++){
+
+        name = an[i];
+        ui.add( 'button', { name:name, p:0 }).onChange( avatar.play );
+
+    }
+
+    //ui.add('button', { name:'MAT', h:20, value:[1, 2, 3], p:0 }).onChange( avatar.setMaterial );
+
+    ui.add('slide',  { name:'metal', min:0, max:1, value:0.25, precision:2, stype:1 }).onChange(  function(v){ avatar.setMaterial(null, v ); } );
+    ui.add('slide',  { name:'rought', min:0, max:1, value:0.5, precision:2, stype:1 }).onChange(  function(v){ avatar.setMaterial(null, undefined, v ); } );
+    ui.add('slide',  { name:'emis', min:0, max:1, value:0.5, precision:2, stype:1 }).onChange(  function(v){ avatar.setMaterial(null, undefined, undefined, v ); } );
+}
+
+</script>
+</body>
+</html>
