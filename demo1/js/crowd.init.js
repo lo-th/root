@@ -67,7 +67,7 @@ var crowd = ( function () {
             switch( data.m ){
                 case 'init': crowd.initEngine(); break;
                 case 'start': crowd.start( data ); break;
-                case 'step': crowd.step();  break;
+                case 'step': crowd.step(); break;
             }
 
         },

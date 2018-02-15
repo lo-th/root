@@ -11,6 +11,12 @@
 
 'use strict';
 
+var M = {}
+var RAND_MAX = 32767;
+var RVO_EPSILON = 0.00001;
+M.rand = function ( low, high ) { return low + Math.random() * ( high - low ); };
+M.randInt = function ( low, high ) { return low + Math.floor( Math.random() * ( high - low + 1 ) ); };
+M.randCC =  function () { return M.randInt( 0, RAND_MAX ) }
 //var useTransferrable = false;
 var timer, step, timestep;
 //var ar = null;
@@ -81,9 +87,28 @@ var reus = 2;
 
 var isBuffer = false;
 
-
+var patchVelocity = false;
 var iteration = 1;
+
+// 15 neighborDist    The default maximum distance (center point to center point) to other agents a new agent
+//                    takes into account in the navigation. The larger this number, the longer he running
+//                    time of the simulation. If the number is too low, the simulation will not be safe. Must be non-negative.
+// 10 maxNeighbors    The default maximum number of other agents a new agent takes into account in the
+//                    navigation. The larger this number, the longer the running time of the simulation.
+//                    If the number is too low, the simulation will not be safe.
+// 10 timeHorizon     The default minimal amount of time for which a new agent's velocities that are computed
+//                    by the simulation are safe with respect to other agents. The larger this number, the
+//                    sooner an agent will respond to the presence  of other agents, but the less freedom the
+//                    agent has in choosing its velocities. Must be positive.
+// 10 timeHorizonObst The default minimal amount of time for which  a new agent's velocities that are computed
+//                    by the simulation are safe with respect to obstacles. The larger this number, the
+//                    sooner an agent will respond to the presence of obstacles, but the less freedom the agent
+//                    has in choosing its velocities. Must be positive.
+
+
 var precision = [ 10, 15, 10, 10 ];
+
+
 
 
 var dataReus;
@@ -153,6 +178,8 @@ var crowd = {
 
     step: function () {
 
+        if(patchVelocity) setPreferredVelocities( true )
+
         CROWD.run( iteration );
         CROWD.X_Y_RAD = new Float32Array( dataHeap.buffer, dataHeap.byteOffset, max );
 
@@ -185,27 +212,16 @@ var crowd = {
 
         o = o || {};
 
-        var timstep = o.timeStep !== undefined ? o.timeStep : 0.016;
-        CROWD.setTimeStep( timstep );
+        var timeStep = o.timeStep !== undefined ? o.timeStep : 0.016;
+        CROWD.setTimeStep( o.forceStep || timeStep );
 
-        iteration = o.iteration || 1;
+        iteration = o.iteration || 10;
 
-        if(o.precision !== undefined) crowd.setPrecision(o.precision);
+        patchVelocity = o.patchVelocity || false;
+
+        precision = o.precision || [ 10, 15, 10, 10 ];
 
     },
-
-    /*update: function () {
-
-        CROWD.run( iteration );
-        CROWD.X_Y_RAD = new Float32Array( dataHeap.buffer, dataHeap.byteOffset, max );
-
-        stepAgents( ar );
-
-        if( useTransferrable ) post( { message:'run', ar:ar }, [ ar.buffer ] );
-        else post( { message:'run', ar:ar } );
-
-    },*/
-
 
     addWay: function ( o ){
 
@@ -290,6 +306,8 @@ var crowd = {
 
     setPrecision: function ( v ) {
 
+
+
         switch ( v ) {
 
             case 1: precision = [ 10, 15, 10, 10 ]; break;
@@ -308,6 +326,13 @@ var crowd = {
 }
 
 
+function setPreferredVelocities( full ) {
+
+    agents.forEach( function ( b, id ) {
+         b.correctVelocity( full );
+    });
+
+}
 
 function stepAgents( ) {
 
@@ -315,20 +340,25 @@ function stepAgents( ) {
 
     agents.forEach( function ( b, id ) {
 
+        //b.correctVelocity( true );
+
         var n = id*5;
         var m = id*3;
+
+        // speed
+        Gr[ n ] = b.getSpeed();
         // position
         b.setPosition( XYR[ m ], XYR[ m + 1 ] );
         Gr[ n + 1 ] = b.position.x;
         Gr[ n + 2 ] = b.position.y;
 
-        Gr[ n ] = b.getSpeed();
+        
         // rotation
         //b.orientation = XYR[ m + 2 ]//Gr[ n + 3 ] = XYR[ m + 2 ];
-  Gr[ n + 3 ] = XYR[ m + 2 ];
+        Gr[ n + 3 ] = XYR[ m + 2 ];
         
          //console.log('agent', b.position.x)
-       // Gr[ n + 3 ] = b.getOrientation();
+        // Gr[ n + 3 ] = b.getOrientation();
         Gr[ n + 4 ] = b.getDistanceToGoal();
 
         
@@ -337,75 +367,7 @@ function stepAgents( ) {
 
 };
 
-// Vector 2
 
-crowd.Vec2 = function( x, y ) {
-
-    this.x = x || 0;
-    this.y = y || 0;
-
-}
-
-crowd.Vec2.prototype = {
-
-    constructor: crowd.Vec2,
-
-    set: function ( x, y ){
-
-        this.x = x;
-        this.y = y;
-
-    },
-
-    length: function () {
-
-        return Math.sqrt( this.x * this.x + this.y * this.y );
-
-    },
-
-    lerp: function ( v, alpha ) {
-
-        this.x += ( v.x - this.x ) * alpha;
-        this.y += ( v.y - this.y ) * alpha;
-        return this;
-
-    },
-
-    angle: function(v) {
-
-        return Math.atan2( v.y - this.y, v.x - this.x );
-
-    },
-
-    orient: function(){
-
-        return Math.atan2( this.x , this.y );
-
-    },
-
-    distanceTo: function( v ) {
-
-        var dx = this.x - v.x;
-        var dy = this.y - v.y;
-        return Math.sqrt( dx * dx + dy * dy );
-
-    },
-
-    copy: function( v ){
-
-        this.x = v.x;
-        this.y = v.y;
-
-    },
-
-    sub:function( v ){
-
-        this.x -= v.x;
-        this.y -= v.y;
-
-    },
-
-}
 
 
 
@@ -431,7 +393,10 @@ crowd.Agent = function ( o ) {
     this.velocity = new crowd.Vec2();
     this.useRoadMap = o.useRoadMap || false;
 
-    this.orientation = 0;
+    this.goalVector = new crowd.Vec2();
+    this.tmpA = new crowd.Vec2();
+
+    //this.orientation = 0;
 
     this.group = o.group || 0;
 
@@ -439,16 +404,7 @@ crowd.Agent = function ( o ) {
     this.currentSpeed = 0;
 
 
-
-    
-
-    // 
-
     CROWD.addAgent( this.position.x, this.position.y );
-
-    // 
-
-    //
 
     CROWD.setAgentRadius( this.id, this.radius );
     CROWD.setAgentMaxSpeed( this.id, this.speed );
@@ -457,14 +413,10 @@ crowd.Agent = function ( o ) {
 
     //console.log(this.id, o.radius, this.useRoadMap)
 
-    //this.setPrecision();
+    this.setPrecision();
 
 
     agents.push( this );
-
-
-
-    
 
 }
 
@@ -490,6 +442,30 @@ crowd.Agent.prototype = {
 
     },
 
+    correctVelocity: function ( full ) {
+
+        // Set the preferred velocity to be a vector of unit magnitude (speed) in the direction of the goal.
+        this.goalVector.copy(this.goal)
+        //CROWD.getAgentPosition(this.id, this.tmpP)
+        this.goalVector.sub( this.position );
+
+        if( this.goalVector.length() > 1.0 ) this.goalVector.normalize();
+
+        if(full){
+            // Perturb a little to avoid deadlocks due to perfect symmetry
+            var angle = M.randCC() * 2.0 * Math.PI / RAND_MAX;
+            var dist = M.randCC() * 0.0001 / RAND_MAX;
+
+            this.tmpA.set( Math.cos(angle), Math.sin(angle) ).mul(dist)
+
+            
+            this.goalVector.add( this.tmpA )
+        }
+
+        CROWD.setAgentPrefVelocity( this.id, this.goalVector.x, this.goalVector.y );
+
+    },
+
     setPosition: function ( x, y ) {
 
         this.oldPos.copy( this.position );
@@ -501,10 +477,9 @@ crowd.Agent.prototype = {
 
         this.getVelocity();
 
-        //this.currentSpeed =
-
         this.currentSpeed = this.velocity.length(); //Math.floor( this.oldPos.distanceTo( this.position )*10 );
         return this.currentSpeed;
+
     },
 
     setPrecision: function ( v ) {
@@ -531,14 +506,14 @@ crowd.Agent.prototype = {
 
     },
 
-    getOrientation: function () {
+    /*getOrientation: function () {
 
         this.getVelocity();
 
         if(this.currentSpeed>1) this.orientation = this.lerp( this.orientation, this.getVelocity().orient(), 0.25 );
         return this.orientation;
 
-    },
+    },*/
 
     getVelocity : function () {
 
@@ -628,16 +603,7 @@ crowd.Obstacle.prototype = {
 
         }
         
-
-        //var min = {x:x+mw, z:y+mh }
-        //var max = {x:x-mh, z:y-mh }
-
-        //var min = {x:-20, z:-20 }
-        //var max = {x:20, z:20 }
-
-        //this.data = new Float32Array([x+mw, y+mh, x-mw, y+mh, x-mw, y-mh, x+mw, y-mh]);
         this.data = new Float32Array(arr);
-        //this.data = new Float32Array([max.x, max.z, min.x, max.z, min.x, min.z, max.x, min.z]);
       
         this.allocateMem();
         this.addToSimulation();
@@ -701,5 +667,104 @@ crowd.WayPoint = function ( x, y ) {
 crowd.WayPoint.prototype = {
 
     constructor: crowd.WayPoint,
+
+}
+
+
+
+
+// Vector 2
+
+crowd.Vec2 = function( x, y ) {
+
+    this.x = x || 0;
+    this.y = y || 0;
+
+}
+
+crowd.Vec2.prototype = {
+
+    constructor: crowd.Vec2,
+
+    set: function ( x, y ){
+
+        this.x = x;
+        this.y = y;
+        return this;
+
+    },
+
+    length: function () {
+
+        return Math.sqrt( this.x * this.x + this.y * this.y );
+
+    },
+
+    normalize: function () {
+
+        var norm = this.length();
+        this.x /= norm;
+        this.y /= norm;
+        return this;
+
+    },
+
+    lerp: function ( v, alpha ) {
+
+        this.x += ( v.x - this.x ) * alpha;
+        this.y += ( v.y - this.y ) * alpha;
+        return this;
+
+    },
+
+    angle: function(v) {
+
+        return Math.atan2( v.y - this.y, v.x - this.x );
+
+    },
+
+    orient: function(){
+
+        return Math.atan2( this.x , this.y );
+
+    },
+
+    distanceTo: function( v ) {
+
+        var dx = this.x - v.x;
+        var dy = this.y - v.y;
+        return Math.sqrt( dx * dx + dy * dy );
+
+    },
+
+    copy: function( v ){
+
+        this.x = v.x;
+        this.y = v.y;
+
+    },
+
+    sub:function( v ){
+
+        this.x -= v.x;
+        this.y -= v.y;
+
+    },
+
+    mul: function ( s ) {
+
+        this.x *= s;
+        this.y *= s;
+        return this;
+
+    },
+
+    add: function( n ) {
+
+        this.x += n.x;
+        this.y += n.y;
+        return this;
+
+    },
 
 }

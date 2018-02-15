@@ -8,6 +8,8 @@ var Model = function ( Character, meshs, txt ) {
     this.isFirstFrame = true;
     this.isFirstPlay = false;
 
+    this.is3dNoz = false;
+
     this.character = Character;
 
     this.isLockHip = true;
@@ -129,7 +131,7 @@ var Model = function ( Character, meshs, txt ) {
 
     // 3 - HEAD
 
-    var headGeo = new THREE.SphereBufferGeometry( 14.5, 16, 12 );
+    var headGeo = new THREE.SphereBufferGeometry( 14.5, 20, 15 );
     var hearGeo = new THREE.SphereBufferGeometry( 1.6, 12, 9 );
     
     headGeo.applyMatrix( new THREE.Matrix4().makeRotationAxis( new THREE.Vector3(0,0,1), 90*this.torad));
@@ -150,6 +152,12 @@ var Model = function ( Character, meshs, txt ) {
     this.headMesh.castShadow = true;
     this.headMesh.receiveShadow = this.rShadow;
 
+    if(this.is3dNoz){
+    	this.headNoz = meshs.noz.clone();
+    	this.headNoz.position.set(-14.5,0, 0)
+    	this.headMesh.add( this.headNoz );
+    }
+
 
     // 4 - EXTRA
 
@@ -159,6 +167,7 @@ var Model = function ( Character, meshs, txt ) {
     if( this.character === 'Theo' ){ 
 
         this.headExtra = meshs.extra_man.clone();
+
         this.headMesh.add( this.headExtra );
 
     } else {
@@ -382,8 +391,8 @@ Model.prototype = Object.assign( Object.create( THREE.Group.prototype ), {
         this.bowL.rotation.y = 12*this.torad;
         this.bowR.rotation.y = 12*this.torad;
 
-        this.bowL.position.set( -19, 5.7,-12.7 );
-        this.bowR.position.set( -19,-5.7,-12.7 );
+        this.bowL.position.set( -19, 5.7,-12.3 );
+        this.bowR.position.set( -19,-5.7,-12.3 );
 
         this.headMesh.add( this.bowL );
         this.headMesh.add( this.bowR );
@@ -544,11 +553,11 @@ Model.prototype = Object.assign( Object.create( THREE.Group.prototype ), {
     	var mtype = 'MeshBasicMaterial'
 
         this.colors = {
-        //             [ 0 m_skin , 1 m_hair, 2 skin  , 3 hair  , 4 extra, 5 foot   , 6 arm   , 7 leg    , 8 earring ]
-            'Theo' :   [ 'corps_t', 'head_t', 0xb1774f, 0x613207, 0x111111, 0x050505, 0x000044, 0x000044, 0xeeee00 ],
-            'Amina' :  [ 'corps_a', 'head_a', 0x9d6743, 0x0a0704, 0x0a0704, 0x050505, 0x9d6743, 0x9d6743, 0xeeee00 ],
-            'Cynthia' :[ 'corps_c', 'head_c', 0x895837, 0x3a160a, 0x3a160a, 0x0f0f0f, 0x1c1c1c, 0x1c1c1c, 0xeeeeee ],
-            'Eleanor' :[ 'corps_e', 'head_e', 0x895837, 0x824683, 0x3a160a, 0x0f0f0f, 0xb8cdae, 0x1c1c1c, 0xeeee00  ],
+        //             [ 0 m_skin , 1 m_hair, 2 skin  , 3 hair  , 4 extra, 5 foot   , 6 arm   , 7 leg   , 8 earring, 9 noz ]
+            'Theo' :   [ 'corps_t', 'head_t', 0xb1774f, 0x613207, 0x111111, 0x050505, 0x000044, 0x000044, 0xeeee00, 0xa36d47 ],
+            'Amina' :  [ 'corps_a', 'head_a', 0x9d6743, 0x0a0704, 0x0a0704, 0x050505, 0x9d6743, 0x9d6743, 0xeeee00, 0x895a39 ],
+            'Cynthia' :[ 'corps_c', 'head_c', 0x895837, 0x3a160a, 0x3a160a, 0x0f0f0f, 0x1c1c1c, 0x1c1c1c, 0xeeeeee, 0x70472b ],
+            'Eleanor' :[ 'corps_e', 'head_e', 0x895837, 0x824683, 0x3a160a, 0x0f0f0f, 0xb8cdae, 0x1c1c1c, 0xeeee00, 0xa36d47 ],
 
         }
 
@@ -576,6 +585,7 @@ Model.prototype = Object.assign( Object.create( THREE.Group.prototype ), {
         this.mats[8] = new THREE[mtype]({ color: cc[3] });// bow
         this.mats[9] = new THREE[mtype]({ color: cc[8] });// earring
         this.mats[10] = new THREE[mtype]({ color: cc[3] });// hair
+        this.mats[11] = new THREE[mtype]({ color: cc[9] });// hair
 
         if( n===1 || n===3 ){
 
@@ -633,6 +643,8 @@ Model.prototype = Object.assign( Object.create( THREE.Group.prototype ), {
 
         this.eyeR.material = this.mats[7];
         this.eyeL.material = this.mats[7];
+
+        if( this.is3dNoz ) this.headNoz.material = this.mats[11];
 
         if( this.dressMesh ) this.dressMesh.material = this.mats[7];
 
