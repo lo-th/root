@@ -13,7 +13,7 @@
 
 var M = {}
 var RAND_MAX = 32767;
-var RVO_EPSILON = 0.00001;
+var RVO_EPSILON = 0.0001;
 M.rand = function ( low, high ) { return low + Math.random() * ( high - low ); };
 M.randInt = function ( low, high ) { return low + Math.floor( Math.random() * ( high - low + 1 ) ); };
 M.randCC =  function () { return M.randInt( 0, RAND_MAX ) }
@@ -345,12 +345,14 @@ function stepAgents( ) {
         var n = id*5;
         var m = id*3;
 
-        // speed
-        Gr[ n ] = b.getSpeed();
+        
         // position
         b.setPosition( XYR[ m ], XYR[ m + 1 ] );
         Gr[ n + 1 ] = b.position.x;
         Gr[ n + 2 ] = b.position.y;
+
+        // speed
+        Gr[ n ] = b.getSpeed2();
 
         
         // rotation
@@ -375,8 +377,9 @@ function stepAgents( ) {
 
 
 
-
+// -----------------------------------
 // Agent
+// -----------------------------------
 
 crowd.Agent = function ( o ) {
 
@@ -470,6 +473,16 @@ crowd.Agent.prototype = {
 
         this.oldPos.copy( this.position );
         this.position.set( x, y );
+
+    },
+
+    getSpeed2: function (){
+
+        //this.getVelocity();
+
+        this.currentSpeed = this.oldPos.distanceTo( this.position ) * 9.8;
+        if( this.currentSpeed < 0.01 ) this.currentSpeed = 0;
+        return this.currentSpeed;
 
     },
 

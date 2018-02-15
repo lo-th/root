@@ -1,4 +1,4 @@
-var view, debug
+var view, debug, debugHard
 var h = 6;
 var tt = 0;
 
@@ -24,6 +24,10 @@ function init () {
     debug = document.createElement("div");
     debug.style.cssText = 'position:absolute; bottom:10px; left:10px; width:200px; color:#757b7d; ';
     document.body.appendChild(debug);
+
+    debugHard = document.createElement("div");
+    debugHard.style.cssText = 'position:absolute; padding:5px 5px; top:10px; right:10px; width:300px; height:60px; color:#060; border:1px dashed #060; font-size:12px; ';
+    document.body.appendChild(debugHard);
 
     crowd.init( onCrowdReady, onCrowdUpdate );
 
@@ -61,7 +65,7 @@ function onCrowdUpdate () {
 
     //var heros = view.getHero()
 
-    var speed, distance;
+    var speed, distance, rotation;
 
     view.heros.forEach( function( b, id ) {
 
@@ -69,19 +73,21 @@ function onCrowdUpdate () {
 
         speed = Gr[ n ];
         distance = Gr[ n+4 ];
+        rotation = Gr[n+3];
 
-        //if(id===1) tell( Gr[ n + 4 ] );
+        if(id===1) trace( 'distance: ' + distance + '<br>speed: '+speed+ '<br>rotation: '+ (Math.floor( rotation*Math.todeg)) );
 
         b.position.set( Gr[n+1], 0, Gr[n+2] );
-        if( distance > 1 ){
-            b.rotation.y = Math.lerp(  Gr[n+3], b.rotation.y, 0.5 );
+
+       
+        if( speed > 0.1 ) {
+            b.setTimescale(0.25+(speed*0.5))
+            b.rotation.y = Math.lerp( rotation, b.rotation.y, 0.5 );
+            b.play( 'walk', 0.5 )
+        } else {
+            b.setTimescale(0.25)
+            b.play( 'idle', 0.5 )
         }
-
-        
-
-        b.setTimescale(0.25+(speed))
-        if( speed > 0.1 ) b.play( 'walk', 0.5 )
-        else b.play( 'idle', 0.5 )
 
 
     })
@@ -92,6 +98,12 @@ function onCrowdUpdate () {
         tt = 0;
         randomGoal();
     }
+
+}
+
+function trace ( m ) {
+
+  debugHard.innerHTML = m;
 
 }
 
