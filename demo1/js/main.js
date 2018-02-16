@@ -29,14 +29,15 @@ function init () {
     debugHard.style.cssText = 'position:absolute; padding:5px 5px; top:10px; right:10px; width:300px; height:60px; color:#060; border:1px dashed #060; font-size:12px; ';
     document.body.appendChild(debugHard);
 
-    crowd.init( onCrowdReady, onCrowdUpdate );
+    crowd.init( onCrowdReady, 4 );
+    crowd.onUpdate = onCrowdUpdate;
 
 }
 
 
 function onCrowdReady () {
 
-    crowd.send( 'set', { fps:60, iteration:10, precision:[ 5, 10, 5, 5 ] });// precision:[ 10, 15, 10, 10 ]
+    crowd.send( 'set', { fps:60, iteration:6, precision:[ 5, 10, 5, 5 ] });// precision:[ 10, 15, 10, 10 ]
 
     //crowd.send( 'set', { fps:60, forceStep:0.3, iteration:1, precision:[ 10, 15, 5, 5 ] });
 
@@ -75,18 +76,19 @@ function onCrowdUpdate () {
         distance = Gr[ n+4 ];
         rotation = Gr[n+3];
 
-        if(id===1) trace( 'distance: ' + distance + '<br>speed: '+speed+ '<br>rotation: '+ (Math.floor( rotation*Math.todeg)) );
+        if(id===3) trace( b.character + '<br>distance: ' + distance + '<br>speed: '+speed+ '<br>rotation: '+ (Math.floor( rotation*Math.todeg)) );
 
         b.position.set( Gr[n+1], 0, Gr[n+2] );
 
        
-        if( speed > 0.1 ) {
-            b.setTimescale(0.25+(speed*0.5))
+        if( speed > 0 ) {
+            b.setTimescale(speed);
+            //b.setTimescale(0.25+(speed*0.6))
             b.rotation.y = Math.lerp( rotation, b.rotation.y, 0.5 );
-            b.play( 'walk', 0.5 )
+            b.play( 'walk', 0.5 );
         } else {
-            b.setTimescale(0.25)
-            b.play( 'idle', 0.5 )
+            b.setTimescale(0.25);
+            b.play( 'idle', 0.5 );
         }
 
 
@@ -94,7 +96,7 @@ function onCrowdUpdate () {
 
     tt++;
 
-    if(tt===600) {
+    if(tt===300) {
         tt = 0;
         randomGoal();
     }
@@ -115,11 +117,14 @@ function tell ( m ) {
 
 function randomGoal () {
 
-    var lng = view.heros.length
+    var lng = view.heros.length;
+    var t;
 
     for(var i=0; i<lng; i++){
 
-        crowd.send( 'goal', { id:i, x:Math.rand(-20,20), z:Math.rand(-20,20) } );
+        t = Math.randInt(0,2);
+
+        if(t!==0) crowd.send( 'goal', { id:i, x:Math.rand(-30,30), z:Math.rand(-20,20) } );
 
     };
 
@@ -127,11 +132,10 @@ function randomGoal () {
 
 function addWayPoint () {
 
-    way({ x:-28, y:-20 })
-    way({ x:-12, y:-20 })
-    way({ x:4, y:-20 })
-
-    way({ x:4, y:0 })
+    way({ x:-28, z:-20 })
+    way({ x:-12, z:-20 })
+    way({ x:4, z:-20 })
+    way({ x:4, z:0 })
 
 }
 
@@ -145,19 +149,17 @@ function addObstacle () {
     obstacle( { size:[4,2,4], pos:[-22.6,1,18], r:0 })
     obstacle( { size:[4,2,4], pos:[-13.4,1,18], r:0 })
 
-    obstacle( { size:[10,1,4], pos:[-18,0.5,10], r:0 })
+    obstacle( { size:[8,1,3], pos:[-18,0.5,10], r:0 })
 
-    obstacle( { size:[16,6,4], pos:[20,3,18], r:0 })
+    obstacle( { size:[16,5,4], pos:[20,2.5,18], r:0 })
 
 }
 
 function way ( o ) {
 
     var m = new THREE.Mesh( view.geo.cicle, view.mat.way )
-    m.position.set(o.x, 0, o.y);
-
+    m.position.set( o.x, 0, o.z );
     view.scene.add( m );
-
     crowd.send( 'way', o );
 
 }

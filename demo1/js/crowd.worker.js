@@ -134,11 +134,36 @@ var crowd = {
 
         iteration = o.iteration || 1;
 
-        CROWD.init();
+        
 
         Maxi = o.Maxi || 100;
         GrMax = Maxi * 5;
         max = Maxi * 3 ;
+
+        this.initEngine();
+
+        //
+
+        //CROWD.setTimeStep( o.timeStep || 0.016 );//0.3?
+
+        //
+        
+        //if( !isBuffer ) Gr = new Float32Array( GrMax );
+
+        //initARRAY();
+
+        self.postMessage( { m:'init' } );
+
+    },
+
+    initEngine: function (){
+
+        if(dataHeap) _free( dataHeap.byteOffset );
+        if(dataReus) _free( dataReus.byteOffset );
+
+        // init
+
+        CROWD.init();
 
         // dataHeap
 
@@ -162,17 +187,22 @@ var crowd = {
 
         CROWD.allocateMemResusable( dataReus.byteOffset, reus );
 
-        //
+        CROWD.setTimeStep( 0.3 );
 
-        CROWD.setTimeStep( o.timeStep || 0.016 );//0.3?
+    },
 
-        //
-        
-        if( !isBuffer ) Gr = new Float32Array( GrMax );
+    set: function ( o ) {
 
-        //initARRAY();
+        o = o || {};
 
-        self.postMessage( { m:'init' } );
+        var timeStep = o.timeStep !== undefined ? o.timeStep : 0.016;
+        CROWD.setTimeStep( o.forceStep || timeStep );
+
+        iteration = o.iteration || 1;
+
+        patchVelocity = o.patchVelocity || false;
+
+        precision = o.precision || [ 10, 15, 10, 10 ];
 
     },
 
@@ -199,33 +229,32 @@ var crowd = {
 
     reset: function () {
 
-       // clearInterval( timer );
         CROWD.deleteCrowd();
 
-        if( !isBuffer ) Ar = new Float32Array( ArMax );
+        //while( agents.length > 0 ) agents.pop().remove();
+        //while( obstacles.length > 0 ) obstacles.pop().remove();
+        //while( way.length > 0 ) way.pop().remove();
+        agents = [];
+        obstacles = [];
+        way = [];
+        //console.log(agents)
+      
+        
+
+        this.initEngine();
+        //CROWD.init();
+
+        if( !isBuffer ) Gr = new Float32Array( GrMax );
 
         self.postMessage({ m:'start' });
 
     },
 
-    set: function ( o ) {
-
-        o = o || {};
-
-        var timeStep = o.timeStep !== undefined ? o.timeStep : 0.016;
-        CROWD.setTimeStep( o.forceStep || timeStep );
-
-        iteration = o.iteration || 10;
-
-        patchVelocity = o.patchVelocity || false;
-
-        precision = o.precision || [ 10, 15, 10, 10 ];
-
-    },
+    
 
     addWay: function ( o ){
 
-        CROWD.addWayPoint( o.x, o.y );
+        CROWD.addWayPoint( o.x, o.z );
         CROWD.recomputeRoadmap();
 
     },
@@ -386,14 +415,17 @@ crowd.Agent = function ( o ) {
     this.id = agents.length;
 
     this.radius = o.radius || 4;
-    this.speed = o.speed || 1;
+    this.speed = o.speed !== undefined ? o.speed : 1;
     this.isSelected = false;
 
     this.goal = new crowd.Vec2( o.gx || 0, o.gz || 0 );
 
     this.position = new crowd.Vec2( o.x || 0, o.z || 0 );
     this.oldPos = new crowd.Vec2( o.x || 0, o.z || 0 );
+
     this.velocity = new crowd.Vec2();
+    this.prevVelocity = new crowd.Vec2();
+
     this.useRoadMap = o.useRoadMap || false;
 
     this.goalVector = new crowd.Vec2();
@@ -411,7 +443,7 @@ crowd.Agent = function ( o ) {
 
     CROWD.setAgentRadius( this.id, this.radius );
     CROWD.setAgentMaxSpeed( this.id, this.speed );
-    CROWD.setAgentUseRoadMap( this.id, this.useRoadMap );
+    CROWD.setAgentUseRoadMap( this.id, this.useRoadMap ? 1:0 );
 
 
     //console.log(this.id, o.radius, this.useRoadMap)
@@ -448,7 +480,7 @@ crowd.Agent.prototype = {
     correctVelocity: function ( full ) {
 
         // Set the preferred velocity to be a vector of unit magnitude (speed) in the direction of the goal.
-        this.goalVector.copy(this.goal)
+        this.goalVector.copy( this.goal )
         //CROWD.getAgentPosition(this.id, this.tmpP)
         this.goalVector.sub( this.position );
 
@@ -527,6 +559,15 @@ crowd.Agent.prototype = {
         return this.orientation;
 
     },*/
+
+    getPrefVelocity : function () {
+
+        CROWD.getAgentPrefVelocity( this.id );
+        var a = new Float32Array( dataReus.buffer, dataReus.byteOffset, reus );
+        this.prevVelocity.set( a[0], a[1] );
+        return this.prevVelocity;
+
+    },
 
     getVelocity : function () {
 
@@ -680,6 +721,9 @@ crowd.WayPoint = function ( x, y ) {
 crowd.WayPoint.prototype = {
 
     constructor: crowd.WayPoint,
+
+    remove : function ( id ) {
+    },
 
 }
 

@@ -6,7 +6,7 @@
 *    CROWD worker launcher
 */
 var Gr;
-var Maxi = 100;
+var Maxi = 1000;
 var GrMax = Maxi * 5;
 
 
@@ -15,7 +15,7 @@ var crowd = ( function () {
     'use strict';
 
     var worker, blob;
-    var callback, upCallback;
+    var callback;//, upCallback;
     var isBuffer = false;
 
     var timestep = 1/60;
@@ -37,11 +37,16 @@ var crowd = ( function () {
 
     crowd = {
 
-        init: function ( Callback, UpCallback ){
+        onUpdate: function () {},
+
+        init: function ( Callback, max ){
+
+            Maxi = max || 1000;
+            GrMax = Maxi * 5;
 
 
             callback = Callback || function(){};
-            upCallback = UpCallback || function(){};
+            //upCallback = UpCallback || function(){};
 
             worker = new Worker( './js/crowd.worker.js' );
             worker.onmessage = this.message;
@@ -101,7 +106,8 @@ var crowd = ( function () {
 
             if ( (time - 1000) > temp ){ temp = time; fps = count; count = 0; }; count++;
 
-            upCallback();
+            //upCallback();
+            this.onUpdate();
 
             stepNext = true;
             
@@ -149,7 +155,6 @@ var crowd = ( function () {
             }
             
             view.reset();
-
             worker.postMessage( { m:'reset', full:full });
 
         }

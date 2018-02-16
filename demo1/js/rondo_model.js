@@ -24,6 +24,8 @@ var Model = function ( Character, meshs, txt ) {
     this.txt = txt;
     this.mats = [];
 
+    this.currentPlay = '';
+
     //this.decal = new THREE.Vector3();
 
     //this.position = new THREE.Vector3();
@@ -515,9 +517,13 @@ Model.prototype = Object.assign( Object.create( THREE.Group.prototype ), {
 
     play: function ( name, crossfade, offset, weight ){
 
-        this.mesh.play( name, crossfade, offset, weight );
-        this.isFirstPlay = true;
+        if( name !== this.currentPlay ){
 
+            this.currentPlay = name;
+            this.mesh.play( this.currentPlay, crossfade, offset, weight );
+            this.isFirstPlay = true;
+            
+        }
     },
 
     getTime: function () {
