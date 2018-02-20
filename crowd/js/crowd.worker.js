@@ -6,13 +6,15 @@
 *    @author Engine Samuel Girardin / http://www.visualiser.fr/
 *
 *    CROWD worker
-*    Reciprocal Collision Avoidance
+*    Optimal Reciprocal Collision Avoidance
 *
 */
 
 'use strict';
 
 //var Module = { TOTAL_MEMORY: 256*1024*1024 };
+
+// MATH
 
 var M = {}
 var RAND_MAX = 32767;
@@ -33,6 +35,12 @@ M.unwrapRad = function( r ){
     if (r > M.Pi ) r -= M.TwoPI;
     if (r < - M.Pi ) r += M.TwoPI;
     return r;
+
+};
+
+M.lerp = function ( a, b, percent ) { 
+
+    return a + (b - a) * percent;
 
 };
 
@@ -81,7 +89,7 @@ self.onmessage = function ( e ) {
 //const torad = 0.0174532925199432957;
 //const todeg = 57.295779513082320876;
 
-var CROWD= {};;
+var CROWD = {};
 
 var Maxi = 1000;
 var max, GrMax;
@@ -180,9 +188,8 @@ var crowd = {
             CROWD.setAgentTimeHorizonObst = Module.cwrap('setAgentTimeHorizonObst', '', ['number', 'number']);
 
             CROWD.setAgentPosition = Module.cwrap('setAgentPosition', '', ['number', 'number']);
-            CROWD.setAgentPrefVelocity = Module.cwrap('setAgentPrefVelocity', '', ['number', 'number', 'number']);
-            CROWD.setAgentVelocity = Module.cwrap('setAgentVelocity', '', ['number', 'number', 'number']);
-            //CROWD.setAgentUseRoadMap = Module.cwrap('setAgentUseRoadMap', '', ['number']);
+            CROWD.setAgentPrefVelocity = Module.cwrap('setAgentPrefVelocity', '', ['number', 'number']);
+            CROWD.setAgentVelocity = Module.cwrap('setAgentVelocity', '', ['number', 'number']);
             CROWD.setAgentUseRoadMap = Module.cwrap('setAgentUseRoadMap', '', ['number', 'number']);
 
             CROWD.getAgentRadius = Module.cwrap('getAgentRadius', 'number', ['number']);
@@ -537,19 +544,24 @@ crowd.Agent = function ( o ) {
 
     this.id = agents.length;
 
+    //The radius of the agent. Must be non-negative.
     this.radius = o.radius || 2;
+
     this.speed = o.speed !== undefined ? o.speed : 1;
     this.isSelected = false;
 
-    
-
     var pos = o.pos || [0,0,0];
-
+    // The current position of the agent.
     this.position = new crowd.Vec2( pos[0], pos[2] );
     this.oldPos = new crowd.Vec2( pos[0], pos[2] );
     this.goal = new crowd.Vec2( pos[0], pos[2] );
 
+    // The current velocity of the agent.
     this.velocity = new crowd.Vec2();
+    // The current preferred velocity of the agent
+    // This is the velocity the agent would take if no other agents or obstacles were around. 
+    // The simulator computes an actual velocity for the agent that follows the preferred 
+    // velocity as closely as possible, but at the same time guarantees collision avoidance
     this.prevVelocity = new crowd.Vec2();
 
     this.useRoadMap = o.useRoad || false;
@@ -581,8 +593,6 @@ crowd.Agent = function ( o ) {
     this.setPrefVelocity( 0,0 );
 
     this.setGoal( o );
-
-    //agents.push( this );
 
 }
 
@@ -640,30 +650,39 @@ crowd.Agent.prototype = {
 
     getOrientation: function ( r ) {
 
-        //var g = this.getVelocity().Normalize().orient()
+        //var g = this.getVelocity().Normalize().angle()
 
         this.oldOrientation = this.orientation;
 
         var a, b 
 
-        a = this.oldPos.angleTo(this.position)
-        b = this.oldPos.distanceTo(this.position);
+        a = this.oldPos.angleTo( this.position )
+        b = this.oldPos.distanceTo( this.position );
         if(b<0) b*=-1;
 
-        if(a > this.orientation + M.Pi)  a -= M.TwoPI;
-        if(a < this.orientation - M.Pi)  a += M.TwoPI;
+        if( a > this.orientation + M.Pi )  a -= M.TwoPI;
+        if( a < this.orientation - M.Pi )  a += M.TwoPI;
 
         var tr = ( a - this.orientation ) * 0.1;
 
         if( b > RVO_EPSILON_2 ){ 
             this.orientation += tr;
-            //this.lerp( a, this.orientation, 0.017 );
+            //M.lerp( a, this.orientation, 0.017 );
             this.currentSpeed = b;
         } else {
             this.currentSpeed = 0;
         }
 
     },
+
+    /*getOrientation: function () {
+
+        this.getVelocity();
+
+        if(this.currentSpeed>1) this.orientation = M.lerp( this.orientation, this.getVelocity().orient(), 0.25 );
+        return this.orientation;
+
+    },*/
 
     /*smoothOrientation: function () {
                  
@@ -689,8 +708,8 @@ crowd.Agent.prototype = {
         this.oldPos.copy( this.position );
 
         CROWD.getAgentPosition( this.id );
-        var a = new Float32Array( dataReus.buffer, dataReus.byteOffset, reus );
-        this.position.set( a[0], a[1] );
+        var arr = new Float32Array( dataReus.buffer, dataReus.byteOffset, reus );
+        this.position.fromArray( arr );
         return this.position;
 
     },
@@ -742,19 +761,19 @@ crowd.Agent.prototype = {
 
     },
 
-    /*getOrientation: function () {
-
-        this.getVelocity();
-
-        if(this.currentSpeed>1) this.orientation = this.lerp( this.orientation, this.getVelocity().orient(), 0.25 );
-        return this.orientation;
-
-    },*/
-
     setVelocity : function ( x, y ) {
 
         this.velocity.set( x, y );
-        CROWD.setAgentPrefVelocity( this.id, this.velocity.x, this.velocity.y );
+        CROWD.setAgentVelocity( this.id, this.velocity.x, this.velocity.y );
+
+    },
+
+    getVelocity : function () {
+
+        CROWD.getAgentVelocity( this.id );
+        var arr = new Float32Array( dataReus.buffer, dataReus.byteOffset, reus );
+        this.velocity.fromArray( arr );
+        return this.velocity;
 
     },
 
@@ -768,24 +787,9 @@ crowd.Agent.prototype = {
     getPrefVelocity : function () {
 
         CROWD.getAgentPrefVelocity( this.id );
-        var a = new Float32Array( dataReus.buffer, dataReus.byteOffset, reus );
-        this.prevVelocity.set( a[0], a[1] );
+        var arr = new Float32Array( dataReus.buffer, dataReus.byteOffset, reus );
+        this.prevVelocity.fromArray( arr );
         return this.prevVelocity;
-
-    },
-
-    getVelocity : function () {
-
-        CROWD.getAgentVelocity( this.id );
-        var a = new Float32Array( dataReus.buffer, dataReus.byteOffset, reus );
-        this.velocity.set( a[0], a[1] );
-        return this.velocity;
-
-    },
-
-    lerp : function (a, b, percent) { 
-
-        return a + (b - a) * percent;
 
     },
 
@@ -978,6 +982,14 @@ crowd.Vec2.prototype = {
 
     constructor: crowd.Vec2,
 
+    /*x: function () {
+        return this.x;
+    },
+
+    y: function () {
+        return this.y;
+    },*/
+
     set: function ( x, y ){
 
         this.x = x;
@@ -1030,21 +1042,31 @@ crowd.Vec2.prototype = {
 
     },
 
-    orient: function(){
+    angle: function(){
 
-        //var angle = Math.atan2( this.x , this.y );
+        // computes the angle in radians with respect to the positive x-axis
         var angle = Math.atan2( this.y , this.x );
-        //if ( angle < 0 ) angle += 2 * Math.PI;
-
+        if ( angle < 0 ) angle += 2 * Math.PI;
         return angle;
 
     },
 
     distanceTo: function( v ) {
 
-        var dx = this.x - v.x;
-        var dy = this.y - v.y;
-        return Math.sqrt( dx * dx + dy * dy );
+        return Math.sqrt( this.distanceToSquared( v ) );
+
+    },
+
+    distanceToSquared: function ( v ) {
+
+        var dx = this.x - v.x, dy = this.y - v.y;
+        return dx * dx + dy * dy;
+
+    },
+
+    manhattanDistanceTo: function ( v ) {
+
+        return Math.abs( this.x - v.x ) + Math.abs( this.y - v.y );
 
     },
 
@@ -1113,6 +1135,29 @@ crowd.Vec2.prototype = {
         this.y = x * s + y * c + center.y;
 
         return this;
+
+    },
+
+    fromArray: function ( array, offset ) {
+
+        if ( offset === undefined ) offset = 0;
+
+        this.x = array[ offset ];
+        this.y = array[ offset + 1 ];
+
+        return this;
+
+    },
+
+    toArray: function ( array, offset ) {
+
+        if ( array === undefined ) array = [];
+        if ( offset === undefined ) offset = 0;
+
+        array[ offset ] = this.x;
+        array[ offset + 1 ] = this.y;
+
+        return array;
 
     },
 

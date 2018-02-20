@@ -1,5 +1,5 @@
 var demos = [ 
-    'basic','circle','building','office','crossing','crossroads'
+    'basic','circle','building','office','crossing','crossroads', 'bug'
 ];
 
 demos.sort();
@@ -7,25 +7,18 @@ demos.sort();
 var demoName = 'basic';
 
 var isWithCode = false;
-;
 var view;
 var tell = editor.tell;
 
 function init () {
 
-    intro.init('Crowd: Samuel Girardin | Lab: 3th');
     view = new View();
+    intro.init('Crowd: Samuel Girardin | Lab: 3th');
 
     view.initGeometry();
     view.initGrid();
     view.addShadow();
-    view.mat['agent'] = new THREE.MeshBasicMaterial({ color:0x7caccc, wireframe:true });
-    view.mat['agentHide'] = new THREE.MeshBasicMaterial({ color:0x7caccc, wireframe:true, transparent:true, opacity:0.1 });
-    view.mat['heros'] = new THREE.MeshStandardMaterial({ color:0xffffff, skinning:true, shadowSide:false, metalness:0.2, roughness:0.6 });
-    view.mat['way'] = new THREE.MeshBasicMaterial({ color:0xFF8800, wireframe:true });
-    view.mat['wall'] = new THREE.MeshStandardMaterial({ color:0x0088ff, transparent:true, opacity:0.3 });
-
-    crowd.onUpdate = view.onCrowdUpdate;
+    
     crowd.init( load, 2000 );
 
 }
@@ -37,6 +30,12 @@ function load () {
 }
 
 function next ( p ) {
+
+    view.mat['agent'] = new THREE.MeshBasicMaterial({ color:0x7caccc, wireframe:true });
+    view.mat['agentHide'] = new THREE.MeshBasicMaterial({ color:0x7caccc, wireframe:true, transparent:true, opacity:0.1 });
+    view.mat['heros'] = new THREE.MeshStandardMaterial({ color:0xffffff, skinning:true, shadowSide:false, metalness:0.2, roughness:0.6 });
+    view.mat['way'] = new THREE.MeshBasicMaterial({ color:0xFF8800, wireframe:true });
+    view.mat['wall'] = new THREE.MeshStandardMaterial({ color:0x0088ff, transparent:true, opacity:0.3 });
 
 	var t = new THREE.Texture( p['heros_c2'] );
 	t.flipY = false;
@@ -52,11 +51,10 @@ function next ( p ) {
     view.mat.heros.envMap = t2;
 
 	view.mesh = pool.meshByName ( 'heros' );
-
-
+    
+    editor.init( launch, isWithCode, '#9966FF' );
 
     intro.clear();
-    editor.init( launch, isWithCode, '#c008e1' );
 
     //crowd.start();
 
