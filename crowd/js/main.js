@@ -1,5 +1,5 @@
 var demos = [ 
-    'basic','circle','building','office','crossing','crossroads', 'bug'
+    'basic','circle','building','office','crossing','crossroads', 'remove'
 ];
 
 demos.sort();
@@ -14,10 +14,11 @@ function init () {
 
     view = new View();
     intro.init('Crowd: Samuel Girardin | Lab: 3th');
-
+    view.camera.fov = 50;
     view.initGeometry();
     view.initGrid();
     view.addShadow();
+    view.addTone();
     
     crowd.init( load, 2000 );
 
@@ -90,6 +91,7 @@ function cam ( o ) { view.moveCam( o ); };
 function follow ( name ) { view.setFollow( name ); };
 
 function agent ( o ) { view.agent( o ); };
+
 function obstacle ( o ) { view.obstacle( o ); };
 function way ( o ) { view.way( o ); };
 function goal ( o ) { crowd.send( 'goal', o ); };

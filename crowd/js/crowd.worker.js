@@ -70,6 +70,7 @@ self.onmessage = function ( e ) {
         case 'set': crowd.set( o ); break;
 
         case 'add': crowd.addAgent( o ); break;
+        case 'remove': crowd.removeAgent( o ); break;
         case 'obstacle': crowd.addObstacle( o ); break;
         case 'way': crowd.addWay( o ); break;
         case 'speed': crowd.setSpeed( o ); break;
@@ -171,7 +172,8 @@ var crowd = {
 
             CROWD.addAgent = Module.cwrap('addAgent', '', ['number', 'number']);
             //CROWD.removeAgent = Module.cwrap('removeAgent', '', ['number']);
-            CROWD.removeAgent = Module.cwrap('removeAgent', 'number', ['number']);
+            CROWD.removeAgent = Module.cwrap('removeAgent', '', ['number']);
+            //CROWD.removeAgent = Module.cwrap('removeAgent', 'number', ['number']);
 
             CROWD.addAgentGoal = Module.cwrap('addAgentGoal', '', ['number', 'number', 'number']);
             CROWD.addAgentsGoal = Module.cwrap('addAgentsGoal', '', ['number', 'number']);
@@ -216,15 +218,20 @@ var crowd = {
     },
 
     clear: function () {
-        var a, z;
+        var a, z, i = agents.length;
+        //while( i-- ){ 
         while( agents.length > 0 ){ 
-            a = agents.pop();
+
+            agents.pop().remove();
+
+            //a = agents.pop();
             //CROWD.setAgentRadius( a.id, 0 );
             //CROWD.setAgentMaxSpeed( a.id, 0 );
             
-            z = CROWD.removeAgent( a.id );
+            //CROWD.removeAgent( i );
+
             //console.log('remove', z, a.id )
-            a = null;
+            //a = null;
         }
 
         agents = [];
@@ -326,8 +333,8 @@ var crowd = {
 
      
         if( oldXYR ){ 
-            _free( dataPtr );
-            //_free( dataHeap.buffer )
+            //_free( dataPtr );
+            _free( dataHeap.buffer )
         }
 
         data = new Float32Array( max );
@@ -493,15 +500,17 @@ var crowd = {
     
     },
 
-    removeAgent: function ( id ) {
+    removeAgent: function ( o ) {
         
-        agents[id].remove();
-        agents.splice( id, 1 );
+        agents[o.id].remove();
+        agents.splice( o.id, 1 );
 
         var i = agents.length;
         while( i-- ){
             agents[i].setId( i );
         }
+
+        this.up();
 
     },
 
@@ -527,6 +536,8 @@ var crowd = {
         while( i-- ){
             agents[i].setPrecision();
         }
+
+
 
     },
 
@@ -586,7 +597,7 @@ crowd.Agent = function ( o ) {
     CROWD.setAgentUseRoadMap( this.id, this.useRoadMap ? 1:0 );
 
 
-    //console.log(this.id, CROWD.getAgentRadius(this.id))
+    //console.log('agent id:'+this.id, 'radius:' + CROWD.getAgentRadius(this.id))
 
     this.setPrecision();
     this.setVelocity( 0,0 );
@@ -602,7 +613,7 @@ crowd.Agent.prototype = {
 
     remove: function () {
 
-        CROWD.removeAgent( this.id );
+        var r = CROWD.removeAgent( this.id );
 
     },
 

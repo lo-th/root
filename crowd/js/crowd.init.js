@@ -55,7 +55,7 @@ var crowd = ( function () {
             worker.postMessage = worker.webkitPostMessage || worker.postMessage;
 
 
-            blob = document.location.href.replace(/\/[^/]*$/,"/") + "./build/crowd.js";
+            blob = document.location.href.replace(/\/[^/]*$/,"/") + "./build/Crowd.js";
 
             // test transferrables
            /* var ab = new ArrayBuffer(1);

@@ -3,12 +3,12 @@ View.prototype.updateIntern = function () {
 
     var speed;
 
-    var i = view.heros.length, a, n, s, c, ca;
+    var i = this.agents.length, a, n, s, c, ca;
 
-    //view.heros.forEach( function( a, id ) {
+    //this.agents.forEach( function( a, id ) {
     while(i--){
 
-        a = view.heros[i];
+        a = this.agents[i];
 
         n = ( i * 5 );
 
@@ -38,6 +38,28 @@ View.prototype.updateIntern = function () {
 
 },
 
+View.prototype.removeAgent = function ( o ) {
+
+    o = o || {};
+    
+    var h = o.id !== undefined ? this.agents[o.id] : o.h; 
+    var c = h.children[0];
+    if(c){
+        c.stop();
+        h.remove(c);
+    }
+
+    this.scene.remove( h );
+
+    if( o.id ){
+
+        this.agents.splice( o.id, 1 );
+        crowd.send( 'remove', o );
+
+    }
+
+}
+
 View.prototype.agent = function ( o ) {
 
 	o = o || {};
@@ -66,7 +88,7 @@ View.prototype.agent = function ( o ) {
     m.position.fromArray( pos );
 
     this.scene.add(m);
-    this.heros.push(m);
+    this.agents.push(m);
 
     crowd.send( 'add', o );
 
@@ -114,19 +136,11 @@ View.prototype.reset = function () {
 	var h, c;
 
 	while( this.solids.length > 0 ) this.scene.remove( this.solids.pop() );
-	while( this.heros.length > 0 ) {
+	while( this.agents.length > 0 ) this.removeAgent( { h:this.agents.pop() } );
 
-		h = this.heros.pop();
-		c = h.children[0]
-		if(c){
-			c.stop();
-			h.remove(c);
-		}
-
-		this.scene.remove( h );
-	}
-
-
+    this.agents = [];
+    this.solids = [];
+      
 	this.helper.visible = true;
     if( this.shadowGround !== null ) this.shadowGround.visible = true;
 
