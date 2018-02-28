@@ -88,4 +88,5 @@ void main(){
 	vec4 cubi=textureCube(tCube,e);
 	m=m*(1.-cubi.a)*clamp(pow(abs(1.-normalize(lightdir).y),10.),0.,1.);
 	gl_FragColor = vec4(m+cubi.rgb,1);
+	#include <tonemapping_fragment>
 }
