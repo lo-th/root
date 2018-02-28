@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<title>super sky</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		body {
+			color: #ffffff;
+			font-family:Monospace;
+			font-size:13px;
+			text-align:center;
+			font-weight: bold;
+			background-color: #000000;
+			margin: 0px;
+			overflow: hidden;
+		}
+	</style>
+	</head>
+	<body>
+
+</script>
+
+<script src="./js/three.min.js"></script>
+<script src="./js/controls/OrbitControls.js"></script>
+<script src="./js/objects/Lensflare.js"></script>
+<script src="./js/objects/Water.js"></script>
+<script src="./js/CubeCamera.js"></script>
+<script src="./js/uil.min.js"></script>
+<script>
+
+	var torad = 0.0174532925199432957; 
+
+	var camera, scene, renderer, mesh, controls, sun, moon, water;
+    
+    var sceneDome, sceneSky, sceneRev;
+    var cubeCamera;
+	var materialSky, materialDome, envMap;
+
+	var vSphe, mSphe;
+
+	var setting = {
+		t:0,
+		fog:0,
+		cloud_size: .45,
+		cloud_covr: .3,
+		cloud_dens: 40,
+
+		inclination: 45,
+		azimuth: 45,
+		hour:12,
+
+		distortionScale:3.7,
+		size:1.0,
+		alpha:0.98,
+
+	}
+
+	// 1 LOAD SHADER
+
+	var urls = ['./glsl/base_vs.glsl', './glsl/dome_fs.glsl', './glsl/sky_fs.glsl'];
+	var shaders = {};
+
+	load();
+
+	function load () {
+		if( urls.length === 0 ) init();
+		else loadOne( urls.shift() )
+	}
+
+
+	function loadOne ( link ) {
+
+		var name = link.substring( link.lastIndexOf('/')+1, link.lastIndexOf('.') );
+		var xhr = new XMLHttpRequest();
+        xhr.open('GET', link, true );
+
+        xhr.onreadystatechange = function () {
+
+	    if ( xhr.readyState === 2 ) { 
+	        } else if ( xhr.readyState === 3 ) { //  progress
+	        } else if ( xhr.readyState === 4 ) {
+	            if ( xhr.status === 200 || xhr.status === 0 ){ 
+	            	shaders[name] = xhr.response;
+	            	load();
+	            	//console.log( name, xhr.response );
+	            }
+	            else console.error( "Couldn't load ["+ name + "] [" + xhr.status + "]" );
+	        }
+	    }
+
+        xhr.send( null );
+
+	}
+
+	// 2 INIT THREE SCENE
+	
+	function init() {
+
+		var textureLoader = new THREE.TextureLoader();
+
+		
+
+		scene = new THREE.Scene();
+		sceneSky = new THREE.Scene();
+
+		renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false, precision: "mediump"});
+		renderer.setPixelRatio( window.devicePixelRatio );
+		document.body.appendChild( renderer.domElement );
+
+		renderer.gammaInput =  true;
+        renderer.gammaOutput =  true;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.soft = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 1, 20000 );
+		camera.position.set( 30, 30, 100 );
+
+		controls = new THREE.OrbitControls(camera, renderer.domElement);
+		controls.maxPolarAngle = Math.PI * 0.495;
+		controls.target.set( 0, 10, 0 );
+		controls.panningMode = THREE.HorizontalPanning;
+		controls.minDistance = 40.0;
+		controls.maxDistance = 200.0;
+		camera.lookAt( controls.target );
+
+		sun = new THREE.DirectionalLight( 0xffffff, 0.8 );
+    	//sun.position.set( 0, 200, 10 );
+
+    	var dd = 150;
+    	var camShadow = new THREE.OrthographicCamera( dd, -dd, dd, -dd,  100, 1000 );
+        sun.shadow = new THREE.LightShadow( camShadow );
+
+        sun.shadow.mapSize.width = 512;
+        sun.shadow.mapSize.height = 512;
+        sun.shadow.bias = 0.001;
+        sun.castShadow = true;
+
+    	moon = new THREE.PointLight( 0x909090, 0.1, 400, 2 );
+    	moon.position.set( 0, -200, -10 );
+
+    	var d = new THREE.HemisphereLight(0, 8087102, .1)
+
+
+
+    	scene.add( sun );
+    	//cene.add( moon );
+    	scene.add( d );
+
+    	vSphe = new THREE.Spherical(500);
+        mSphe = new THREE.Spherical(500);
+
+		
+
+		materialSky = new THREE.ShaderMaterial( {
+			defines: {
+                //SCATTERING_SAMPLES: 64
+            },
+			uniforms: {
+				lightdir: { value: new THREE.Vector3(0, .2, -1) },
+                cloud_size: { value: setting.cloud_size },
+                cloud_covr: { value: setting.cloud_covr },
+                cloud_dens: { value: setting.cloud_dens },
+                fog: { value: setting.fog },
+                t: { value: setting.t }
+			},
+			vertexShader: shaders['base_vs'],
+			fragmentShader: shaders['sky_fs']
+			
+		});
+
+		
+
+		//var mm = new THREE.MeshBasicMaterial( {color:0xFF0000 })
+
+		var t = new THREE.BoxBufferGeometry( -2, -2, -2 );
+
+		var cmesh = new THREE.Mesh( t, materialSky );
+	    //var cmesh = new THREE.Mesh( new THREE.SphereBufferGeometry( -3 ), materialSky );
+		//cmesh.material.side = THREE.BackSide;
+		sceneSky.add( cmesh );
+
+		cubeCamera = new THREE.CubeCamera( 1, 1e3, 256 );
+		sceneSky.add( cubeCamera );
+		cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter
+
+
+		materialDome = new THREE.ShaderMaterial( {
+			uniforms: {
+				lightdir: { value: new THREE.Vector3(0, .2, -1) },
+				lunardir: { value: new THREE.Vector3(0, -.2, 1) },
+				tCube: { value: cubeCamera.renderTarget.texture },
+                tDome: { value:textureLoader.load( "assets/textures/milkyway.png" ) },
+			},
+			vertexShader: shaders['base_vs'],
+			fragmentShader: shaders['dome_fs'],
+			//depthWrite: false,
+			
+		});
+
+
+		var dmesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 10000, 30, 15 ), materialDome );
+		dmesh.material.side = THREE.BackSide;
+		scene.add( dmesh );
+
+		envMap = cubeCamera.renderTarget.texture;
+
+		var material = new THREE.MeshStandardMaterial( {
+			color:0xFFFFFF, 
+			envMap:envMap,
+			//roughness: 0.3, 
+			//metalness:0.8, 
+			metalnessMap:textureLoader.load("assets/textures/worldm.jpg"),
+			roughnessMap:textureLoader.load("assets/textures/worldr.jpg"),
+			//flatShading: true, 
+			shadowSide : false,
+			normalMap: textureLoader.load("assets/textures/worldn.jpg"),
+			normalScale: new THREE.Vector2( 1.5, 1.5 ),
+
+		})
+
+		var geometry = new THREE.IcosahedronGeometry( 20, 3 );
+		mesh = new THREE.Mesh( geometry, material );
+		mesh.castShadow = true;
+        mesh.receiveShadow = true;
+		scene.add( mesh );
+
+		var textureFlare3 = textureLoader.load("assets/textures/lensflare3.png")
+		var lensflare = new THREE.Lensflare();
+		lensflare.addElement( new THREE.LensflareElement( textureLoader.load("assets/textures/lensflare0.png"), 700, 0, sun.color ) );
+		lensflare.addElement( new THREE.LensflareElement( textureFlare3, 60, 0.6, sun.color ) );
+		lensflare.addElement( new THREE.LensflareElement( textureFlare3, 70, 0.7, sun.color ) );
+		lensflare.addElement( new THREE.LensflareElement( textureFlare3, 120, 0.9, sun.color ) );
+		lensflare.addElement( new THREE.LensflareElement( textureFlare3, 70, 1, sun.color ) );
+		sun.add(lensflare);
+
+		// Water
+
+		var waterGeometry = new THREE.PlaneBufferGeometry( 10000, 10000 );
+
+		water = new THREE.Water(
+			waterGeometry,
+			{
+				textureWidth: 512,
+				textureHeight: 512,
+				waterNormals: textureLoader.load( 'assets/textures/waternormals.jpg', function ( texture ) {
+					texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+				}),
+				alpha: 1.0,
+				sunDirection: sun.position.clone().normalize(),
+				sunColor: sun.color,
+				waterColor: 0x001e0f,
+				size: setting.size,
+				alpha: setting.alpha,
+				distortionScale: setting.distortionScale,
+				fog: false//scene.fog !== undefined
+			}
+		);
+
+		//water.material.side = THREE.DoubleSide;
+
+		water.rotation.x = - Math.PI / 2;
+		water.receiveShadow = true;
+
+		scene.add( water );
+
+		onWindowResize();
+
+		window.addEventListener( 'resize', onWindowResize, false );
+
+		updateSky();
+		gui();
+
+		animate();
+
+	}
+
+	function gui() {
+
+		ui = new UIL.Gui( { w:320 } );
+
+	    ui.add('slide',  { name:'fog', min:0, max:2, value:setting.fog, precision:2, fontColor:'#B0CC99', h:20 }).onChange( function(v){ setting.fog = v; updateSky(); } );
+	    ui.add('slide',  { name:'cloud_size', min:0, max:1, value:setting.cloud_size, precision:2, fontColor:'#B0CC99', h:20 }).onChange( function(v){ setting.cloud_size = v; updateSky(); } );
+	    ui.add('slide',  { name:'cloud_covr', min:0, max:1, value:setting.cloud_covr, precision:2, fontColor:'#B0CC99', h:20 }).onChange( function(v){ setting.cloud_covr = v; updateSky(); } );
+	    ui.add('slide',  { name:'cloud_dens', min:0, max:60, value:setting.cloud_dens, precision:2, fontColor:'#B0CC99', h:20 }).onChange( function(v){ setting.cloud_dens = v; updateSky(); } );
+	    ui.add('slide',  { name:'timelap', min:0, max:100, value:setting.fog, precision:2, fontColor:'#B0CC99', h:20 }).onChange( function(v){ setting.t = v; updateSky(); } );
+	    ui.add('slide',  { name:'hour', min:0, max:24, value:setting.hour, precision:2, fontColor:'#B0CC99', h:20 }).onChange( function(v){ setting.hour = v; updateSky(); } );
+	    ui.add('slide',  { name:'azimuth', min:0, max:360, value:setting.azimuth, precision:2, fontColor:'#B0CC99', h:20 }).onChange( function(v){ setting.azimuth = v; updateSky(); } );
+
+	    ui.add('slide',  { name:'alpha', min:0.5, max:1, value:setting.alpha, precision:2, fontColor:'#99B0CC', h:20 }).onChange( function(v){ setting.alpha = v; updateWater(); } );
+	    ui.add('slide',  { name:'size', min:0.1, max:10, value:setting.size, precision:2, fontColor:'#99B0CC', h:20 }).onChange( function(v){ setting.size = v; updateWater(); } );
+	    ui.add('slide',  { name:'distortionScale', min:0, max:20, value:setting.distortionScale, precision:2, fontColor:'#99B0CC', h:20 }).onChange( function(v){ setting.distortionScale = v; updateWater(); } );
+
+	}
+
+	function k(e, t) {
+        var n = t.dot(t),
+            a = 2 * t.dot(e),
+            o = e.dot(e) - 1,
+            r = a * a - 4 * n * o,
+            i = Math.sqrt(r),
+            l = (-a - i) / 2,
+            s = o / l;
+        return s
+    }
+
+    function z(e, t, n, a) {
+        var o = new THREE.Vector3(.188, .458, .682),
+            r = a.y >= 0 ? 1 : 0;
+        return this.r = (t.x - t.x * Math.pow(o.x, n / e)) * r, this.g = (t.y - t.y * Math.pow(o.y, n / e)) * r, this.b = (t.z - t.z * Math.pow(o.z, n / e)) * r, this
+    }
+
+    function updateWater() {
+
+    	water.material.uniforms.alpha.value = setting.alpha;
+        water.material.uniforms.size.value = setting.size;
+        water.material.uniforms.distortionScale.value = setting.distortionScale;
+    }
+
+	function updateSky() {
+
+		setting.inclination = (setting.hour*15)-90;
+
+		vSphe.phi = (setting.inclination-90) * torad;
+        vSphe.theta = (setting.azimuth-90) * torad;
+
+        mSphe.phi = (setting.inclination+90) * torad;
+        mSphe.theta = (setting.azimuth-90) * torad;
+
+        moon.position.setFromSpherical( mSphe );
+        sun.position.setFromSpherical( vSphe );
+
+        var sunpos = new THREE.Vector3().copy(sun.position).normalize()
+        var n = k(new THREE.Vector3(0, .99, 0), sunpos), a = z(n, new THREE.Vector3(1.8, 1.8, 1.8), .028, sunpos);
+
+        sun.color.setRGB(a.r, a.g, a.b)
+
+        water.material.uniforms.sunDirection.value.copy( sunpos );
+        water.material.uniforms.sunColor.value = sun.color;
+
+        
+
+
+		materialSky.uniforms.lightdir.value = sunpos;
+		materialDome.uniforms.lightdir.value = sunpos;
+
+		materialSky.uniforms.t.value = setting.t;
+		materialSky.uniforms.fog.value = setting.fog;
+		materialSky.uniforms.cloud_size.value = setting.cloud_size;
+		materialSky.uniforms.cloud_covr.value = setting.cloud_covr;
+		materialSky.uniforms.cloud_dens.value = setting.cloud_dens;
+
+		cubeCamera.update( renderer, sceneSky );
+
+	}
+
+	function onWindowResize( event ) {
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+	}
+
+	function animate( timestamp ) {
+
+		requestAnimationFrame( animate );
+
+		var time = performance.now() * 0.001;
+
+		mesh.position.y = Math.sin( time ) * 20 + 5;
+		mesh.rotation.x = time * 0.5;
+		mesh.rotation.z = time * 0.51;
+
+		water.material.uniforms.time.value += 1.0 / 60.0;
+		renderer.render( scene, camera );
+
+	}
+
+</script>
+
+</body>
+</html>
