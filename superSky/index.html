@@ -128,8 +128,8 @@
 		sun = new THREE.DirectionalLight( 0xffffff, 0.8 );
     	//sun.position.set( 0, 200, 10 );
 
-    	var dd = 150;
-    	var camShadow = new THREE.OrthographicCamera( dd, -dd, dd, -dd,  100, 1000 );
+    	var dd = 200;
+    	var camShadow = new THREE.OrthographicCamera( dd, -dd, dd, -dd,  8000, 10000 );
         sun.shadow = new THREE.LightShadow( camShadow );
 
         sun.shadow.mapSize.width = 512;
@@ -148,7 +148,7 @@
     	//cene.add( moon );
     	scene.add( d );
 
-    	vSphe = new THREE.Spherical(500);
+    	vSphe = new THREE.Spherical(10000-100);
         mSphe = new THREE.Spherical(500);
 
 		
