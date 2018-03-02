@@ -1,5 +1,6 @@
 
 // @author Artur Vill _ @shaderology
+// optimized by @3dflashlo
 
 varying vec3 worldPosition;
 
@@ -16,22 +17,20 @@ uniform float cloud_dens;
 uniform float t;
 
 const int SAMPLE = 128;
+const int STEP = 8;
 
 const float c = 6.36e6;
 const float d = 6.38e6;
 
-const int f = 8;
 const float g = 0.76;
 const float h = g*g;
-const float i = 8e3;
-const float j = 1200.0;
-const float k = 15.0;
-
+const float icc = 1.0/8e3;
+const float jcc = 1.0/1200.0;
 const float pi = 3.141592653589793;
 
 const vec3 vm = vec3( 0,-c,0 );
 const vec3 vn = vec3( 2.1e-5 );
-const vec3 vo = vec3( 5.8e-6,1.35e-5,3.31e-5 );
+const vec3 vo = vec3( 5.8e-6, 1.35e-5, 3.31e-5 );
 
 //#define USE_PROCEDURAL
 
@@ -69,53 +68,6 @@ float noise( in vec3 x ){
 
 #endif
 
-/*float X(float r){
-	return fract( sin(r) * 43758.5453 );
-}
-
-float Y(in vec2 r){
-	vec2 s,t;
-	s = floor(r);
-	t = fract(r);
-	t = t * t * ( 3.0 - 2.0 * t );
-	float u,v;
-	u = s.x + s.y * 57.0;
-	v = mix(mix(X(u+0.0),X(u+1.0),t.x),mix(X(u+57.0),X(u+58.0),t.x),t.y);
-	return v;
-}
-
-float X( in vec3 r ){
-	return fract(sin(dot(r,vec3(37.1,61.7,12.4)))*3758.5453123);
-}
-
-float Y(in vec3 r){
-	vec3 s,t;
-	s = floor(r);
-	t = fract(r);
-	t *= t * ( 3.0 - 2.0 * t );
-	return mix( mix( mix( X(s+vec3(0)), X(s+vec3(1,0,0) ), t.x ), 
-		             mix( X(s+vec3(0,1,0)), X(s+vec3(1,1,0)),t.x ),t.y),
-	             mix(mix(X(s+vec3(0,0,1)),X(s+vec3(1,0,1)),t.x),
-	                 mix(X(s+vec3(0,1,1)),X(s+vec3(1)),t.x),t.y),t.z);
-}*/
-
-/*float NOISE( vec3 r ){
-	r.xz += t;
-	r *= 0.5;
-	float s;
-	s = 0.5 * Y(r);
-	r = r * 2.52;
-	s += 0.25 * Y(r);
-	r = r * 2.53;
-	s += 0.125 * Y(r);
-	r = r * 2.51;
-	s += 0.0625 * Y(r);
-	r = r * 2.53;
-	s += 0.03125 * Y(r);
-	r = r*2.52;
-	s += 0.015625 * Y(r);
-	return s;
-}*/
 
 float NOISE( vec3 r ){
 
@@ -148,31 +100,34 @@ float MakeNoise( vec3 r ){
 
 }
 
-void ba( in vec3 r,out float s,out float t,out float u ){
+void cloudLayer( in vec3 r,out float s,out float t,out float u ){
 
 	float v,w;
 	v = length( r-vm ) - c;
-	w=0.;
+	w=0.0;
 	if( 5e3 < v && v < 1e4 ) w = MakeNoise( r ) * sin( pi*(v-5e3)/5e3 );
-	s = exp(-v/i)+fog;
-	t = exp(-v/j)+w+fog;
+	s = exp(-v*icc) + fog;
+	t = exp(-v*jcc) + w + fog;
 	u = w + fog;
 
 }
 
 float ca(in vec3 r,in vec3 s,in float t){
-	vec3 u=r-vm;
+
+	vec3 u = r-vm;
 	float v,w,x,y,z,A;
-	v=dot(u,s);
-	w=dot(u,u)-t*t;
-	x=v*v-w;
-	if(x<0.)return -1.;
-	y=sqrt(x);
-	z=-v-y;A=-v+y;
-	return z>=0.?z:A;
+	v = dot(u,s);
+	w = dot(u,u)-t*t;
+	x = v*v-w;
+	if( x<0.0 ) return -1.0;
+	y = sqrt(x);
+	z = -v-y;
+	A = -v+y;
+	return z >= 0.0 ? z : A;
+
 }
 
-vec3 makeSky(in vec3 r,in vec3 s,out float t){
+vec3 makeSky( in vec3 r, in vec3 s, out float t){
 	
 	float u,v,w,x,y,z,A,B,C,m,F;
 	vec3 p = normalize( lightdir );
@@ -180,8 +135,8 @@ vec3 makeSky(in vec3 r,in vec3 s,out float t){
 	v = dot(s,p);
 	w = 1.0+v*v;
 	x = 0.0596831*w;
-	y = 0.0253662*(1.-h)*w/((2.+h)*pow(abs(1.+h-2.*g*v),1.5));
-	z = 50.*pow(abs(1.+dot(s,-p)),2.)*dot(vec3(0,1,0),p)*(1.-cloud_covr)*(1.-min(fog,1.));
+	y = 0.0253662*(1.0-h)*w/((2.0+h)*pow(abs(1.0+h-2.0*g*v),1.5));
+	z = 50.*pow(abs(1.+dot(s,-p)),2.0)*dot(vec3(0,1,0),p)*(1.0-cloud_covr)*(1.0-min(fog,1.0));
 	A = 0.0;
 	B = 0.0;
 	C = 0.0;
@@ -197,7 +152,7 @@ vec3 makeSky(in vec3 r,in vec3 s,out float t){
 		H = float(G)*F;
 		vec3 I = r + s * H;
 		L = 0.0;
-		ba( I, J, K, L );
+		cloudLayer( I, J, K, L );
 		J *= F;
 		K *= F;
 		A += J;
@@ -206,21 +161,21 @@ vec3 makeSky(in vec3 r,in vec3 s,out float t){
 		M = ca(I,p,d);
 		if( M > 0.0 ){
 			float N,O,P,Q;
-			N=M/float(f);
-			O=0.;
-			P=0.;
-			Q=0.;
-			for( int R=0; R<f; ++R ){
+			N=M/float(STEP);
+			O=0.0;
+			P=0.0;
+			Q=0.0;
+			for( int R=0; R<STEP; ++R ){
 				float S,U,V,W;
 				S = float(R)*N;
 				vec3 T=I+p*S;
-				W=0.0;
-				ba( T, U, V, W );
+				W = 0.0;
+				cloudLayer( T, U, V, W );
 				O+=U*N;
 				P+=V*N;
 				Q+=W*N;
 			}
-			vec3 S=exp(-(vo*(O+A)+vn*(P+B)));
+			vec3 S = exp(-(vo*(O+A)+vn*(P+B)));
 			m+=L;
 			D+=S*J;
 			E+=S*K+z*m;
@@ -228,7 +183,7 @@ vec3 makeSky(in vec3 r,in vec3 s,out float t){
 		else return vec3(0.0);
 	}
 	t = m * 0.0125;// /80.0;
-	return k*(D*vo*x+E*vn*y);
+	return ( (D * vo * x) + (E * vn * y)) * 15.0;
 }
 
 void main(){
