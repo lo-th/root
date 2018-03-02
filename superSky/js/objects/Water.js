@@ -29,6 +29,7 @@ THREE.Water = function ( geometry, options ) {
 	var distortionScale = options.distortionScale !== undefined ? options.distortionScale : 20.0;
 	var side = options.side !== undefined ? options.side : THREE.FrontSide;
 	var fog = options.fog !== undefined ? options.fog : false;
+	var depth = options.depth !== undefined ? options.depth : 1.0;
 
 	//
 
@@ -79,7 +80,8 @@ THREE.Water = function ( geometry, options ) {
 				sunColor: { value: new THREE.Color( 0x7F7F7F ) },
 				sunDirection: { value: new THREE.Vector3( 0.70707, 0.70707, 0 ) },
 				eye: { value: new THREE.Vector3() },
-				waterColor: { value: new THREE.Color( 0x555555 ) }
+				waterColor: { value: new THREE.Color( 0x555555 ) },
+				depth: { value: 1.0 }
 			}
 		] ),
 
@@ -117,6 +119,7 @@ THREE.Water = function ( geometry, options ) {
 			'uniform vec3 sunDirection;',
 			'uniform vec3 eye;',
 			'uniform vec3 waterColor;',
+			'uniform float depth;',
 
 			'varying vec4 mirrorCoord;',
 			'varying vec4 worldPosition;',
@@ -124,8 +127,10 @@ THREE.Water = function ( geometry, options ) {
 			'vec4 getNoise( vec2 uv ) {',
 			'	vec2 uv0 = ( uv / 103.0 ) + vec2(time / 17.0, time / 29.0);',
 			'	vec2 uv1 = uv / 107.0-vec2( time / -19.0, time / 31.0 );',
-			'	vec2 uv2 = uv / vec2( 8907.0, 9803.0 ) + vec2( time / 101.0, time / 97.0 );',
+			//'	vec2 uv2 = uv / vec2( 8907.0, 9803.0 ) + vec2( time / 101.0, time / 97.0 );',
+			'	vec2 uv2 = uv / vec2( 1027.0, 1091.0 ) + vec2( time / 101.0, time / 97.0 );',
 			'	vec2 uv3 = uv / vec2( 1091.0, 1027.0 ) - vec2( time / 109.0, time / -113.0 );',
+			//'	vec4 noise = texture2D( normalSampler, uv3 );',
 			'	vec4 noise = texture2D( normalSampler, uv0 ) +',
 			'		texture2D( normalSampler, uv1 ) +',
 			'		texture2D( normalSampler, uv2 ) +',
@@ -150,7 +155,11 @@ THREE.Water = function ( geometry, options ) {
 
 			'void main() {',
 			'	vec4 noise = getNoise( worldPosition.xz * size );',
-			'	vec3 surfaceNormal = normalize( noise.xzy * vec3( 1.5, 1.0, 1.5 ) );',
+			//'   noise.xy = noise.xy * ( 0.001 + 1.0 / distance ) * vec2(depth);',
+			//'	vec3 surfaceNormal = normalize( noise.xzy * vec3( 1.5, 1.0, 1.5 ) );',
+			'	vec3 surfaceNormal = normalize( noise.xzy * vec3( depth, 1.0 ,depth ) );',
+
+
 
 			'	vec3 diffuseLight = vec3(0.0);',
 			'	vec3 specularLight = vec3(0.0);',
@@ -163,6 +172,8 @@ THREE.Water = function ( geometry, options ) {
 
 			'	vec2 distortion = surfaceNormal.xz * ( 0.001 + 1.0 / distance ) * distortionScale;',
 			'	vec3 reflectionSample = vec3( texture2D( mirrorSampler, mirrorCoord.xy / mirrorCoord.z + distortion ) );',
+
+			//'   surfaceNormal.xy = surfaceNormal.xy * ( 0.001 + 1.0 / distance ) * vec2(depth);',
 
 			'	float theta = max( dot( eyeDirection, surfaceNormal ), 0.0 );',
 			'	float rf0 = 0.3;',
@@ -199,6 +210,7 @@ THREE.Water = function ( geometry, options ) {
 	material.uniforms.waterColor.value = waterColor;
 	material.uniforms.sunDirection.value = sunDirection;
 	material.uniforms.distortionScale.value = distortionScale;
+	material.uniforms.depth.value = depth;
 
 	material.uniforms.eye.value = eye;
 
