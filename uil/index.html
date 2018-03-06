@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <title>Uil to Three</title>
-<link rel="shortcut icon" href="favicon.ico">
+<link rel="shortcut icon" href="./favicon.ico">
 <style>
-/**{ margin: 0; padding: 0; border: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select:none; } */
 html{ overflow:hidden; width:100%; height:100%; }
 body { font-family: "Lucida Console", Monaco, monospace; background-color:#161616; font-size:11px; color:#fff; margin: 0px; }
 
 #version { position:absolute; top:98px; left:50%; width:90px; height:10px; pointer-events:none; text-align:right;  font-size:16px;}
 #logo{ position:absolute; left:50%; margin-left:-128px;  margin-top:-60px; transform: scale(0.5,0.5);}
+
 </style>
 
 <script type="text/javascript" src="./js/uil.min.js"></script>
@@ -25,11 +25,7 @@ body { font-family: "Lucida Console", Monaco, monospace; background-color:#16161
 
 var cw = 300, ch=617;
 
-var canvas = document.createElement("canvas");
-canvas.width = cw;
-canvas.height = ch;
-
-var debug, debug2, camera, scene, renderer, controls, loader, mesh, mat, screenTexture, interactive, nup = false;
+var debug, debug2, camera, scene, renderer, controls, loader, mesh, mat, screen = null, interactive, nup = false;
 var temp=0, fps=0, count=0; 
 
 var raycaster = new THREE.Raycaster();
@@ -45,6 +41,10 @@ function init() {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x000000 );
+
+    
+
+    
 
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -75,19 +75,18 @@ function init() {
 
     var env = loader.load( './assets/textures/env.jpg' );
     env.mapping = THREE.SphericalReflectionMapping;
+
+    //canvas = document.createElement("canvas");
+    //canvas.width = cw;
+    //canvas.height = ch;
     
-    screenTexture = new THREE.Texture( canvas );
-    screenTexture.flipY = false;
-    screenTexture.minFilter = THREE.LinearFilter;
-    screenTexture.generateMipmaps = false;
-    screenTexture.premultiplyAlpha = false;
 
     debug = document.createElement("div");
     debug.style.cssText = 'position:absolute; top:10px; left:10px; width:100px; pointer-events:none; ';
     document.body.appendChild(debug);
 
     debug2 = document.createElement("div");
-    debug2.style.cssText = 'position:absolute; bottom:10px; left:10px; width:100px; pointer-events:none; ';
+    debug2.style.cssText = 'position:absolute; bottom:10px; left:50%; width:128px;  margin-left:-64px; pointer-events:none; text-align:center; color:#FFFF00;';
     document.body.appendChild(debug2);
 
    
@@ -100,7 +99,9 @@ function init() {
     mat['screen_back'] = new THREE.MeshBasicMaterial( { color:0x000000 } );
     mat['screen_border'] = mat['screen_back'];
     
-    mat['screen'] = new THREE.MeshBasicMaterial( { map:screenTexture } );
+    mat['screen'] = new THREE.MeshBasicMaterial();
+
+    
 
     interactive = new THREE.Group();
     scene.add(interactive);
@@ -131,7 +132,7 @@ function animate(time) {
     if ( (time - 1000) > temp ){ temp = time; debug2.textContent = count; count = 0; }; count++;
 
     if(nup){
-        screenTexture.needsUpdate = true;
+        screen.needsUpdate = true;
         nup = false;
     }
     renderer.render( scene, camera );
@@ -164,25 +165,21 @@ function load() {
 
 function onMouseUp( e ){
 
-   //e.preventDefault();
    if(!controls.enabled){
         controls.enabled = true;
         
     }
-    //raytest( e );
 
 }
 
 function onMouseDown( e ){
 
-   //e.preventDefault();
     controls.enabled = raytest( e ) ? false : true;
 
 }
 
 function onMouseMove( e ) {
 
-    //e.preventDefault();
     raytest( e );
 
 }
@@ -199,80 +196,62 @@ function raytest ( e ) {
         mouse2d.x = Math.round(uv.x*cw);
         mouse2d.y = Math.round(uv.y*ch);
 
-        ui.setMouse(mouse2d)
+        ui.setMouse(mouse2d);
 
         return true;
 
     } else {
-        //controls.enabled = true;
-        mouse2d.set(-10,-10);
-        ui.setMouse(mouse2d)
+
         ui.reset( true );
         return false;
     }
 
-
+   
 }
 
 
-
-
-
-
-//canvas.style.cssText = 'position:absolute; left:10px; top:0;';
-//document.body.appendChild(canvas);
-//var ctx = canvas.getContext("2d");
-//ctx.fillStyle = '#000';
-//ctx.fillRect( 0,0, 300, 700); 
 
 var timer = null;
 var display = false;
 var list = ['item-0', 'item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-6', 'item-7', 'item-8', 'item-9', 'item-10', 'item-11', 'item-12'];
 var list2 = ['item-0', 'item-1', 'item-2'];
 
-//document.getElementById('version').innerHTML = 'il '+ UIL.REVISION;
-
-
 
 var callback = function( v ){ 
     debug.innerHTML = v;
-
-    //UIL.Tools.toCanvas(canvas, ui.content, 300, 600 );
-
-    //UMC.toCanvas(canvas, 'http://lo-th.github.io/uil/index.html', 600, 600 );
-
 }
-
-//var callbackButton = function(){ debug.innerHTML = "i'm a button !!" ; }
-//var callbackSize = function( v ){ ui.setWidth( v ); }
-//var callbackLogo = function( v ){ document.getElementById('logoin').setAttributeNS(null, 'fill', UIL.hexToHtml(v)); document.getElementById('version').style.color = UIL.hexToHtml(v);  }
 
 
 // single UI element
 var b = UIL.add('button', { target:document.body, callback:populate, name:'populate', w:100, pos:{left:'50%', top:'10px', marginLeft:'-50px' }, simple:true });
 
-/*var cc = document.createElement('div');
-cc.style.cssText = 'position:absolute; left:0px; top:0px; height:617px; width:300px; background:#FF0000; pointer-events:none; opacity:0; visibility:hidden; ';
-document.body.appendChild(cc);*/
-//cc.style.display = 'hidden'
-// in GUI element
-var ui = new UIL.Gui( { w:cw, maxHeight:ch, parent:false,  css:'left:0; top:0;' } ).onChange( callback );
+var ui = new UIL.Gui( { w:cw, maxHeight:ch, parent:null, isCanvas:true } ).onChange( callback );
 
 
-ui.setEventCallback( redraw ); 
 
-function redraw(){ 
-    UIL.Tools.toCanvas( canvas, ui.content, up3d, cw, ch );
-}
+ui.onDraw = function (){
 
-function up3d(){  
-    nup = true;
+
+    if( screen === null ){
+
+        screen = new THREE.Texture( this.canvas );
+        screen.flipY = false;
+        screen.minFilter = THREE.LinearFilter;
+        screen.generateMipmaps = false;
+        screen.premultiplyAlpha = false;
+        screen.needsUpdate = true;
+        mat.screen.map = screen;
+
+        
+    } else {
+        screen.needsUpdate = true;
+        //nup = true;
+    }
+    //
+    console.log('ui draw')
 }
 
 populate();
-//loop();
-
-///ui.toCanvas();
 
 function populate(){
 
@@ -287,10 +266,10 @@ function populate(){
         ui.add('string', { name:'string',  value:'welcome to uil', fontColor:'#D4B87B', height:40});
         ui.add('list',   { name:'list',  list:list, fontColor:'#D4B87B', height:30});
         ui.add('list',   { name:'list',  list:list2, height:40});
-        /*ui.add('number', { name:'number',  value:20});
+        ui.add('number', { name:'number',  value:20});
         ui.add('number', { name:'vector2', value:[0,0], fontColor:'#D4B87B' });
         ui.add('number', { name:'vector3', value:[0,0,0] });
-        ui.add('number', { name:'vector4', value:[0,0,0,0], step:1, precision:0, height:30 });*/
+        ui.add('number', { name:'vector4', value:[0,0,0,0], step:1, precision:0, height:30 });
         ui.add('button', { name:'button', fontColor:'#D4B87B', height:30 });
         ui.add('button', { name:'MULTY', fontColor:'#D4B87B', height:30, value:[1, 2, 3, 4] })
 
@@ -311,6 +290,10 @@ function populate(){
 
         gr2 = ui.add('group', { name:'knobs', fontColor:'#D4B87B' });
 
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, step:10, value:20, precision:0 , fontColor:'#D4B87B' });
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:50, precision:2 , fontColor:'#D4B87B' });
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:75, precision:2 , fontColor:'#D4B87B' });
+        gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:100, step:1, precision:0 , fontColor:'#D4B87B' });
         gr2.add('knob', { name:'knob', w:70, min:0, max:100, step:10, value:20, precision:0 , fontColor:'#D4B87B' });
         gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:50, precision:2 , fontColor:'#D4B87B' });
         gr2.add('knob', { name:'knob', w:70, min:0, max:100, value:75, precision:2 , fontColor:'#D4B87B' });
@@ -336,13 +319,6 @@ function populate(){
 
 }
 
-
-/*function loop(){
-
-    window.requestAnimationFrame(loop);
-    UIL.Tools.toCanvas(canvas, ui.content, 300, 600 );
-
-}*/
 
 </script>
 </body>
