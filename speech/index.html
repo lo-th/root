@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sea3d / morph</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+				color:#ffffff;
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<script src="./js/three.min.js"></script>
+
+		<script src="./js/OrbitControls.js"></script>
+
+		<script src="./js/sea3d/SEA3D.js"></script>
+		<script src="./js/sea3d/SEA3DLZMA.js"></script>
+		<script src="./js/sea3d/SEA3DLoader.js"></script>
+		<script src="./js/sea3d/SEA3DLegacy.js"></script>
+
+
+		<script>
+
+
+			var container, info, button, sound;
+
+			var camera, scene, renderer, composer, controls, loader;
+
+			var mouth, dent;
+
+			var time = 0, data;
+			var current = 'X', prev = 'X';
+
+
+			var n = 0;
+			var inc = 0.1;
+
+			init();
+			
+
+			//
+
+			function init() {
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x333333 );
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( -50, 40, 150 );
+
+				var light1 = new THREE.PointLight( 0xffFFFF, 2, 500 );
+				light1.position.set(100, 150, 200)
+				scene.add( light1 );
+
+				var light2 = new THREE.PointLight( 0x3366FF, 1, 500 );
+				light2.position.set(-100, -150, -200)
+				scene.add( light2 );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+
+				loader = new THREE.SEA3D();
+				loader.load( './lips2.sea' );
+
+				loadSound()
+
+				loader.onComplete = function( e ) {
+
+					controls = new THREE.OrbitControls( camera );
+
+					// get mesh
+
+					mouth = loader.getMesh("mouth");
+					dent = loader.getMesh("dent");
+
+					var matM = new THREE.MeshStandardMaterial({color:0xff5555, morphTargets:true })
+					var matD = new THREE.MeshStandardMaterial({color:0xffffff, morphTargets:true })
+
+					mouth.material = matM;
+					dent.material = matD;
+
+					scene.add(mouth);
+					scene.add(dent);
+
+					animate();
+
+				};
+
+				// events
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function play() {
+
+				sound.play();
+
+			}
+
+			function loadSound() {
+
+				sound      = document.createElement('audio');
+				//sound.id       = 'audio-player';
+				//sound.controls = 'controls';
+				sound.src      = './base.mp3';
+				sound.type     = 'audio/mpeg';
+				//document.body.appendChild(sound);
+
+				info = document.createElement( 'div' );
+				info.style.cssText = 'position:absolute; left:10px; top:40px;'
+				
+
+				button = document.createElement( 'div' );
+				button.style.cssText = 'position:absolute; left:10px; top:10px; cursor:pointer; background:#FF0000; width:80px; height:20px; text-align:center;'
+				button.innerHTML = 'PLAY';
+				document.body.appendChild( button );
+
+				button.addEventListener('mousedown', play, false);
+
+
+				var xhr = new XMLHttpRequest();
+			    xhr.overrideMimeType("application/json");
+			    xhr.open('GET', './base.json', true);
+			    xhr.onreadystatechange = function() {
+		            if (xhr.readyState === 4 ) {//&& xhr.status === "200"
+		            	data = JSON.parse(xhr.responseText).mouthCues;
+
+
+		               document.body.appendChild( info );
+		            }
+		        };
+
+			    xhr.send(null);
+
+			}
+
+			function getCurrent(){
+
+				var i = data.length, d;
+
+				while(i--){
+					d = data[i];
+					if( time >= d.start && time < d.end ) return d.value;
+				}
+
+				return 'X'
+
+			}
+
+			function testMorph(){
+
+				var c = getCurrent();
+
+				if( current !== c ){
+
+					prev = current;
+					current = c;
+
+					n = 0;
+
+				}
+
+				if(n<=1){
+					setMorph( current, n);
+					setMorph( prev, 1-n);
+				} 
+
+
+				n += inc;
+
+			}
+
+			function setMorph( name, v ) {
+
+				if(name==='X') return;
+
+				mouth.setWeight(name, v );
+				dent.setWeight(name, v );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				time = sound.currentTime;
+
+				info.innerHTML = current +' '+time;
+
+				testMorph();
+
+				renderer.render( scene, camera );
+
+
+			}
+
+		</script>
+	</body>
+</html>
