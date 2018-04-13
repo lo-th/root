@@ -91,9 +91,18 @@ var video = ( function () {
 
 		callback = Callback || function(){}
 
-		navigator.mediaDevices.getUserMedia(constraints)
+		navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
+ 
+		if (navigator.getUserMedia) {       
+		    navigator.getUserMedia(constraints, function( stream ){ mediaStream = stream;  source.src = window.URL.createObjectURL(stream) }, function(error){ console.log('getUserMedia error: ' + error.name, error); });
+		}
+		 
+
+
+
+		/*navigator.mediaDevices.getUserMedia(constraints)
 		.then( function( stream ){ mediaStream = stream;  source.srcObject = mediaStream; } )
-		.catch( function(error){ console.log('getUserMedia error: ' + error.name, error); }.bind(this) );
+		.catch( function(error){ console.log('getUserMedia error: ' + error.name, error); }.bind(this) );*/
 		source.play();
 		isVideo = false;
 		isRever = true;
@@ -107,9 +116,15 @@ var video = ( function () {
 
 		if(isVideo) return;
 
-		navigator.mediaDevices.getUserMedia(constraints)
+		navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
+ 
+		if (navigator.getUserMedia) {       
+		    navigator.getUserMedia(constraints, function( stream ){ mediaStream = stream;  source.src = window.URL.createObjectURL(stream) }, function(error){ console.log('getUserMedia error: ' + error.name, error); });
+		}
+
+		/*navigator.mediaDevices.getUserMedia(constraints)
 		.then( function( stream ){ mediaStream = stream;  source.srcObject = mediaStream; } )
-		.catch( function(error){ console.log('getUserMedia error: ' + error.name, error); }.bind(this) );
+		.catch( function(error){ console.log('getUserMedia error: ' + error.name, error); }.bind(this) );*/
 
 		source.play();
 		isPlaying = true;
