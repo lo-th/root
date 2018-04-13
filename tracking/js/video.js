@@ -5,7 +5,7 @@ var video = ( function () {
     var ua = window.navigator.userAgent;
 	var isIOS11 = (ua.indexOf("iPad") > 0 || ua.indexOf("iPhone") > 0) && ua.indexOf("OS 11_") > 0;
 
-	var source, mediaSource, constraints;
+	var source, mediaStream, constraints;
 	var content, canvas, canvasOver, ctx, ctxOver, timebare, timebareIn;
 
 	var width = 640;
@@ -25,6 +25,7 @@ var video = ( function () {
     video = {
 
 	setting: {
+		isIOS11: isIOS11,
 		width:width, 
 		height:height,
 		zoom:1,
@@ -36,7 +37,7 @@ var video = ( function () {
 	init: function () {
 
 		source = document.createElement('video');
-		mediaSource = new MediaSource();
+		//mediaSource = new MediaSource();
 		//this.constraints = { audio: false, video: {width: w, height: h, frameRate: 30}  };
 		constraints = { audio: false, video: {frameRate: 30}  };
 
@@ -91,7 +92,7 @@ var video = ( function () {
 		callback = Callback || function(){}
 
 		navigator.mediaDevices.getUserMedia(constraints)
-		.then( function( stream ){ source.srcObject = stream; } )
+		.then( function( stream ){ mediaStream = stream;  source.srcObject = mediaStream; } )
 		.catch( function(error){ console.log('getUserMedia error: ' + error.name, error); }.bind(this) );
 		source.play();
 		isVideo = false;
@@ -99,6 +100,19 @@ var video = ( function () {
 		isPlaying = true;
 
 		video.takeDimension();
+
+	},
+
+	restartWebcam: function(){
+
+		if(isVideo) return;
+
+		navigator.mediaDevices.getUserMedia(constraints)
+		.then( function( stream ){ mediaStream = stream;  source.srcObject = mediaStream; } )
+		.catch( function(error){ console.log('getUserMedia error: ' + error.name, error); }.bind(this) );
+
+		source.play();
+		isPlaying = true;
 
 	},
 
@@ -118,9 +132,10 @@ var video = ( function () {
 			// Once that is done, we start the stream again.
 			// Otherwise the stream will just stop and won't update anymore.
 
-			if(isIOS11) {
+			if(isIOS11 && !isVideo) {
 				source.pause();
 				source.srcObject.getTracks().forEach(function(track) { track.stop(); });
+				isPlaying = false;
 			}
 
 			if(isVideo) video.addBare();

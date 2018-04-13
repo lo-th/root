@@ -101,6 +101,14 @@ var brf4 = ( function () {
 
             this.reset();
 
+            if(video.setting.isIOS11){
+                setTimeout(function () {
+                    console.log('delayed camera restart for iOS 11');
+                    video.restartWebcam();
+                }, 2000)
+
+            }
+
 
             callback();
 
