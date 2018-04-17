@@ -1,265 +1,27 @@
 <!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
 <html>
 <head>
+    <title>face tracking</title>
 	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>face tracking</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="IE=11" />
+	<meta http-equiv="Pragma" content="no-cache">
+	
 	<style>
 		* { margin: 0; padding: 0; border: 0; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none; -o-user-select: none; user-select: none; }
 		body {
 		    font-family: Monospace;
-		    font-size: 12px; 
-		    color:#fff;
-		    background: #333333;
+		    font-size: 12px;
+		    background: #ccc;
+		    color:#000;
 		}
 	</style>
 
-	<script src="js/libs/brf_asmjs/BRFv4_JS_TK190218_v4.0.5_trial.js"></script>
-	<script src="js/libs/three.min.js"></script>
-	<script src="js/libs/uil.min.js"></script>
+	<script src="./build/brf/BRFv4.js"></script>
+	<script src="./build/tracking.min.js"></script>
 
 </head>
 <body>
-
-    <script src="js/hub.js"></script>
-    <script src="js/video.js"></script>
-	<script src="js/M.js"></script>
-	<script src="js/V2.js"></script>
-	<script src="js/brf4.js"></script>
-	
-	<script>
-
-	var camera, scene, renderer, debug;
-	var mesh, rotation, geo;
-
-	var ww, hh;
-
-
-	init3D()
-
-	window.onload = start
-
-	
-
-	// brfv4 
-	//var brf = new Brf();
-
-	//document.body.appendChild( webcam.video );
-	//document.body.appendChild( webcam.content );
-	//webcam.resize()
-
-	
-
-
-	function start (){
-
-		video.init();
-		hub.init()
-
-	}
-
-	function startVideo () {
-
-		video.setting.zoom = 2;
-		video.setting.top = true;
-
-		//webcam.load( ready, './assets/video/mtu_33.mp4' );
-		video.load( ready, './assets/video/wib_23.mp4' );
-
-	}
-
-	function startWebcam () {
-
-		video.setting.top = false;
-		video.webcam( ready );
-
-	}
-
-
-	function ready (){
-
-		console.log('webcam ready');
-
-		brf4.init( brfReady );
-
-	}
-
-	function brfReady (){
-
-		console.log('brf ready');
-
-		trackFaces();
-
-	}
-
-
-	function trackFaces() {
-
-		requestAnimationFrame(trackFaces);
-
-
-		brf4.update();
-
-
-		//var face = brf4.getFace();
-
-		//if( !face ) return;
-
-		//var s =  (face.scale / 180);
-		var x = -(brf4.position.x - (video.setting.width * 0.5));
-		var y = -(brf4.position.y - (video.setting.height * 0.5));
-		var z =  -50
-
-		/*var rx = THREE.Math.radToDeg(-face.rotationX);
-		var ry = THREE.Math.radToDeg(-face.rotationY);
-		var rz = THREE.Math.radToDeg( face.rotationZ);
-
-		//txt += 'RX: ' + rx.toFixed(1) + ' RY: ' + ry.toFixed(1) + ' RZ: ' + rz.toFixed(1) +'<br>';
-
-		//txt += 'LNG: ' +face.vertices.length
-
-		//console.log(rx)
-
-		var rya = ry < 0 ? -ry : ry;
-		ry = ry * 0.90;*/
-
-		mesh.position.set( x, y, z );
-
-		rotation.set(brf4.rotation.x, brf4.rotation.y, brf4.rotation.z )
-		mesh.quaternion.setFromEuler(rotation)
-
-		/*mesh.rotation.set(
-			THREE.Math.degToRad(rx),
-			THREE.Math.degToRad(ry),
-			THREE.Math.degToRad(rz)
-		);*/
-
-		var v = brf4.v;//face.vertices
-
-		var attributes = geo.attributes;
-		var pos = attributes.position.array;
-
-		var n3 = 0;
-		var n2 = 0;
-
-		var o = 68;
-		while(o--){
-
-			n3 = o*3;
-			n2 = o*2;
-
-			pos[n3] = v[o].x;
-			pos[n3+1] = v[o].y;
-			pos[n3+2] = 0
-
-		}
-
-		attributes.position.needsUpdate = true;
-		hub.log( brf4.getInfo() );
-
-	}
-
-	function init3D(){
-
-		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-		camera.position.z = 400;
-
-		scene = new THREE.Scene();
-
-		rotation = new THREE.Euler()
-
-		//var texture = new THREE.TextureLoader().load( 'textures/crate.gif' );
-
-		var geometry = new THREE.BoxBufferGeometry( 30, 60, 30 );
-		var material = new THREE.MeshStandardMaterial( {color:0x00ff00, transparent:true, opacity:0.2} );
-
-		mesh = new THREE.Mesh( geometry, material );
-		scene.add( mesh );
-
-		var mid = new THREE.Mesh( new THREE.SphereBufferGeometry( 10 ), material );
-		scene.add( mid );
-
-		geo = makePoint();
-
-		var dirLight = new THREE.DirectionalLight( 0xffffff );
-		dirLight.position.set( 200, 200, 1000 ).normalize();
-		scene.add( dirLight );
-
-		renderer = new THREE.WebGLRenderer();
-		renderer.setPixelRatio( window.devicePixelRatio );
-		renderer.setSize( window.innerWidth, window.innerHeight );
-		renderer.domElement.style.cssText = 'position:absolute; '
-		document.body.appendChild( renderer.domElement );
-
-		//
-
-		window.addEventListener( 'resize', onWindowResize, false );
-
-		onWindowResize();
-
-		/*debug = document.createElement('div');
-		debug.style.cssText = 'position:absolute; right:10px; top:10px; width:400px, height:400px; text-align:right;'
-		document.body.appendChild( debug );*/
-
-		animate();
-
-	}
-
-	function onWindowResize() {
-
-		video.resize()
-
-		ww = window.innerWidth;
-		hh = window.innerHeight;
-
-		camera.aspect = ww / hh;
-		camera.updateProjectionMatrix();
-
-		renderer.setSize( ww, hh );
-
-	}
-
-	function animate() {
-
-		requestAnimationFrame( animate );
-
-		//mesh.rotation.x += 0.005;
-		//mesh.rotation.y += 0.01;
-
-		renderer.render( scene, camera );
-
-	}
-
-	function makePoint(){
-
-		var geometry = new THREE.BufferGeometry();
-		var lng = 68, n;
-
-		var positions = new Float32Array( lng * 3 );
-		var colors = new Float32Array( lng * 3 );
-
-		for(var i = 0; i < lng; i++) {
-			n = i*3;
-			colors[n] = 1;
-			colors[n+1] = 1;
-			colors[n+2] = 1;
-		}
-
-		geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-		geometry.addAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
-
-		var material = new THREE.PointsMaterial( { size:5, vertexColors: THREE.VertexColors, transparent: true } );
-		var pp = new THREE.Points(geometry, material);
-		//pp.scale.set(1,1,1)
-		scene.add( pp );
-
-		return geometry;
-
-	}
-
-
-
-
-	</script>
 </body>
 </html>
