@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sea3d / bvh / retarget</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+
+			}
+
+			a { color: white }
+		</style>
+	</head>
+	<body>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">Three.JS</a> - Exported by <a href="https://github.com/sunag/sea3d" style="color:#FFFFFF" target="_blank" rel="noopener">SEA3D Exporter</a>. Asset by <a href="https://github.com/lo-th" style="color:#FFFFFF" target="_blank" rel="noopener">LTH</a>
+			<br/>
+			<br/>BVH Animation to SEA3D Animation
+		</div>
+
+		<script src="js/libs/three.min.js"></script>
+
+		<script src="js/controls/OrbitControls.js"></script>
+
+		<script src="js/effects/OutlineEffect.js"></script>
+
+		<script src="js/loaders/sea3d/SEA3D.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLegacy.js"></script>
+
+		<script src="js/loaders/BVHLoader.js"></script>
+		<script src="js/loaders/BVHLoaderAdd.js"></script>
+		
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			console.log( "Visit https://github.com/sunag/sea3d to all codes and builds under development." );
+
+			var container, stats;
+
+			var camera, scene, renderer, controls, player, effect;
+
+			var loader, options;
+
+			var bvhSkeletonHelper, bvhMixer;
+
+			// Initialize Three.JS
+
+			init();
+
+			//
+			// SEA3D Loader
+			//
+
+			loader = new THREE.SEA3D( {
+
+				autoPlay: false, // Auto play animations
+				container: scene, // Container to add models
+				multiplier: 1.0 // Light multiplier
+
+			} );
+
+			loader.onComplete = function ( ) {
+
+				// Get the first camera from SEA3D Studio
+				// use loader.get... to get others objects
+				if(loader.cameras[ 0 ]){
+					var cam = loader.cameras[ 0 ];
+					camera.position.copy( cam.position );
+					camera.rotation.copy( cam.rotation );
+				}
+
+				controls.update()
+
+				var grad = new THREE.TextureLoader().load( './models/sea3d/lee/grad.jpg' );
+				var map = new THREE.TextureLoader().load( './models/sea3d/lee/lee_c.png' );
+				map.flipY = false;
+				grad.flipY = false;
+
+				// get meshes
+				player = loader.getMesh( "lee" );
+				var mat = new THREE.MeshToonMaterial({
+					skinning:true, 
+					map:map, 
+					gradientMap:grad,
+					//bumpScale:0.5, bumpMap:map,
+					
+				});
+
+				player.material = mat;
+
+				loadBVH();
+
+				animate();
+
+			};
+
+			loader.load( './models/sea3d/lee/lee.sea' );
+
+			//
+
+			options = {
+				names: {
+					"spine1": "abdomen",
+					"spine2": "chest",
+				},
+			};
+
+
+			//
+
+			function loadBVH() {
+
+				var loader = new THREE.BVHLoader();
+
+				// set model and Tpose 
+				loader.setCurrentModel( player, options );
+
+				// apply animation
+				loader.load( "models/bvh/arnold posing.bvh", function ( result ) {
+
+					loader.applyToModel( result );
+					player.play('animation');
+
+				} );
+
+			}
+
+
+
+			function init() {
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x333333 );
+				scene.add( new THREE.GridHelper( 400, 10 ) );
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				//camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 20000 );
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.set( 0, 100, 200 );
+
+				controls = new THREE.OrbitControls( camera );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				effect = new THREE.OutlineEffect( renderer );
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				// events
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				//composer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				effect.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			var clock = new THREE.Clock();
+
+			function animate() {
+
+				var delta = clock.getDelta();
+
+				requestAnimationFrame( animate );
+
+				// Update SEA3D Animations
+				THREE.SEA3D.AnimationHandler.update( delta );
+
+				render( delta );
+
+				stats.update();
+
+			}
+
+			function render( dlt ) {
+
+				//renderer.render( scene, camera );
+				effect.render( scene, camera );
+				//composer.render( dlt );
+
+			}
+
+		</script>
+
+	</body>
+</html>

@@ -161,7 +161,7 @@
 
 		sunMaterial = new THREE.SpriteMaterial( { map: textureLoader.load("assets/textures/lensflare1.png"), blending:THREE.AdditiveBlending, opacity:0.5 } );
 		var sunSprite = new THREE.Sprite( sunMaterial );
-		sunSprite.scale.set( 400, 400, 1 );
+		sunSprite.scale.set( 400, 400, 400 );
 				
 
 		sun = new THREE.DirectionalLight( 0xffffff, 0.8 );
@@ -218,7 +218,7 @@
 		});
 
 		//var t = new THREE.BoxBufferGeometry( -1, -1, -1 );
-		var t = new THREE.IcosahedronGeometry( 1, 1 );
+		var t = new THREE.SphereBufferGeometry( 1, 30, 15 );//new THREE.IcosahedronGeometry( 1, 1 );
 		var cmesh = new THREE.Mesh( t, materialSky );
 		sceneSky.add( cmesh );
 
@@ -364,9 +364,26 @@
             o = e.dot(e) - 1,
             r = a * a - 4 * n * o,
             i = Math.sqrt(r),
-            l = (-a - i) / 2,
-            s = o / l;
-        return s
+            l = (-a - i) * 0.5
+            
+        return o / l
+    }
+
+    function getSunColor( position ) {
+
+        var c = { r:0, g:0, b:0 };
+    	var e = 0.028 / k( new THREE.Vector3(0, .99, 0), position );
+    	var t = new THREE.Vector3(1.8, 1.8, 1.8);
+    	var o = new THREE.Vector3(.188, .458, .682);
+    	var r = position.y >= 0 ? 1 : 0;
+    	c.r = (t.x - t.x * Math.pow(o.x, e )) * r;
+    	c.g = (t.y - t.y * Math.pow(o.y, e )) * r;
+    	c.b = (t.z - t.z * Math.pow(o.z, e )) * r;
+    	c.r = c.r > 1.0 ? 1.0 : c.r;
+        c.g = c.g > 1.0 ? 1.0 : c.g;
+        c.b = c.b > 1.0 ? 1.0 : c.b;
+    	return c;
+
     }
 
     function z(e, t, n, a) {
@@ -421,12 +438,12 @@
         moonPosition = sun.position.clone().normalize();
 
         // sun color formule
-        var n = k(new THREE.Vector3(0, .99, 0), sunPosition), a = z(n, new THREE.Vector3(1.8, 1.8, 1.8), .028, sunPosition);
-        a.r = a.r > 1.0 ? 1.0:a.r;
-        a.g = a.g > 1.0 ? 1.0:a.g;
-        a.b = a.b > 1.0 ? 1.0:a.b;
 
-        sun.color.setRGB(a.r, a.g, a.b);
+        var a = getSunColor( sunPosition );
+
+        //console.log( a.r, a.g, a.b, c )
+
+        sun.color.setRGB( a.r, a.g, a.b );
         sunMaterial.color.copy( sun.color )
 
         sun.intensity = a.r;
