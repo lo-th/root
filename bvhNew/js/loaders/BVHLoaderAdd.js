@@ -5,20 +5,12 @@
 *
 */
 
-THREE.BVHLoader.prototype.parseArray = function( buffer ){
+THREE.BVHLoader.prototype.parseData = function( data ){
 
-    var text = "";
-    var raw = new Uint8Array( buffer );
-    for ( var i = 0; i < raw.length; ++ i ) {
-
-        text += String.fromCharCode( raw[ i ] );
-
-    }
-
-    return this.parse( text );
+    if (typeof data === 'string' || data instanceof String) return this.parse( data );
+    else return this.parse( new TextDecoder("utf-8").decode( new Uint8Array( data ) ) );
 
 };
-
 
 THREE.BVHLoader.prototype.findTime = function( times, value ){
 
@@ -39,90 +31,117 @@ THREE.BVHLoader.prototype.findTime = function( times, value ){
 
 THREE.BVHLoader.prototype.findSize = function( target, source ){
 
-    var i = source.bones.length, b, n;
-    var v = new THREE.Vector3();
+    
+    
+    var sourceLegDistance = 0;
     var p = [];
 
-    while(i--){
-        b = source.bones[i];
-        n = -1;
-        if( b.name === 'rThigh' ) n = 6;
-        if( b.name === 'rShin' ) n = 7;
-        if( b.name === 'rFoot' ) n = 8;
+    if( source.getBoneByName('rShin').userData.offset ){
 
-        if(n!==-1) p[n] = b.getWorldPosition( v.clone() );
+        p[1] = new THREE.Vector3();
+        p[2] = source.getBoneByName('rShin').userData.offset.clone();
+        p[3] = source.getBoneByName('rFoot').userData.offset.clone();
+
+        sourceLegDistance = p[1].distanceTo( p[2] ) + p[1].distanceTo( p[3] );
+
+    } else {
+
+        var i = source.bones.length, b, n;
+        var v = new THREE.Vector3();
+
+        // force skeleton update
+        source.getBoneByName('hip').updateMatrixWorld( true );
+
+        while(i--){
+            b = source.bones[i];
+            n = -1;
+            if( b.name === 'rThigh' ) n = 1;
+            if( b.name === 'rShin' ) n = 2;
+            if( b.name === 'rFoot' ) n = 3;
+
+            if(n!==-1) p[n] = b.getWorldPosition( v.clone() );
+
+        }
+
+        sourceLegDistance = p[1].distanceTo( p[2] ) + p[2].distanceTo( p[3] );
     }
 
-    var sourceLegDistance = p[6].distanceTo( p[7] ) + p[7].distanceTo( p[8] );
+    //sourceLegDistance = -(p[2].y + p[3].y)
 
-    i = target.skeleton.bones.length;
-    p = [];
 
-    while(i--){
+    var targetLegDistance = this.sizes[ target.name ];
 
-        b = target.skeleton.bones[i];
-        n = -1;
-        //if( b.name === 'hip' ) n = 0;
-        //if( b.name === 'spine1' ) n = 1;
-        //if( b.name === 'spine2' ) n = 2;
-        //if( b.name === 'neck' ) n = 3;
-        //if( b.name === 'head' ) n = 4;
-        if( b.name === 'rThigh' ) n = 6;
-        if( b.name === 'rShin' ) n = 7;
-        if( b.name === 'rFoot' ) n = 8; 
+    var ratio = (targetLegDistance / sourceLegDistance).toFixed(2) * 1.0;
 
-        //if(n!==-1) p[n] = b.position.clone();
-        if(n!==-1) p[n] = b.getWorldPosition( v.clone() );
+    //console.log(sourceLegDistance, targetLegDistance, ratio)
 
-    }
-
-    var targetLegDistance =  p[6].distanceTo( p[7] ) //+ p[7].distanceTo( p[8] );
-
-    return targetLegDistance / sourceLegDistance;
+    return ratio;
 
 };
 
-THREE.BVHLoader.prototype.setCurrentModel = function( model, options ){
+THREE.BVHLoader.prototype.addModel = function( model, options ){
 
-    this.model = model;
-    this.tPose = [];
+    if( this.tPose === undefined ) this.tPose = {};
+    if( this.sizes === undefined ) this.sizes = {};
+
+    var name = model.name;
     var bones = model.skeleton.bones;
-    var lng = bones.length, i, bone, name;
+    var lng = bones.length, i, b, n;
+    var v = new THREE.Vector3();
+    var pose = [], p = [];
 
     for( i = 0; i < lng; i++ ){ 
 
-        bone = bones[ i ];
-        this.renameBone( bone, options.names );
+        b = bones[ i ];
 
-        this.tPose[i] = bone.matrixWorld.clone();
+
+
+        // get id of parent bones
+        if( b.parent ) b.userData['id'] = bones.indexOf( b.parent );
+
+        if( options !== undefined ) this.renameBone( b, options.names );
+
+        n = -1;
+        if( b.name === 'rThigh' ) n = 1;
+        if( b.name === 'rShin' ) n = 2;
+        if( b.name === 'rFoot' ) n = 3; 
+        if( n!==-1 ) p[n] = b.getWorldPosition( v.clone() )
+
+
+
+        pose.push( b.matrixWorld.clone() );
 
     }
+
+    this.tPose[name] = pose;
+    this.sizes[name] = p[1].distanceTo( p[2] ) + p[2].distanceTo( p[3] );
 
 };
 
 THREE.BVHLoader.prototype.renameBone = function( bone, names ){
 
     for( var n in names ){
-        if(bone.name === n) bone.name = names[n];
+        if( bone.name === n ) bone.name = names[n];
     }
 
 };
 
-
-THREE.BVHLoader.prototype.applyToModel = function ( result, seq ) {
+THREE.BVHLoader.prototype.applyToModel = function ( model, result, seq, pos ) {
 
     //leg = leg || 1;
     //var hipos = model.userData.posY || 1;
     //var ratio = hipos / Math.abs( leg );
-    var model = this.model;
+    //var model = this.model;
+
+    var tPose = this.tPose[ model.name ];
+
+    var decal = pos || new THREE.Vector3();
 
     var ratio = this.findSize( model, result.skeleton );
 
     var clip = result.clip;
 
-    var lng, lngB, lngS, n, i, j, k, bone, name, tmptime, tracks;
-
-    var modelName = model.name;
+    var lng, lngB, lngS, n, i, j, k, bone, name, tmptime, tracks; 
 
     var utils = THREE.AnimationUtils;
 
@@ -152,7 +171,7 @@ THREE.BVHLoader.prototype.applyToModel = function ( result, seq ) {
 
    // if( this.tPose === undefined ) 
 
-    var tPose = this.tPose;
+    
 
 
     /*if( tPose === undefined ){
@@ -247,7 +266,8 @@ THREE.BVHLoader.prototype.applyToModel = function ( result, seq ) {
 
             if( nodeTracks[i].length === 2 ){
 
-                parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
+                //parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
+                parentMtx = bone.parent ? tPose[ bone.userData.id ] : matrixWorldInv;
 
                 // rotation
 
@@ -261,7 +281,6 @@ THREE.BVHLoader.prototype.applyToModel = function ( result, seq ) {
 
                 resultRotations = [];
                 times = [];
-
 
                 lng  = tmptime.length;
 
@@ -325,8 +344,8 @@ THREE.BVHLoader.prototype.applyToModel = function ( result, seq ) {
                 n = j*3;
 
                 globalPos.set( positions[n], positions[n+1], positions[n+2] );
-                //globalPos.set( positions[n], positions[n+1] * ratio, positions[n+2] );
                 globalPos.multiplyScalar( ratio );
+                globalPos.add(decal);
 
                 globalMtx.identity();
                 globalMtx.setPosition( globalPos );
@@ -346,11 +365,6 @@ THREE.BVHLoader.prototype.applyToModel = function ( result, seq ) {
 
         }
 
-
-
-
-        //}
-
         // 5° apply new clip to model
 
         var newClip = new THREE.AnimationClip( clipName, -1, tracks );
@@ -358,8 +372,8 @@ THREE.BVHLoader.prototype.applyToModel = function ( result, seq ) {
         newClip.repeat = clipLoop === 1 ? true : false;
         newClip.timeScale = 1;
 
-        model.addAnimation( newClip );
-        
+        if(model.addAnimation) model.addAnimation( newClip );
+        else return newClip;
 
     }
 

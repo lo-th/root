@@ -134,12 +134,12 @@
 				var loader = new THREE.BVHLoader();
 
 				// set model and Tpose 
-				loader.setCurrentModel( player, options );
+				loader.addModel( player, options );
 
 				// apply animation
 				loader.load( "models/bvh/arnold posing.bvh", function ( result ) {
 
-					loader.applyToModel( result );
+					loader.applyToModel( player, result );
 					player.play('animation');
 
 				} );
