@@ -13,7 +13,7 @@ body {
     margin: 0; padding: 0; border: 0;
     font-family: Consolas, Monaco, monospace;
     font-size: 11px; 
-    color:#000;
+    color:#FFF;
     background: #232323; 
 }
 
@@ -26,6 +26,13 @@ body {
 	margin:-150px -150px;
 }
 
+.option{
+	position:absolute;
+	cursor: pointer;
+	top:10px;
+	left:10px;
+}
+
 </style>
 
 <script src="./build/head.min.js"></script>
@@ -33,6 +40,10 @@ body {
 
 <body>
 <div id='container'></div>
+<label class="option">
+  LOOK<input type="checkbox" onclick="main.autoLook()"><br>
+  SPEED<input type="range" min="0" max="100" value="2" id="myRange" oninput="main.setSpeed( document.getElementById('myRange').value )">
+</label>
 <script>
 
 var container = document.getElementById('container');
