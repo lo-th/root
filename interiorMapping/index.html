@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Interior Mapping</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #fff;
+				color: #bbbbff;
+				margin: 0px;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+		<div id="info">Interior Mapping</div>
+
+		<script src="./js/three.min.js"></script>
+		<script src="./js/OrbitControls.js"></script>
+		
+		<script type="x-shader/x-vertex" id="vertexShader">
+
+		varying vec2 vUv;
+		varying vec3 vEye;
+
+			varying vec3 oP; // surface position in object space
+			varying vec3 oE; // position of the eye in object space
+			varying vec3 oI; // incident ray direction in object space
+
+			varying vec3 oX; // position of the eye in object space
+
+			varying vec3 shad_E; // shadow light position
+			varying vec3 shad_I; // shadow direction
+
+			varying vec3 norm;
+
+			//uniform vec3 camPos;
+			uniform vec3 lightPosition;
+
+
+
+			uniform mat4 lightProjMatrix;
+			uniform mat4 lightViewMatrix;
+
+			mat4 InverseMatrix( mat4 A ) {
+
+				float s0 = A[0][0] * A[1][1] - A[1][0] * A[0][1];
+				float s1 = A[0][0] * A[1][2] - A[1][0] * A[0][2];
+				float s2 = A[0][0] * A[1][3] - A[1][0] * A[0][3];
+				float s3 = A[0][1] * A[1][2] - A[1][1] * A[0][2];
+				float s4 = A[0][1] * A[1][3] - A[1][1] * A[0][3];
+				float s5 = A[0][2] * A[1][3] - A[1][2] * A[0][3];
+			 
+				float c5 = A[2][2] * A[3][3] - A[3][2] * A[2][3];
+				float c4 = A[2][1] * A[3][3] - A[3][1] * A[2][3];
+				float c3 = A[2][1] * A[3][2] - A[3][1] * A[2][2];
+				float c2 = A[2][0] * A[3][3] - A[3][0] * A[2][3];
+				float c1 = A[2][0] * A[3][2] - A[3][0] * A[2][2];
+				float c0 = A[2][0] * A[3][1] - A[3][0] * A[2][1];
+			 
+				float invdet = 1.0 / (s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0);
+			 
+				mat4 B;
+			 
+				B[0][0] = ( A[1][1] * c5 - A[1][2] * c4 + A[1][3] * c3) * invdet;
+				B[0][1] = (-A[0][1] * c5 + A[0][2] * c4 - A[0][3] * c3) * invdet;
+				B[0][2] = ( A[3][1] * s5 - A[3][2] * s4 + A[3][3] * s3) * invdet;
+				B[0][3] = (-A[2][1] * s5 + A[2][2] * s4 - A[2][3] * s3) * invdet;
+			 
+				B[1][0] = (-A[1][0] * c5 + A[1][2] * c2 - A[1][3] * c1) * invdet;
+				B[1][1] = ( A[0][0] * c5 - A[0][2] * c2 + A[0][3] * c1) * invdet;
+				B[1][2] = (-A[3][0] * s5 + A[3][2] * s2 - A[3][3] * s1) * invdet;
+				B[1][3] = ( A[2][0] * s5 - A[2][2] * s2 + A[2][3] * s1) * invdet;
+			 
+				B[2][0] = ( A[1][0] * c4 - A[1][1] * c2 + A[1][3] * c0) * invdet;
+				B[2][1] = (-A[0][0] * c4 + A[0][1] * c2 - A[0][3] * c0) * invdet;
+				B[2][2] = ( A[3][0] * s4 - A[3][1] * s2 + A[3][3] * s0) * invdet;
+				B[2][3] = (-A[2][0] * s4 + A[2][1] * s2 - A[2][3] * s0) * invdet;
+			 
+				B[3][0] = (-A[1][0] * c3 + A[1][1] * c1 - A[1][2] * c0) * invdet;
+				B[3][1] = ( A[0][0] * c3 - A[0][1] * c1 + A[0][2] * c0) * invdet;
+				B[3][2] = (-A[3][0] * s3 + A[3][1] * s1 - A[3][2] * s0) * invdet;
+				B[3][3] = ( A[2][0] * s3 - A[2][1] * s1 + A[2][2] * s0) * invdet;
+			 
+				return B;
+			}
+
+			void main() {
+
+				vUv = uv;
+				vEye = normalize(-cameraPosition);
+
+					// available matrices to vertex shader in three.js
+						/*
+						modelMatrix;
+						modelViewMatrix;
+						projectionMatrix;
+						viewMatrix;
+						normalMatrix;
+					*/
+
+				mat4 modelViewMatrixInverse = InverseMatrix( modelViewMatrix );
+
+				// surface position in object space
+				oP = position;
+
+				oX = modelViewMatrix[3].xyz;
+
+				// position of the eye in object space
+				oE = modelViewMatrixInverse[3].xyz;
+				//vec3 transformedNormal = normalMatrix * objectNormal;
+				//oE = modelViewMatrix[3].xyz;
+
+				// incident ray direction in object space
+				oI = oP - oE; 
+
+
+					// shadow map calculation process in three.js
+						/*
+						1. setFromMatrixPosition: x = m.elements[ 12 ], y = m.elements[ 13 ], z = m.elements[ 14 ]. (same as modelMatrix[3].xyz ? )
+						2. shadowCamera.position.setFromMatrixPosition( light.matrixWorld );
+						3. _matrixPosition.setFromMatrixPosition( light.target.matrixWorld );
+						4. shadowCamera.lookAt( _matrixPosition );
+						5. shadowCamera.updateMatrixWorld();
+						6. shadowCamera.matrixWorldInverse.getInverse( shadowCamera.matrixWorld );
+						7. shadowMatrix.multiply( shadowCamera.projectionMatrix );
+						8. shadowMatrix.multiply( shadowCamera.matrixWorldInverse );	
+						9. vShadowCoord[ i ] = shadowMatrix[ i ] * worldPosition;
+						10. vec3 shadowCoord = vShadowCoord[ i ].xyz / vShadowCoord[ i ].w;
+						11. texture2D( shadowMap[ i ], shadowCoord.xy
+						*/
+
+				 // link the light position to camera for testing
+				 // need to find a way for world space directional light to work
+				shad_E = oE - lightPosition;
+
+				 // light vector
+				shad_I = position - shad_E;
+
+				norm = normalize(vec3( normal ));
+
+
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentShader">
+
+		    varying vec2 vUv;
+
+
+			varying vec3 oP; // surface position in object space
+			varying vec3 oE; // position of the eye in object space
+			varying vec3 oI; // incident ray direction in object space
+
+			varying vec3 oX;
+
+			varying vec3 norm;
+
+			varying vec3 shad_E; // shadow light position
+			varying vec3 shad_I; // shadow direction
+
+			uniform bool insideShadow;
+			
+
+			uniform vec3 wallFreq;
+
+			uniform float wallsBias;
+
+			//uniform sampler2D map;
+			uniform sampler2D insideMap;
+			uniform sampler2D outsideMap;
+
+
+			float rand(vec2 co){
+			    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+			}
+
+			vec2 tileUV(vec2 uv, vec2 pos, vec2 ntile){
+
+				pos.y = ntile.y-pos.y-1.0;
+				vec2 div = 1.0/ntile;
+
+				vec2 v = vec2(uv*div)+(pos*div);
+				
+				return v;
+			}
+		
+			float checker(vec2 uv, float checkSize) {
+			  float fmodResult = mod( floor(checkSize * uv.x) + floor(checkSize * uv.y), 2.0);
+
+			  
+
+			  if (fmodResult < 1.0) {
+				return 1.0;
+			  } else {
+				//return 0.2;
+				return rand(vec2(0.0,1.0));
+			  }
+			}
+			
+			void main() {
+
+				// INTERIOR MAPPING by Joost van Dongen
+				// http://interiormapping.oogst3d.net/
+				// email: joost@ronimo-games.com
+				// Twitter: @JoostDevBlog
+
+				
+				
+				vec3 wallFrequencies = wallFreq - wallsBias;//wallFreq / 2.0 - wallsBias;
+
+				//calculate wall locations
+				vec3 walls = ( floor( oP * wallFrequencies) + step( vec3( 0.0 ), oI )) / wallFrequencies;
+
+
+
+
+				//how much of the ray is needed to get from the oE to each of the walls
+				vec3 rayFractions = ( walls - oE) / oI;
+				//vec3 rayFractions = (( walls - oX) / oI);
+
+				//texture-coordinates of intersections
+				vec2 uvXY = fract((oE + rayFractions.z * oI).xy * wallFrequencies.xy);
+				vec2 uvXZ = fract((oE + rayFractions.y * oI).xz * wallFrequencies.xz);//vec2(wallFrequencies.x, wallFrequencies.z);//(oE + rayFractions.y * oI).xz;
+				vec2 uvZY = fract((oE + rayFractions.x * oI).zy * wallFrequencies.zy);
+
+				
+
+				vec2 nuv = vec2( 2.0, 4.0 );
+
+				//float mixer = rand(vec2(0.0,1.0));
+				
+
+				vec3 ceilingColour = texture2D( insideMap, tileUV( uvXZ, vec2(0.0,1.0), nuv ) ).xyz;
+				vec3 floorColour = texture2D( insideMap, tileUV( uvXZ, vec2(1.0,1.0), nuv ) ).xyz;
+				vec3 verticalColour = mix(floorColour, ceilingColour, step(0.0, oI.y));
+
+				vec3 wallXYColour_L = texture2D( insideMap, tileUV( uvXY, vec2(0.0,2.0), nuv ) ).xyz;
+				vec3 wallXYColour_R = texture2D( insideMap, tileUV( uvXY, vec2(1.0,2.0), nuv ) ).xyz;
+				vec3 wallXYColour = mix(wallXYColour_L, wallXYColour_R, step(oI.z, 0.0));
+
+				vec3 wallZYColour_L = texture2D( insideMap, tileUV( uvZY, vec2(0.0,3.0), nuv ) ).xyz;
+				vec3 wallZYColour_R = texture2D( insideMap, tileUV( uvZY, vec2(1.0,3.0), nuv ) ).xyz;
+				vec3 wallZYColour = mix(wallZYColour_L, wallZYColour_R, step(oI.x, 0.0));
+
+
+				//vec3 color = vec3(1.0, 0.67, 0.55);
+				//if(walls.x<rayFractions.x) color= vec3(1.0, 1.0, 1.0);
+
+				vec3 ww = floor( oP * wallFrequencies);
+
+				vec3 color = (vec3( rand(vec2( ww.x, ww.y)) ) + vec3( rand(vec2( ww.z, ww.y)) ) + vec3( rand(vec2( ww.x, ww.z)) ) ) / 3.0;
+				//vec3 color2 = vec3( rand(vec2( ww.z, ww.y)) );
+
+				wallXYColour*=color;
+				wallZYColour*=color;
+				verticalColour*= color;
+
+
+				
+
+				//verticalColour = texture2D( map, uvXZ ).xyz;
+
+
+					// SHADOWS DEV // SHADOWS DEV // SHADOWS DEV // SHADOWS DEV //
+					// SHADOWS DEV // SHADOWS DEV // SHADOWS DEV // SHADOWS DEV //
+
+					if(insideShadow){
+
+						vec3 shad_P = oP;  // just surface position in object space
+						vec3 shad_walls = ( floor( shad_P * wallFrequencies) + step( vec3( 0.0 ), shad_I )) / wallFrequencies;
+						vec3 shad_rayFr = ( shad_walls - shad_E ) / shad_I;
+
+						// Cast shadow from ceiling planes (uvXZ)
+
+						verticalColour *= mix( 0.3, 1.0, step( rayFractions[1], shad_rayFr[1] ));
+						wallZYColour *= mix( 0.3, 1.0, step( shad_rayFr[0], shad_rayFr[1] ));
+						wallXYColour *= mix( 0.3, 1.0, step( shad_rayFr[2], shad_rayFr[1] ));
+
+					}
+
+					// SHADOWS DEV // SHADOWS DEV // SHADOWS DEV // SHADOWS DEV //
+					// SHADOWS DEV // SHADOWS DEV // SHADOWS DEV // SHADOWS DEV //
+
+				// intersect walls
+				float xVSz = step( rayFractions.x, rayFractions.z );
+				vec3 interiorColour = mix(wallXYColour, wallZYColour, xVSz );
+				float rayFraction_xVSz = mix( rayFractions.z, rayFractions.x, xVSz );
+				float xzVSy = step( rayFraction_xVSz, rayFractions.y );
+
+				interiorColour = mix( verticalColour, interiorColour, xzVSy );
+				//vec4 outside = texture2D( outsideMap, vUv*10.0 );
+				vec3 rr = floor( oP * wallFrequencies);
+				vec2 uvN = (vec2( rr.x, rr.y)+vec2( rr.z, rr.y)+vec2( rr.x, rr.z) )/3.0;
+
+				vec2 nuvo = vec2( 2.0, 2.0 );
+
+
+
+				vec4 Ftop = texture2D( outsideMap, tileUV( fract(oP.xz * wallFrequencies.xz) , vec2(1.0,2.0), nuv ) );
+				vec4 Fleft = texture2D( outsideMap, tileUV( fract(oP.zy * wallFrequencies.zy) , vec2(1.0,1.0), nuv ) );//oP.zy * wallFrequencies.zy );
+				vec4 Ffront = texture2D( outsideMap, tileUV( fract(oP.xy * wallFrequencies.xy) , vec2(0.0,1.0), nuv ) );//oP.xy * wallFrequencies.xy );
+				vec4 outside =  mix( Fleft, Ffront, abs(norm.z) );
+				outside =  mix( outside, Ftop, abs(norm.y) );
+				//vec4 outside = texture2D( outsideMap,  fract(vec2( 1.0 ) * (vec2( ww.x, ww.y)+vec2( ww.z, ww.y)+vec2( ww.x, ww.z) )/3.0) );
+				//vec4 outside = ( texture2D( outsideMap,vec2( ww.x, ww.y)) + texture2D( outsideMap,vec2( ww.z, ww.y)) + texture2D( outsideMap,vec2( ww.x, ww.z)) ) / 3.0 ;
+				float sider = float( gl_FrontFacing );
+
+				gl_FragColor = vec4( mix( vec4(interiorColour, 1.0), outside, outside.a).xyz, 1.0); //float( gl_FrontFacing ) ? outside :interiorColour;	
+
+			}
+		</script>
+	
+		<script>
+
+			//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var camera, scene, renderer, time, light, lightCam,  material, material2, cube, sphere, map;
+
+			var lightMatrix = new THREE.Matrix4(); 
+
+
+			init();
+			animate();
+
+			function init() {
+
+				var container = document.getElementById( 'container' );
+
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 5000 );
+				camera.position.set( -150, 100, 260 );
+
+				scene = new THREE.Scene();
+
+				controls = new THREE.OrbitControls( camera );
+				controls.target.set(0,20,0)
+				controls.update();
+
+
+				light = new THREE.DirectionalLight( 0xffffff );
+				light.position.set( 30, 100, 200 );
+
+				var d = 150;
+		        //this.camShadow = new THREE.OrthographicCamera( -d, d, d, -d,  100, 300 );
+		        var camShadow = new THREE.OrthographicCamera( d, -d, d, -d,  100, 500 );
+		        //this.followGroup.add( this.camShadow );
+		        light.shadow = new THREE.LightShadow( camShadow );
+
+				light.castShadow = true;
+
+				light.shadow.mapWidth = 1024;
+				light.shadow.mapHeight = 1024;
+
+
+				scene.add( light );
+
+				var shadowHelper = new THREE.CameraHelper( light.shadow.camera );
+				//scene.add( shadowHelper );
+
+
+				// GROUND
+				var groundGeo = new THREE.PlaneGeometry( 200, 200 );
+				var groundMat = new THREE.MeshPhongMaterial( { color:0x333333 } );
+				var ground = new THREE.Mesh( groundGeo, groundMat );
+				ground.rotation.x = -Math.PI/2;
+				ground.position.y = 0;
+				ground.receiveShadow = true;
+				scene.add( ground );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.soft = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				//renderer.shadowMapCullFace = THREE.CullFaceBack;
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+
+				makeBuilding();
+				
+			}
+
+			function makeBuilding(){
+
+				var inside = new THREE.TextureLoader().load( './assets/inside.jpg' )
+				inside.wrapS = inside.wrapT = THREE.RepeatWrapping;
+				//inside.needsUpdate = true;
+
+				var outside = new THREE.TextureLoader().load( './assets/outside.png' )
+				outside.wrapS = outside.wrapT = THREE.RepeatWrapping;
+				//outside.needsUpdate = true;
+				
+
+				var vertexShader = document.getElementById( 'vertexShader' ).textContent;
+				var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
+				var uniforms = {
+
+					insideMap:				{ value: null }, 
+					outsideMap:				{ value: null }, 
+
+					insideShadow:			{ value: 0 },
+
+					wallFreq:				{ value: new THREE.Vector3( 0.2, 0.4, 0.2 ) }, 
+					wallsBias:				{ type: "f", value: 0.001 },
+
+					lightPosition:			{ value: light.position },
+					lightProjMatrix: 		{ type: "m4v", value: [] },
+					lightViewMatrix: 		{ type: "m4v", value: [] }
+
+				}
+
+				
+				var mergedUniforms = THREE.UniformsUtils.merge( [THREE.ShaderLib["lambert"].uniforms, uniforms ] );
+					mergedUniforms = THREE.UniformsUtils.merge( [THREE.UniformsLib["common"], mergedUniforms ] );
+
+					//mergedUniforms.map.value = map
+					mergedUniforms.insideMap.value = inside;
+					mergedUniforms.outsideMap.value = outside;
+					uniforms.lightViewMatrix.value = light.shadowMatrix;
+
+
+				var cubeGeo = new THREE.BoxBufferGeometry( 40, 60, 40 );			
+				material = new THREE.ShaderMaterial( {	vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: mergedUniforms, lights:true, side:THREE.DoubleSide, shadowSide:THREE.BackSide } );//shadowSide//THREE.DoubleSide  
+
+				cube = new THREE.Mesh( cubeGeo, material );
+				cube.position.set(-50, 30, 0)
+				cube.castShadow = true;
+				cube.receiveShadow = true;
+				scene.add( cube );
+
+				//material2 = material.clone();
+
+				var sphereGeo = new THREE.SphereBufferGeometry( 30, 40, 30 );			
+				sphere = new THREE.Mesh( sphereGeo, material );
+				sphere.castShadow = true;
+				scene.add( sphere );
+				sphere.position.set(50,30,0)
+
+
+
+
+				var spline = new THREE.CatmullRomCurve3( [new THREE.Vector3(0,0,0), new THREE.Vector3(0,60,0)] );
+
+				//
+
+				var extrudeSettings = {
+					steps: 1,
+					//depth: 60,
+					//bevelEnabled: false,
+					extrudePath: spline,
+					/*bevelEnabled: true,
+					bevelThickness: 2,
+					bevelSize: 4,
+					bevelSegments: 1*/
+				};
+
+
+				var pts = [], numPts = 5;
+
+				for ( var i = 0; i < numPts * 2; i ++ ) {
+
+					var l = i % 2 == 1 ? 10 : 20;
+
+					var a = i / numPts * Math.PI;
+
+					pts.push( new THREE.Vector2( Math.cos( a ) * l, Math.sin( a ) * l ) );
+
+				}
+
+				var shape = new THREE.Shape( pts );
+
+				var geometry = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+
+				var material3 = new THREE.MeshLambertMaterial( { wireframe: false, map:map } );
+
+				var mesh = new THREE.Mesh( geometry, material );
+
+				scene.add( mesh );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate( t ) {
+				
+				requestAnimationFrame( animate );
+				render( t );
+
+			}
+
+			function render( t ) {			
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>
