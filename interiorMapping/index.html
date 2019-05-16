@@ -374,7 +374,7 @@
 
 				// GROUND
 				var groundGeo = new THREE.PlaneGeometry( 200, 200 );
-				var groundMat = new THREE.MeshPhongMaterial( { color:0x333333 } );
+				var groundMat = new THREE.MeshPhongMaterial( { color:0x606060 } );
 				var ground = new THREE.Mesh( groundGeo, groundMat );
 				ground.rotation.x = -Math.PI/2;
 				ground.position.y = 0;
@@ -383,8 +383,8 @@
 
 				renderer = new THREE.WebGLRenderer( { antialias: false } );
 				renderer.shadowMap.enabled = true;
-				renderer.shadowMap.soft = true;
-				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				//renderer.shadowMap.soft = true;
+				//renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 				//renderer.shadowMapCullFace = THREE.CullFaceBack;
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -399,13 +399,8 @@
 
 			function makeBuilding(){
 
-				var inside = new THREE.TextureLoader().load( './assets/inside.jpg' )
-				inside.wrapS = inside.wrapT = THREE.RepeatWrapping;
-				//inside.needsUpdate = true;
-
-				var outside = new THREE.TextureLoader().load( './assets/outside.png' )
-				outside.wrapS = outside.wrapT = THREE.RepeatWrapping;
-				//outside.needsUpdate = true;
+				var inside = new THREE.TextureLoader().load( './assets/inside.jpg' );
+				var outside = new THREE.TextureLoader().load( './assets/outside.png' );
 				
 
 				var vertexShader = document.getElementById( 'vertexShader' ).textContent;
@@ -417,7 +412,7 @@
 
 					insideShadow:			{ value: 0 },
 
-					wallFreq:				{ value: new THREE.Vector3( 0.2, 0.4, 0.2 ) }, 
+					wallFreq:				{ value: new THREE.Vector3( 0.4, 0.8, 0.4 ) }, 
 					wallsBias:				{ type: "f", value: 0.001 },
 
 					lightPosition:			{ value: light.position },
@@ -491,6 +486,8 @@
 				var material3 = new THREE.MeshLambertMaterial( { wireframe: false, map:map } );
 
 				var mesh = new THREE.Mesh( geometry, material );
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
 
 				scene.add( mesh );
 
