@@ -309,11 +309,11 @@
 
 				// exterior
 
-				vec2 nuvo = vec2( 2.0, 2.0 );// texture reapeat
+				vec2 nuvo = vec2( 2.0, 4.0 );// texture reapeat
 
 				vec4 Ftop = texture2D( outsideMap, tileUV( fract(oP.xz * wallFrequencies.xz) , vec2(1.0,2.0), nuv ) );
 				vec4 Fleft = texture2D( outsideMap, tileUV( fract(oP.zy * wallFrequencies.zy) , vec2(1.0,1.0), nuv ) );
-				vec4 Ffront = texture2D( outsideMap, tileUV( fract(oP.xy * wallFrequencies.xy) , vec2(0.0,1.0), nuv ) );
+				vec4 Ffront = texture2D( outsideMap, tileUV( fract(oP.xy * wallFrequencies.xy) , vec2(0.0,0.0), nuv ) );
 
 				float n = abs(norm.z) > abs(norm.x) ? 1.0 : 0.0;
 				float ny = abs(norm.y) > (abs(norm.x)+abs(norm.z)*0.5) ? 1.0 : 0.0;
