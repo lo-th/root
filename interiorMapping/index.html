@@ -307,18 +307,19 @@
 				vec3 rr = floor( oP * wallFrequencies);
 				vec2 uvN = (vec2( rr.x, rr.y)+vec2( rr.z, rr.y)+vec2( rr.x, rr.z) )/3.0;
 
-				vec2 nuvo = vec2( 2.0, 2.0 );
+				// exterior
 
-
+				vec2 nuvo = vec2( 2.0, 2.0 );// texture reapeat
 
 				vec4 Ftop = texture2D( outsideMap, tileUV( fract(oP.xz * wallFrequencies.xz) , vec2(1.0,2.0), nuv ) );
-				vec4 Fleft = texture2D( outsideMap, tileUV( fract(oP.zy * wallFrequencies.zy) , vec2(1.0,1.0), nuv ) );//oP.zy * wallFrequencies.zy );
-				vec4 Ffront = texture2D( outsideMap, tileUV( fract(oP.xy * wallFrequencies.xy) , vec2(0.0,1.0), nuv ) );//oP.xy * wallFrequencies.xy );
-				vec4 outside =  mix( Fleft, Ffront, abs(norm.z) );
-				outside =  mix( outside, Ftop, abs(norm.y) );
-				//vec4 outside = texture2D( outsideMap,  fract(vec2( 1.0 ) * (vec2( ww.x, ww.y)+vec2( ww.z, ww.y)+vec2( ww.x, ww.z) )/3.0) );
-				//vec4 outside = ( texture2D( outsideMap,vec2( ww.x, ww.y)) + texture2D( outsideMap,vec2( ww.z, ww.y)) + texture2D( outsideMap,vec2( ww.x, ww.z)) ) / 3.0 ;
-				float sider = float( gl_FrontFacing );
+				vec4 Fleft = texture2D( outsideMap, tileUV( fract(oP.zy * wallFrequencies.zy) , vec2(1.0,1.0), nuv ) );
+				vec4 Ffront = texture2D( outsideMap, tileUV( fract(oP.xy * wallFrequencies.xy) , vec2(0.0,1.0), nuv ) );
+
+				float n = abs(norm.z) > abs(norm.x) ? 1.0 : 0.0;
+				float ny = abs(norm.y) > (abs(norm.x)+abs(norm.z)*0.5) ? 1.0 : 0.0;
+
+				vec4 outside =  mix( Fleft, Ffront, n );
+				outside =  mix( outside, Ftop, ny );
 
 				gl_FragColor = vec4( mix( vec4(interiorColour, 1.0), outside, outside.a).xyz, 1.0); //float( gl_FrontFacing ) ? outside :interiorColour;	
 
@@ -412,7 +413,7 @@
 
 					insideShadow:			{ value: 0 },
 
-					wallFreq:				{ value: new THREE.Vector3( 0.4, 0.8, 0.4 ) }, 
+					wallFreq:				{ value: new THREE.Vector3( 0.3, 0.6, 0.3 ) }, 
 					wallsBias:				{ type: "f", value: 0.001 },
 
 					lightPosition:			{ value: light.position },
