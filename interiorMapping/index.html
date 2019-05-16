@@ -381,7 +381,7 @@
 				ground.receiveShadow = true;
 				scene.add( ground );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.soft = true;
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -437,7 +437,7 @@
 
 
 				var cubeGeo = new THREE.BoxBufferGeometry( 40, 60, 40 );			
-				material = new THREE.ShaderMaterial( {	vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: mergedUniforms, lights:true, side:THREE.DoubleSide, shadowSide:THREE.BackSide } );//shadowSide//THREE.DoubleSide  
+				material = new THREE.ShaderMaterial( {	vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: mergedUniforms, lights:true, side:THREE.FrontSide } );
 
 				cube = new THREE.Mesh( cubeGeo, material );
 				cube.position.set(-50, 30, 0)
