@@ -37,21 +37,21 @@
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> wegbl - interior mapping.
 		</div>
 
-		<script src="../build/three.min.js"></script>
-		<script src="./js/controls/OrbitControls.js"></script>
+		<script src="./build/three.min.js"></script>
+		<script src="./examples/js/controls/OrbitControls.js"></script>
 
-		<script src="./js/loaders/GLTFLoader.js"></script>
-		<script src="./js/loaders/RGBELoader.js"></script>
-		<script src="./js/loaders/HDRCubeTextureLoader.js"></script>
+		<script src="./examples/js/loaders/GLTFLoader.js"></script>
+		<script src="./examples/js/loaders/RGBELoader.js"></script>
+		<script src="./examples/js/loaders/HDRCubeTextureLoader.js"></script>
 
-		<script src="./js/WebGL.js"></script>
-		<script src="./js/libs/stats.min.js"></script>
-		<script src="./js/libs/dat.gui.min.js"></script>
+		<script src="./examples/js/WebGL.js"></script>
+		<script src="./examples/js/libs/stats.min.js"></script>
+		<script src="./examples/js/libs/dat.gui.min.js"></script>
 
-		<script src="./js/pmrem/PMREMGenerator.js"></script>
-		<script src="./js/pmrem/PMREMCubeUVPacker.js"></script>
+		<script src="./examples/js/pmrem/PMREMGenerator.js"></script>
+		<script src="./examples/js/pmrem/PMREMCubeUVPacker.js"></script>
 
-		<script src="./js/loaders/GLSLLoader.js"></script>
+		<script src="./examples/js/loaders/GLSLLoader.js"></script>
 
 		<script>
 
@@ -101,7 +101,7 @@
 			function loadShaderPiece() {
 
 				glsl = new THREE.GLSLLoader();
-				glsl.path = './glsl/'
+				glsl.path = './examples/glsl/'
 				glsl.load(['bb_v_add.vs', 'bb_v_main.vs', 'bb_f_add.fs', 'bb_f_main.fs'], init );
 
 
@@ -185,8 +185,8 @@
 
 					shader.uniforms.time = { value: 0 };
 					shader.uniforms.twisted = { value: params.twisted };
-					shader.uniforms.insideMap = { value: textureLoader.load( './textures/lth/inside.jpg' ) };
-					shader.uniforms.outsideMap = { value: textureLoader.load( './textures/lth/outside.png' ) };
+					shader.uniforms.insideMap = { value: textureLoader.load( './examples/textures/lth/inside.jpg' ) };
+					shader.uniforms.outsideMap = { value: textureLoader.load( './examples/textures/lth/outside.png' ) };
 					shader.uniforms.wallFreq = { value:  new THREE.Vector3( params.cell_x, params.cell_y, params.cell_z ) };
 					shader.uniforms.wallsBias = { value: params.bias };
 
@@ -201,7 +201,7 @@
 				};
 
 				var loader = new THREE.GLTFLoader();
-				loader.load( './models/gltf/LeePerrySmith/LeePerrySmith.glb', function ( gltf ) {
+				loader.load( './examples/models/gltf/LeePerrySmith/LeePerrySmith.glb', function ( gltf ) {
 
 					mesh = new THREE.Mesh( gltf.scene.children[ 0 ].geometry, material );
 					mesh.position.y = 0;
@@ -241,7 +241,7 @@
 
 				var hdrUrls = [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ];
 				hdrCubeMap = new THREE.HDRCubeTextureLoader()
-					.setPath( './textures/cube/pisaHDR/' )
+					.setPath( './examples/textures/cube/pisaHDR/' )
 					.load( THREE.UnsignedByteType, hdrUrls, function () {
 
 						var pmremGenerator = new THREE.PMREMGenerator( hdrCubeMap );
@@ -262,7 +262,7 @@
 
 				var ldrUrls = [ 'px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png' ];
 				ldrCubeMap = new THREE.CubeTextureLoader()
-					.setPath( './textures/cube/pisa/' )
+					.setPath( './examples/textures/cube/pisa/' )
 					.load( ldrUrls, function () {
 
 						ldrCubeMap.encoding = THREE.GammaEncoding;
@@ -283,7 +283,7 @@
 
 				var rgbmUrls = [ 'px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png' ];
 				rgbmCubeMap = new THREE.CubeTextureLoader()
-					.setPath( './textures/cube/pisaRGBM16/' )
+					.setPath( './examples/textures/cube/pisaRGBM16/' )
 					.load( rgbmUrls, function () {
 
 						rgbmCubeMap.encoding = THREE.RGBM16Encoding;
