@@ -22,5 +22,8 @@ uniform float wallsBias;
 
 uniform sampler2D insideMap;
 uniform sampler2D outsideMap;
+uniform sampler2D outsideNormal;
 
 uniform float time;
+//uniform mat3 normalMatrix;
+uniform float lightning;

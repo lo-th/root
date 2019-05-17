@@ -79,6 +79,7 @@
 				exposure: 3,
 				whitePoint:1.5,
 				twisted: true,
+				lightning:0.5,
 
 				cell_x: 2,
 				cell_y: 6,
@@ -102,7 +103,7 @@
 
 				glsl = new THREE.GLSLLoader();
 				glsl.path = './examples/glsl/'
-				glsl.load(['bb_v_add.vs', 'bb_v_main.vs', 'bb_f_add.fs', 'bb_f_main.fs'], init );
+				glsl.load(['bb_v_add.vs', 'bb_v_main.vs', 'bb_f_add.fs', 'bb_f_color.fs', 'bb_f_normal.fs', 'bb_f_light.fs'], init );
 
 
 			}
@@ -146,7 +147,7 @@
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
 
-				renderer.gammaInput = true;
+				//renderer.gammaInput = true;
 				renderer.gammaOutput = true;
 				renderer.shadowMap.enabled = true;
 
@@ -175,18 +176,24 @@
 
 			function initMesh() {
 
+
 				material = new THREE.MeshStandardMaterial({
 					color: 0xffffff,
 					metalness: params.metalness,
-					roughness: params.roughness
+					roughness: params.roughness,
+					normalMap: textureLoader.load( './examples/textures/lth/outside_n.jpg' ),
+					normalScale: new THREE.Vector2(-2,-2),
+
 				});
 
 				material.onBeforeCompile = function ( shader ) {
 
 					shader.uniforms.time = { value: 0 };
+					shader.uniforms.lightning = { value: params.lightning };
 					shader.uniforms.twisted = { value: params.twisted };
 					shader.uniforms.insideMap = { value: textureLoader.load( './examples/textures/lth/inside.jpg' ) };
-					shader.uniforms.outsideMap = { value: textureLoader.load( './examples/textures/lth/outside.png' ) };
+					shader.uniforms.outsideMap = { value: textureLoader.load( './examples/textures/lth/outside.png', function(m){ m.minFilter = THREE.NearestFilter; m.magFilter = THREE.NearestFilter; } ) };
+					//shader.uniforms.normalMap = { value: textureLoader.load( './textures/lth/outside_n.jpg' ) };
 					shader.uniforms.wallFreq = { value:  new THREE.Vector3( params.cell_x, params.cell_y, params.cell_z ) };
 					shader.uniforms.wallsBias = { value: params.bias };
 
@@ -194,7 +201,10 @@
 					shader.vertexShader = shader.vertexShader.replace( '#include <begin_vertex>', glsl.shader.bb_v_main );
 
 					shader.fragmentShader = glsl.shader.bb_f_add + '\n' + shader.fragmentShader;
-					shader.fragmentShader = shader.fragmentShader.replace( '#include <dithering_fragment>', glsl.shader.bb_f_main );
+					shader.fragmentShader = shader.fragmentShader.replace( '#include <color_fragment>', glsl.shader.bb_f_color );
+					shader.fragmentShader = shader.fragmentShader.replace( '#include <normal_fragment_maps>', glsl.shader.bb_f_normal );
+					shader.fragmentShader = shader.fragmentShader.replace( '#include <emissivemap_fragment>', glsl.shader.bb_f_light );
+					//shader.fragmentShader = shader.fragmentShader.replace( '#include <dithering_fragment>', glsl.shader.bb_f_main );
 
 					materialShader = shader;
 
@@ -226,6 +236,8 @@
 				gui.add( params, 'exposure', 0, 10, 0.01 );
 				gui.add( params, 'whitePoint', 0, 10, 0.01 );
 				gui.add( params, 'twisted', false );
+
+				gui.add( params, 'lightning', 0, 1, 0.01 );
 
 				gui.add( params, 'cell_x', 0, 10, 0.1 );
 				gui.add( params, 'cell_y', 0, 10, 0.1 );
@@ -344,6 +356,7 @@
 					materialShader.uniforms.twisted.value = params.twisted;
 					materialShader.uniforms.wallFreq.value.set( params.cell_x, params.cell_y, params.cell_z );
 					materialShader.uniforms.wallsBias.value = params.bias;
+					materialShader.uniforms.lightning.value = params.lightning;
 
 					
 

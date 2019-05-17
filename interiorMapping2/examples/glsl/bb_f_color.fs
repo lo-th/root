@@ -63,12 +63,8 @@ float ny = abs(oN.y) > ( abs(oN.x) + abs(oN.z) * 0.5 ) ? 1.0 : 0.0;
 vec4 outsideColor =  mix( Fleft, Ffront, n );
 outsideColor =  mix( outsideColor, Ftop, ny );
 
-outsideColor.rgb = toneMapping( outsideColor.rgb );
-insideColor.rgb = toneMapping( insideColor.rgb );
 
-insideColor.rgb *= gl_FragColor.rgb;
-outsideColor.rgb *= gl_FragColor.rgb;
+vec4 building_color = mapTexelToLinear(vec4( mix( insideColor, outsideColor, outsideColor.a ).xyz, 1.0));
 
-vec4 building_color = vec4( mix( insideColor, outsideColor, outsideColor.a ).xyz, 1.0);
 
-gl_FragColor = building_color;
+diffuseColor *= building_color;
