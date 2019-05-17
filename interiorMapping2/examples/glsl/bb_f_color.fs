@@ -21,8 +21,8 @@ vec2 nuv = vec2( 2.0, 4.0 );
 
 // floor / ceiling  
 
-vec4 tmp_color_1 = texture2D( insideMap, tileUV( uvXZ, vec2(0.0,1.0), nuv ) );// floor
-vec4 tmp_color_2 = texture2D( insideMap, tileUV( uvXZ, vec2(0.0,1.0), nuv ) );// ceilling
+vec4 tmp_color_1 = texture2D( insideMap, tileUV( uvXZ, vec2(1.0,0.0), nuv ) );// floor
+vec4 tmp_color_2 = texture2D( insideMap, tileUV( uvXZ, vec2(0.0,0.0), nuv ) );// ceilling
 vec4 verticalColour = mix( tmp_color_1, tmp_color_2, step(0.0, oI.y));
 
 tmp_color_1 = texture2D( insideMap, tileUV( uvXY, vec2(0.0,2.0), nuv ) );
