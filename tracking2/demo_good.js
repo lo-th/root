@@ -158,19 +158,19 @@ function setDebug(){
 
 function gui (){
 
-    var ui = new UIL.Gui();
+    var ui = new UIL.Gui({ width:300, bg:'rgba(0,0,0,0.5)' });
     ui.add('fps',    { h:30 });
 
     ui.add( setting, 'onFrame', {type:'bool' }).onChange( applyOnFrame );
     ui.add( setting, 'debug', {type:'bool' }).onChange( setDebug );
-    ui.add( setting, 'fov', {min:0, max:120 }).onChange( applySetting );
+    ui.add( setting, 'fov', {min:0, max:120, color:'#7BB8D4' }).onChange( applySetting );
     ui.add( setting, 'pivotY', {min:-2, max:2 }).onChange( applySetting );
     ui.add( setting, 'pivotZ', {min:-2, max:2 }).onChange( applySetting );
     ui.add( setting, 'tweakY', { min:-1, max:1 }).onChange( applySetting );
     ui.add( setting, 'rotateX', { min:-180, max:180 }).onChange( applySetting );
 
-    ui.add( setting, 'sensibility', { min:0, max:1 }).onChange( applySetting );
-    ui.add( setting, 'range', { min:0, max:0.5 }).onChange( applySetting );
+    ui.add( setting, 'sensibility', { min:0, max:1, color:'#D4B87B' }).onChange( applySetting );
+    ui.add( setting, 'range', { min:0, max:0.5, color:'#D4B87B' }).onChange( applySetting );
 
     //ui.add('fps',    { h:30 });
 
