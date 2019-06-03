@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>diamond</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+	    <script src="js/three.min.js"></script>
+	    <script src="js/uil.min.js"></script>
+	    
+	    
+		
+		<script src="js/loaders/RGBELoader.js"></script>
+		<script src="js/loaders/HDRCubeTextureLoader.js"></script>
+		<script src="js/loaders/sea3d.js"></script>
+
+		<script src="js/pmrem/PMREMGenerator.js"></script>
+		<script src="js/pmrem/PMREMCubeUVPacker.js"></script>
+
+		<script src="js/controls/OrbitControls.js"></script>
+
+		<script src="js/postprocessing/EffectComposer.js"></script>
+		<script src="js/postprocessing/RenderPass.js"></script>
+		<script src="js/postprocessing/ShaderPass.js"></script>
+		<script src="js/postprocessing/UnrealBloomPass.js"></script>
+		<script src="js/shaders/CopyShader.js"></script>
+		<script src="js/shaders/LuminosityHighPassShader.js"></script>
+		
+		
+		<script src="js/diamond.js"></script>
+
+
+<script>
+
+    var camera, scene, renderer, composer, controls, bloomPass;
+
+    var txtLoader, envCubeMap, envmap, diamond;
+
+    var params = {
+    	postprocess: false,
+		exposure: 2,
+		whitePoint: 1,
+		bloomStrength: 0.2,
+		bloomThreshold: 0.9,
+		bloomRadius: 0.1
+	};
+
+
+
+    init();
+    animate();	
+	
+
+	function init() {
+
+		txtLoader = new THREE.TextureLoader();
+
+		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.3, 100 );
+		camera.position.z = 8;
+		camera.position.y = 5;
+
+		scene = new THREE.Scene();
+		scene.background = new THREE.Color(0.6, 0.6, 0.6);
+
+		renderer = new THREE.WebGLRenderer( { antialias: true } );
+		renderer.toneMapping = THREE.Uncharted2ToneMapping;//THREE.ACESFilmicToneMapping//
+	    renderer.toneMappingExposure = params.exposure;
+	    renderer.toneMappingWhitePoint = params.whitePoint;
+	    renderer.gammaInput = true;
+	    renderer.gammaOutput = true;
+
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		document.body.appendChild( renderer.domElement );
+
+		controls = new THREE.OrbitControls( camera, renderer.domElement );
+		controls.screenSpacePanning = true;
+
+		var dirLight = new THREE.DirectionalLight(0x6699aa);
+		dirLight.position.set(1, 2, -1);
+		scene.add(dirLight);
+
+		var renderScene = new THREE.RenderPass( scene, camera );
+
+		bloomPass = new THREE.UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
+		bloomPass.renderToScreen = true;
+		bloomPass.threshold = params.bloomThreshold;
+		bloomPass.strength = params.bloomStrength;
+		bloomPass.radius = params.bloomRadius;
+
+		composer = new THREE.EffectComposer( renderer );
+		composer.setSize( window.innerWidth, window.innerHeight );
+		composer.addPass( renderScene );
+		composer.addPass( bloomPass );
+
+		window.addEventListener( 'resize', onWindowResize, false );
+
+		var genCubeUrls = function( prefix, postfix ) {
+	      return [
+	        prefix + 'px' + postfix, prefix + 'nx' + postfix,
+	        prefix + 'py' + postfix, prefix + 'ny' + postfix,
+	        prefix + 'pz' + postfix, prefix + 'nz' + postfix
+	      ];
+	    };
+
+	    var hdrUrls = genCubeUrls( "assets/textures/cubeHdr/", ".hdr" );
+	    var hdrTextureLoader = new THREE.HDRCubeTextureLoader();
+	    envCubeMap = hdrTextureLoader.load( THREE.UnsignedByteType, hdrUrls, function ( hdrCubeMap ) {
+
+	        pmremGenerator = new THREE.PMREMGenerator( hdrCubeMap, 256 );
+	        pmremGenerator.update( renderer );
+	        pmremCubeUVPacker = new THREE.PMREMCubeUVPacker( pmremGenerator.cubeLods );
+	        pmremCubeUVPacker.update( renderer );
+
+	        envmap = pmremCubeUVPacker.CubeUVRenderTarget.texture;
+
+	        pmremGenerator.dispose();
+	        pmremCubeUVPacker.dispose();
+
+	        load();
+
+	    });
+
+	    //scene.background = envCubeMap;
+
+	}
+
+	function load(){
+
+		var loader = new THREE.SEA3D();
+
+		loader.onComplete = function ( e ) {
+
+			var i = loader.meshes.length, j, geo = {};
+			while(i--){
+
+				g = loader.meshes[i].geometry;
+                g.addAttribute( 'uv2', new THREE.BufferAttribute( g.attributes.uv.array, 2 ) );
+
+                geo[ loader.meshes[i].name ] = g;
+
+			}
+
+			var ringMaterial = new THREE.MeshStandardMaterial({ 
+				envMap:envmap, 
+				metalness:1, 
+				roughness:0.2,
+				aoMap:txtLoader.load('./assets/textures/ring_ao.png', function (tx){ tx.flipY = false; }),
+				aoMapIntensity:1,
+				color:0xffc54b,//0xdbdbdb 
+			})
+
+			ringMaterial.color.convertLinearToGamma();
+
+			var ring = new THREE.Mesh( geo.ring, ringMaterial );
+			var crown = new THREE.Mesh( geo.crown, ringMaterial );
+
+            diamond = new Diamond( geo.diamond , envCubeMap, envmap, renderer, camera );
+
+            diamond.addSparkles( 5, 2 );
+
+            scene.add( ring );
+            scene.add( crown );
+            scene.add( diamond );
+
+            initGui();
+
+		}
+
+		loader.load( './assets/model/ring.sea' );
+
+	}
+
+	function onWindowResize() {
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		composer.setSize( window.innerWidth, window.innerHeight );
+
+	}
+
+	function animate() {
+
+		requestAnimationFrame( animate );
+		//
+		if(params.postprocess) composer.render();
+		else renderer.render( scene, camera );
+
+	}
+
+	function initGui(){
+
+		var setting = diamond.settings;
+
+		var ui = new UIL.Gui( { width:300, bg:'rgba(0,0,0,0.3)' } ).onChange( guiUpdate );
+
+		var gr1 = ui.add('group', { name:'POSTPROCESS', fontColor:'#D4B87B', height:22 })
+
+		gr1.add( params, 'exposure', { min:0, max:5, stype:0, precision:2 } )
+		gr1.add( params, 'whitePoint', { min:0, max:5, stype:0, precision:2 } )
+
+		gr1.add( params, 'postprocess', { type:'bool' } )
+		gr1.add( params, 'bloomStrength', { min:0, max:1, stype:0, precision:2 } )
+        gr1.add( params, 'bloomThreshold', { min:0, max:1, stype:0, precision:2 } );
+        gr1.add( params, 'bloomRadius', { min:0, max:1, stype:0, precision:2 } );
+
+        gr1.open();
+
+		var gr2 = ui.add('group', { name:'DIAMOND', fontColor:'#D4B87B', height:22 })
+
+		gr2.add( setting, 'mFresnelBias', { min:0, max:1, stype:0, precision:3 } )
+        gr2.add( setting, 'mFresnelScale', { min:0, max:2, stype:0, precision:2 } );
+        gr2.add( setting, 'mFresnelPower', { min:0, max:5, stype:0, precision:2 } );
+        gr2.add( setting, 'aberration', { min:0, max:1, stype:0, precision:3 } );
+        gr2.add( setting, 'refraction', { min:0, max:3, stype:0, precision:3 } );
+        gr2.add( setting, 'normalOffset', { min:0, max:10, stype:0, precision:2 } );
+        gr2.add( setting, 'squashFactor', { min:0, max:2, stype:0, precision:2 } );
+        gr2.add( setting, 'distanceOffset', { min:0, max:2, stype:0, precision:2 } );
+        gr2.add( setting, 'geometryFactor', { min:0, max:1, stype:0, precision:2 } );
+
+        gr2.add( setting, "absorbption",  { type:'Color', ctype:'array', height:20 } )
+        gr2.add( setting, "correction",  { type:'Color', ctype:'array', height:20 } )
+        gr2.add( setting, "boost",  { type:'Color', ctype:'array', height:20 } )
+
+		gr2.open();
+
+	}
+
+	function guiUpdate() {
+		diamond.updateMaterial()
+
+		bloomPass.threshold = params.bloomThreshold;
+		bloomPass.strength = params.bloomStrength;
+		bloomPass.radius = params.bloomRadius;
+		renderer.toneMappingExposure = params.exposure;
+		renderer.toneMappingWhitePoint = params.whitePoint;
+	}
+
+</script>
+</body>
+</html>

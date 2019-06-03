@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - cube</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+	    <script src="js/three.min.js"></script>
+	    <script src="js/loaders/sea3d.js"></script>
+		
+		<script src="js/loaders/RGBELoader.js"></script>
+		<script src="js/loaders/HDRCubeTextureLoader.js"></script>
+
+		<script src="js/pmrem/PMREMGenerator.js"></script>
+		<script src="js/pmrem/PMREMCubeUVPacker.js"></script>
+
+		<script src="js/controls/OrbitControls.js"></script>
+		
+		<script src="js/diamond.js"></script>
+
+
+<script>
+
+    var camera, scene, renderer, controls;
+
+    var envCubeMap
+
+
+
+    init();
+    animate();	
+	
+
+	function init() {
+
+		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.3, 100 );
+		camera.position.z = 20;
+		camera.position.y = 0;
+
+
+
+		scene = new THREE.Scene();
+		scene.background = new THREE.Color(0.5, 0.5, 0.5);
+		rootNode = new THREE.Object3D();
+		scene.add(rootNode)
+
+		//var texture = new THREE.TextureLoader().load( 'assets/textures/sparkle0.png' );
+
+		//var geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+		//var material = new THREE.MeshBasicMaterial( { map: texture } );
+
+		//mesh = new THREE.Mesh( geometry, material );
+		//scene.add( mesh );
+
+		renderer = new THREE.WebGLRenderer( { antialias: true } );
+		renderer.toneMapping = THREE.Uncharted2ToneMapping;
+	    renderer.toneMappingExposure = 2;
+	    renderer.toneMappingWhitePoint = 1;
+	    renderer.gammaInput = true;
+	    renderer.gammaOutput = true;
+
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		document.body.appendChild( renderer.domElement );
+
+		controls = new THREE.OrbitControls(camera, renderer.domElement);
+		controls.screenSpacePanning = true;
+
+		var dirLight = new THREE.DirectionalLight(0x6699aa);
+				dirLight.position.set(1, 2, -1);
+				scene.add(dirLight);
+
+		//
+
+		window.addEventListener( 'resize', onWindowResize, false );
+
+		var genCubeUrls = function( prefix, postfix ) {
+	      return [
+	        prefix + 'px' + postfix, prefix + 'nx' + postfix,
+	        prefix + 'py' + postfix, prefix + 'ny' + postfix,
+	        prefix + 'pz' + postfix, prefix + 'nz' + postfix
+	      ];
+	    };
+	    var hdrUrls = genCubeUrls( "assets/textures/cubeHdr/", ".hdr");
+
+	    var hdrTextureLoader = new THREE.HDRCubeTextureLoader();
+	    envCubeMap = hdrTextureLoader.load( THREE.UnsignedByteType, hdrUrls, function ( hdrCubeMap ) {
+
+	      pmremGenerator = new THREE.PMREMGenerator( hdrCubeMap, 256 );
+	      pmremGenerator.update( renderer );
+	      pmremCubeUVPacker = new THREE.PMREMCubeUVPacker( pmremGenerator.cubeLods );
+	      pmremCubeUVPacker.update( renderer );
+
+	      //load()
+
+	      var g = new THREE.ConeBufferGeometry(1, 2, 30, 10);
+	      var g = new THREE.BoxBufferGeometry(1,1,1)//new THREE.SphereBufferGeometry( 1, 6, 8 );
+	      var diam = new Diamond( g, envCubeMap, renderer );
+	      diam.position.set( 0,-2,0 )
+	      scene.add( diam );
+
+
+	      load();
+
+	      
+	    } );
+
+
+	    
+
+
+
+
+
+
+	}
+
+	function load(){
+
+		var loader = new THREE.SEA3D();
+
+		loader.onComplete = function ( e ) {
+
+			var i = loader.meshes.length, j, g;
+			while(i--){
+
+				g = loader.meshes[i].geometry;
+
+				j = 5;
+				while(j--){
+					var diam = new Diamond( g, envCubeMap, renderer );
+	                scene.add( diam );
+	                diam.position.set( -3 + i*3,0, 12 -j*6 );
+				}
+				
+
+
+			}
+
+
+		}
+
+		loader.load( './assets/model/diam.sea' );
+	}
+
+	function onWindowResize() {
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+	}
+
+	function animate() {
+
+		requestAnimationFrame( animate );
+		renderer.render( scene, camera );
+
+	}
+
+</script>
+</body>
+</html>
