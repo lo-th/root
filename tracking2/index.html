@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="content-language" content="en-EN" />
+        
+        <title>Traking 2</title>
+
+        <style>
+            a {color: #eee; text-decoration: none}
+            a:hover {color: blue;}
+            body {
+                background: #020202;
+                overflow: hidden;
+                margin: 0px;
+            }
+            canvas{
+                position: absolute; 
+                left:0; top:0;
+                image-rendering: pixelated;
+            }
+            #test{
+                position: absolute; 
+                left:10px; top:10px;
+                width:20px; height:20px;
+                background: #ff0000;
+                border-radius: 10px;
+            }
+
+        </style>
+        
+        <!-- INCLUDE JEELIZ FACEFILTER SCRIPT -->
+        <script src="./js/jeelizFaceFilter.js"></script>
+
+        <!-- INCLUDE THREE.JS -->
+        <script src="./js/libs/three.js"></script>
+        <script src="./js/libs/sea3d.js"></script>
+        <script src="./js/libs/tween.js"></script>
+        <script src="./js/libs/uil.js"></script>
+
+        <!-- INCLUDE JEELIZ THREE.JS HELPER -->
+        <script src="./js/JeelizThreejsHelper.js"></script>
+
+        <!-- INCLUDE DEMO SCRIPT AND GLASSES CREATOR -->
+        
+        <script src="./demo_good.js"></script>
+
+    </head>
+    
+    <body onload="main()">
+        
+        <canvas id='jeeFaceFilterCanvas'></canvas>
+        <canvas id='threeCanvas'></canvas>
+        <div id='test'></div>
+        <!--<video id="video" autoplay style="display:none" width="1920" height="1080"></video>-->
+
+    </body>
+
+</html>
+ 
+ 

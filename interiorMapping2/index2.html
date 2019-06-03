@@ -78,16 +78,16 @@
 				metalness: 0.6,
 				exposure: 3,
 				whitePoint:1.5,
-				twisted: true,
+				twisted: false,
 				lightning:0.5,
 
-				cell_x: 2,
-				cell_y: 6,
-				cell_z: 2,
+				cell_x: 1,
+				cell_y: 2,
+				cell_z: 1,
 				bias:0.001,
 
-				isNoise: true,
-				isNoSection: false,
+				isNoise: false,
+				isNoSection: true,
 			};
 
 			var toneMappingOptions = {
@@ -184,9 +184,10 @@
 					color: 0xffffff,
 					metalness: params.metalness,
 					roughness: params.roughness,
-					normalMap: textureLoader.load( './examples/textures/lth/outside_n.jpg' ),
-					normalScale: new THREE.Vector2(-2,-2),
-
+					//normalMap: textureLoader.load( './examples/textures/lth/outside_n.jpg' ),
+					//normalScale: new THREE.Vector2(-2,-2),
+					//transparent:true,
+					//side:THREE.DoubleSide
 				});
 
 				material.onBeforeCompile = function ( shader ) {
@@ -196,7 +197,7 @@
 					shader.uniforms.twisted = { value: params.twisted };
 					shader.uniforms.isNoise = { value: params.isNoise };
 					shader.uniforms.isNoSection = { value: params.isNoSection };
-					shader.uniforms.insideMap = { value: textureLoader.load( './examples/textures/lth/inside.jpg' ) };
+					shader.uniforms.insideMap = { value: textureLoader.load( './examples/textures/lth/inside_2.png' ) };
 					shader.uniforms.outsideMap = { value: textureLoader.load( './examples/textures/lth/outside.png', function(m){ m.minFilter = THREE.NearestFilter; m.magFilter = THREE.NearestFilter; } ) };
 					//shader.uniforms.normalMap = { value: textureLoader.load( './textures/lth/outside_n.jpg' ) };
 					shader.uniforms.wallFreq = { value:  new THREE.Vector3( params.cell_x, params.cell_y, params.cell_z ) };
@@ -209,18 +210,17 @@
 					shader.fragmentShader = shader.fragmentShader.replace( '#include <color_fragment>', glsl.shader.bb_f_color );
 					shader.fragmentShader = shader.fragmentShader.replace( '#include <normal_fragment_maps>', glsl.shader.bb_f_normal );
 					shader.fragmentShader = shader.fragmentShader.replace( '#include <emissivemap_fragment>', glsl.shader.bb_f_light );
-					//shader.fragmentShader = shader.fragmentShader.replace( '#include <dithering_fragment>', glsl.shader.bb_f_main );
 
 					materialShader = shader;
 
 				};
 
 				var loader = new THREE.GLTFLoader();
-				loader.load( './examples/models/gltf/LeePerrySmith/LeePerrySmith.glb', function ( gltf ) {
+				loader.load( './examples/models/gltf/Nefertiti/Nefertiti.glb', function ( gltf ) {
 
 					mesh = new THREE.Mesh( gltf.scene.children[ 0 ].geometry, material );
-					mesh.position.y = 0;
-					mesh.scale.setScalar( 10 );
+					mesh.position.y = -38;
+					mesh.scale.setScalar( 2.8 );
 					mesh.castShadow = true;
 				    mesh.receiveShadow = true;
 					scene.add( mesh );
@@ -366,8 +366,6 @@
 					materialShader.uniforms.lightning.value = params.lightning;
 					materialShader.uniforms.isNoise.value = params.isNoise;
 					materialShader.uniforms.isNoSection.value = params.isNoSection;
-
-					
 
 					var renderTarget, cubeMap;
 

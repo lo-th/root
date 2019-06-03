@@ -6,10 +6,9 @@ vec2 tileUV( vec2 uv, vec2 pos, vec2 ntile ){
 
 	pos.y = ntile.y-pos.y-1.0;
 	vec2 div = 1.0/ntile;
-
 	vec2 v = vec2(uv*div)+(pos*div);
-	
 	return v;
+	
 }
 
 varying vec3 oP; // surface position in object space
@@ -27,3 +26,6 @@ uniform sampler2D outsideNormal;
 uniform float time;
 //uniform mat3 normalMatrix;
 uniform float lightning;
+
+uniform bool isNoise;
+uniform bool isNoSection;
