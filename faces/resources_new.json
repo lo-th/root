@@ -12,9 +12,9 @@
 
 	"postprocess":{
 		"ssao":false,
-		"sao":true,
+		"sao":false,
 		"shadow":true,
-		"lut":true,
+		"lut":false,
 		"bloom":true,
 		"focus":false,
 		"fxaa":false,
