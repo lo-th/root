@@ -55,8 +55,8 @@
 		},
 		{ "type":"sea", "file":"costume.sea", "visible":true,
 			"materials":[
-			{ "name":"jacket", "map":"costume/jacket_c.jpg", "normalMap":"costume/jacket_n.jpg", "velvet":"0xe9d447", "metalness":0.1, "roughness":0.5, "normalScale":2 },
-			{ "name":"shirt", "map":"costume/shirt_c.jpg" },
+			{ "name":"jacket", "map":"costume/jacket_c.jpg", "normalMap":"costume/jacket_n.jpg", "velvet":"0xe9d447", "metalness":0.1, "roughness":0.5, "normalScale":2, "alphaMap":"costume/jacket_m.jpg", "alpha":true },
+			{ "name":"shirt", "map":"costume/shirt_c.jpg", "alphaMap":"costume/shirt_m.jpg", "alpha":true },
 			{ "name":"pant", "map":"costume/pant_c.jpg", "alphaMap":"costume/pant_m.jpg", "alpha":true }
 		    ],
 			"elements":[
