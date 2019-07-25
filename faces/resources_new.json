@@ -11,13 +11,9 @@
 	},
 
 	"postprocess":{
-		"ssao":false,
 		"sao":false,
 		"shadow":true,
-		"lut":false,
 		"bloom":true,
-		"focus":false,
-		"fxaa":false,
 		"smaa":true
 	},
 
