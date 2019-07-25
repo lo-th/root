@@ -1,7 +1,7 @@
 var container = document.getElementById('container');
 
 // webgl 1 or 2 
-var forceGL1 = true;
+var forceGL1 = false
 
 view.init( container, forceGL1 );
 
