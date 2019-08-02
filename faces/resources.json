@@ -40,7 +40,7 @@
 	"models":[
 		{ "type":"sea", "file":"Skeleton_M.sea", "isRoot":true, "structure":"Kingsman" },
 
-		{ "type":"sea", "file":"male_part.sea", "visible":true,
+		{ "type":"sea", "file":"Male_part.sea", "visible":true,
 			"materials":[
 				{ "name":"Flesh", "color":"0xE8B5A2", "normalMap":"skin/body_n.jpg", "aoMap":"skin/body_ao.jpg" }
 		    ],
