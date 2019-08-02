@@ -1,3 +1,5 @@
+var resourceFile =  resourceFile || 'resources';
+
 var container = document.getElementById('container');
 
 // webgl 1 or 2 
@@ -11,11 +13,11 @@ gui.init( container );
 
 
 //pool.load( 'resources.json', onResourceLoaded );
-pool.load( 'resources_new.json', onResourceLoaded );
+pool.load( resourceFile + '.json', onResourceLoaded );
 
 function onResourceLoaded () {
 
-    avatar.load( pool.get( 'resources_new' ), onComplete );
+    avatar.load( pool.get( resourceFile ), onComplete );
 
 }
 
@@ -23,11 +25,6 @@ function onComplete () {
 
     console.log('ok')
 
-    avatar.setModel('male_morph');
-
-    //avatar.setModel('man');
-
-    //avatar.setModel('skin');
     view.setCamera( { distance:300, phi:0, theta:0, time:2000 } );
 
     // select environement
