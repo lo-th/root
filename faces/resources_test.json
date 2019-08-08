@@ -61,11 +61,12 @@
 
 		{ "type":"sea", "file":"Male_part.sea", "visible":false,
 			"materials":[
-			    { "name":"Flesh", "color":"0xE8B5A2", "normalMap":"skin/body_n.jpg", "aoMap":"skin/body_ao.jpg" }
+				{ "name":"Flesh", "color":"0xE8B5A2", "normalMap":"skin/body_n.jpg", "aoMap":"skin/body_ao.jpg" }
 		    ],
 			"elements":[
-				{ "name":"Male_extremity", "material":"Flesh", "visible":true },
-				{ "name":"Male_hand_neck", "material":"Flesh", "visible":false }
+				{ "name":"Male_head", "material":"Flesh", "visible":true },
+				{ "name":"Male_hand", "material":"Flesh", "visible":true },
+				{ "name":"Male_neck", "material":"Flesh", "visible":false }
 			]
 		},
 
@@ -74,13 +75,28 @@
 				{ "name":"jacket", "map":"costume/jacket_c.jpg", "normalMap":"costume/jacket_n.jpg", "velvet":"0xe9d447", "metalness":0.1, "roughness":0.5, "normalScale":2, "alphaMap":"costume/jacket_m.jpg", "alpha":true, "aoMap":"costume/jacket_ao.jpg" },
 				{ "name":"shirt", "map":"costume/shirt_c.jpg", "alphaMap":"costume/shirt_m.jpg", "alpha":true, "aoMap":"costume/shirt_ao.jpg" },
 				{ "name":"pant", "map":"costume/pant_c.jpg", "alphaMap":"costume/pant_m.jpg", "alpha":true, "aoMap":"costume/pant_ao.jpg" },
-				{ "name":"shoes", "map":"costume/shoes_c.jpg", "specular":"costume/shoes_s.jpg" }
+				{ "name":"shoes_1", "map":"costume/shoes_c.jpg", "specular":"costume/shoes_s.jpg", "normalMap":"costume/shoes_1_n.jpg", "normalScale":2 },
+				{ "name":"shoes_2", "map":"costume/shoes_c.jpg", "specular":"costume/shoes_s.jpg", "normalMap":"costume/shoes_2_n.jpg", "normalScale":2 },
+				{ "name":"shoes_3", "map":"costume/shoes_3_c.jpg", "specular":"costume/shoes_3_s.jpg", "normalMap":"costume/shoes_3_n.jpg", "normalScale":2 }
 		    ],
 			"elements":[
 				{ "name":"jacket", "material":"jacket", "visible":true },
 				{ "name":"shirt", "material":"shirt", "visible":true },
 				{ "name":"pant", "material":"pant", "visible":true },
-				{ "name":"shoes", "material":"shoes", "visible":true }
+				{ "name":"shoes_1", "material":"shoes_1", "visible":true },
+				{ "name":"shoes_2", "material":"shoes_2", "visible":false },
+				{ "name":"shoes_3", "material":"shoes_3", "visible":false }
+			]
+		},
+
+		{ "type":"sea", "file":"accessoires.sea", "visible":true,
+			"materials":[
+				{ "name":"gun", "map":"accessoires/gun_c.jpg", "specular":"accessoires/gun_s.jpg", "normalMap":"accessoires/gun_n.jpg", "normalScale":0.5 },
+				{ "name":"umbrella", "map":"accessoires/umbrella_c.jpg", "specular":"accessoires/umbrella_s.jpg" }
+		    ],
+			"elements":[
+				{ "name":"gun", "material":"gun", "visible":false },
+				{ "name":"umbrella", "material":"umbrella", "visible":false }
 			]
 		}
 
