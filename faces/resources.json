@@ -74,11 +74,17 @@
 		{ "type":"sea", "file":"accessoires.sea", "visible":true,
 			"materials":[
 				{ "name":"gun", "map":"accessoires/gun_c.jpg", "specular":"accessoires/gun_s.jpg", "normalMap":"accessoires/gun_n.jpg", "normalScale":0.5 },
-				{ "name":"umbrella", "map":"accessoires/umbrella_c.jpg", "specular":"accessoires/umbrella_s.jpg" }
+				{ "name":"umbrella", "map":"accessoires/umbrella_c.jpg", "specular":"accessoires/umbrella_s.jpg" },
+				{ "name":"glasses_1", "map":"accessoires/glasses_1.png", "specular":"accessoires/glasses_1_s.jpg", "transparent":true },
+				{ "name":"glasses_2", "map":"accessoires/glasses_2.png", "specular":"accessoires/glasses_1_s.jpg", "transparent":true },
+				{ "name":"glasses_3", "map":"accessoires/glasses_3.png", "specular":"accessoires/glasses_3_s.jpg", "transparent":true }
 		    ],
 			"elements":[
 				{ "name":"gun", "material":"gun", "visible":true },
-				{ "name":"umbrella", "material":"umbrella", "visible":true }
+				{ "name":"umbrella", "material":"umbrella", "visible":true },
+				{ "name":"glasses_1", "material":"glasses_1", "visible":true, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
+				{ "name":"glasses_2", "material":"glasses_2", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
+				{ "name":"glasses_3", "material":"glasses_3", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] }
 			]
 		}
 
