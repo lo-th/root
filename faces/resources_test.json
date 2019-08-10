@@ -25,6 +25,7 @@
 		{ "type":"bvh", "name":"idle2", "y":0, "file":"idle2.bvh" },
 		{ "type":"bvh", "name":"idle3", "y":0, "file":"idle3.bvh" },
 		{ "type":"bvh", "name":"idle4", "y":0, "file":"idle4.bvh" },
+		{ "type":"bvh", "name":"idle5", "y":0, "file":"idle5.bvh" },
 		{ "type":"bvh", "name":"pose1", "y":0, "file":"pose1.bvh" },
 		{ "type":"bvh", "name":"pose2", "y":0, "file":"pose2.bvh" },
 		{ "type":"bvh", "name":"pose3", "y":0, "file":"pose3.bvh" },
