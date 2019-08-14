@@ -18,25 +18,37 @@
 	},
 
 	"animations":[
-		{ "type":"bvh", "name":"arnold", "y":-7, "file":"arnold.bvh" },
-		{ "type":"bvh", "name":"idle", "y":-20, "file":"idle.bvh" },
-		{ "type":"bvh", "name":"test", "y":0, "file":"test.bvh" },
-		{ "type":"bvh", "name":"idle2", "y":0, "file":"idle2.bvh" },
-		{ "type":"bvh", "name":"idle3", "y":0, "file":"idle3.bvh" },
-		{ "type":"bvh", "name":"idle4", "y":0, "file":"idle4.bvh" },
-		{ "type":"bvh", "name":"idle5", "y":0, "file":"idle5.bvh" },
-		{ "type":"bvh", "name":"pose1", "y":0, "file":"pose1.bvh" },
-		{ "type":"bvh", "name":"pose2", "y":0, "file":"pose2.bvh" },
-		{ "type":"bvh", "name":"pose3", "y":0, "file":"pose3.bvh" },
-		{ "type":"bvh", "name":"cross", "y":0, "file":"cross.bvh" },
-		{ "type":"bvh", "name":"low", "y":0, "file":"low.bvh" },
-		{ "type":"bvh", "name":"jump", "y":0, "file":"jump.bvh" },
-		{ "type":"bvh", "name":"fight1", "y":-12, "file":"fight1.bvh" },
-		{ "type":"bvh", "name":"fight2", "y":-12, "file":"fight2.bvh" },
-		{ "type":"bvh", "name":"fight3", "y":-12, "file":"fight3.bvh" },
-		{ "type":"bvh", "name":"victory", "y":-8, "file":"victory.bvh" },
-		{ "type":"bvh", "name":"respect", "y":-8, "file":"respect.bvh" }
+		{ "file":"boxing.bvh" },
+		{ "file":"code.bvh" },
+		{ "file":"combo.bvh" },
+		{ "file":"finding.bvh" },
+		{ "file":"forward.bvh" },
+		{ "file":"idle1.bvh" },
+		{ "file":"idle2.bvh" },
+		{ "file":"idle3.bvh" },
+		{ "file":"idle4.bvh" },
+		{ "file":"idle5.bvh" },
+		{ "file":"idle6.bvh" },
+		{ "file":"jog.bvh" },
+		{ "file":"laught.bvh" },
+		{ "file":"phone.bvh" },
+		{ "file":"run.bvh" },
+		{ "file":"searching.bvh" },
+		{ "file":"spinning.bvh" },
+		{ "file":"swagged.bvh" },
+		{ "file":"walk.bvh" },
+		{ "file":"yelling.bvh" },
+		{ "file":"poses/pose1.bvh" },
+		{ "file":"poses/pose2.bvh" },
+		{ "file":"poses/pose3.bvh" },
+		{ "file":"poses/cross.bvh" },
+		{ "file":"poses/low.bvh" },
+		{ "file":"poses/jump.bvh" },
+		{ "file":"poses/dynamic.bvh" },
+		{ "file":"poses/stand.bvh" }
 	],
+
+	"accessoires":["shoes_1", "shoes_2", "shoes_3", "gun", "umbrella", "glasses_1", "glasses_2", "glasses_3", "pen" ],
 
 	"models":[
 
@@ -44,7 +56,7 @@
 
 		{ "type":"sea", "file":"Male_part.sea", "visible":true,
 			"materials":[
-				{ "name":"Flesh", "color":"0xE8B5A2", "normalMap":"skin/body_n.jpg", "aoMap":"skin/body_ao.jpg" }
+				{ "name":"Flesh", "skinColor":true, "map":"skin/body_c.jpg", "normalMap":"skin/body_n.jpg", "normalScale":0.25, "aoMap":"skin/body_ao.jpg", "specular":"skin/body_s.jpg", "subdermal":"skin/body_u.jpg" }
 		    ],
 			"elements":[
 				{ "name":"Male_head", "material":"Flesh", "visible":true },
@@ -78,14 +90,16 @@
 				{ "name":"umbrella", "map":"accessoires/umbrella_c.jpg", "specular":"accessoires/umbrella_s.jpg" },
 				{ "name":"glasses_1", "map":"accessoires/glasses_1.png", "specular":"accessoires/glasses_1_s.jpg", "transparent":true },
 				{ "name":"glasses_2", "map":"accessoires/glasses_2.png", "specular":"accessoires/glasses_1_s.jpg", "transparent":true },
-				{ "name":"glasses_3", "map":"accessoires/glasses_3.png", "specular":"accessoires/glasses_3_s.jpg", "transparent":true }
+				{ "name":"glasses_3", "map":"accessoires/glasses_3.png", "specular":"accessoires/glasses_3_s.jpg", "transparent":true },
+				{ "name":"pen", "map":"accessoires/pen_c.jpg", "specular":"accessoires/pen_s.jpg" }
 		    ],
 			"elements":[
-				{ "name":"gun", "material":"gun", "visible":true },
-				{ "name":"umbrella", "material":"umbrella", "visible":true },
+				{ "name":"gun", "material":"gun", "visible":false, "link":"rHand", "pos":[-11,2,0.5], "rot":[-90,-90,0] },
+				{ "name":"umbrella", "material":"umbrella", "visible":false, "link":"lHand", "pos":[-20,-2,-4], "rot":[0,0,90] },
 				{ "name":"glasses_1", "material":"glasses_1", "visible":true, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
 				{ "name":"glasses_2", "material":"glasses_2", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
-				{ "name":"glasses_3", "material":"glasses_3", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] }
+				{ "name":"glasses_3", "material":"glasses_3", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
+				{ "name":"pen", "material":"pen", "visible":false, "link":"chest", "pos":[-16,-18,-8.5], "rot":[0,180,-90] }
 			]
 		}
 
