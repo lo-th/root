@@ -101,17 +101,6 @@
 				{ "name":"glasses_3", "material":"glasses_3", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
 				{ "name":"pen", "material":"pen", "visible":false, "link":"chest", "pos":[-16,-18,-8.5], "rot":[0,180,-90] }
 			]
-		},
-
-		{ "type":"sea", "file":"scenes/scene_1.sea", "visible":true,
-			"elements":[
-				{ "name":"ground", "visible":true }
-			]
-		},
-		{ "type":"sea", "file":"scenes/scene_2.sea", "visible":true,
-			"elements":[
-				{ "name":"ground_lib", "visible":true }
-			]
 		}
 
 	]
