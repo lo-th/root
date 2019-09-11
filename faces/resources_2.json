@@ -54,7 +54,20 @@
 		{ "file":"b6.bvh" },
 		{ "file":"b7.bvh" },
 		{ "file":"b8.bvh" },
-		{ "file":"b9.bvh" }
+		{ "file":"b9.bvh" },
+		{ "file":"idles/a_idle_1.bvh" },
+		{ "file":"idles/a_idle_2.bvh" },
+		{ "file":"idles/a_idle_3.bvh" },
+		{ "file":"idles/b_idle_1.bvh" },
+		{ "file":"idles/b_idle_2.bvh" },
+		{ "file":"idles/b_idle_3.bvh" },
+		{ "file":"idles/idle_a_b.bvh" },
+		{ "file":"idles/idle_b_a.bvh" },
+		{ "file":"perfume/pistol_aim.bvh" },
+		{ "file":"perfume/pistol_aim_revers.bvh" },
+		{ "file":"perfume/pistol_idle.bvh" },
+		{ "file":"perfume/pistol_shooting.bvh" },
+		{ "file":"perfume/shooting.bvh" }
 	],
 
 	"accessoires":["shoes_1", "shoes_2", "shoes_3", "gun", "umbrella", "glasses_1", "glasses_2", "glasses_3", "pen", "parfum" ],
