@@ -48,20 +48,22 @@
 		{ "file":"poses/stand.bvh" }
 	],
 
-	"accessoires":["shoes_1", "shoes_2", "shoes_3", "gun", "umbrella", "glasses_1", "glasses_2", "glasses_3", "pen" ],
+	"accessoires":["shoes_1", "shoes_2", "shoes_3", "gun", "umbrella", "glasses_1", "glasses_2", "glasses_3", "pen", "parfum" ],
 
 	"models":[
 
-		{ "type":"sea", "file":"Skeleton_M.sea", "isRoot":true, "structure":"Kingsman" },
+		{ "type":"sea", "file":"skeleton.sea", "isRoot":true, "structure":"Kingsman" },
 
-		{ "type":"sea", "file":"Male_part.sea", "visible":true,
+		{ "type":"sea", "file":"male_part.sea", "visible":true,
 			"materials":[
-				{ "name":"Flesh", "skinColor":true, "map":"skin/body_c.jpg", "normalMap":"skin/body_n.jpg", "normalScale":0.25, "aoMap":"skin/body_ao.jpg", "specular":"skin/body_s.jpg", "subdermal":"skin/body_u.jpg" }
+				{ "name":"Flesh", "skinColor":true, "map":"skin/body_c0.jpg", "normalMap":"skin/body_n.jpg", "normalScale":0.25, "aoMap":"skin/body_ao.jpg", "specular":"skin/body_s.jpg", "subdermal":"skin/body_u.jpg" },
+				{ "name":"Hair", "skinColor":true, "map":"skin/hair_c.png", "roughness":0.8, "metalness":0.2, "transparent":true }
 		    ],
 			"elements":[
 				{ "name":"Male_head", "material":"Flesh", "visible":true },
 				{ "name":"Male_hand", "material":"Flesh", "visible":true },
-				{ "name":"Male_neck", "material":"Flesh", "visible":false }
+				{ "name":"Male_neck", "material":"Flesh", "visible":false },
+				{ "name":"Male_hair", "material":"Hair", "visible":true }
 			]
 		},
 
@@ -88,18 +90,29 @@
 			"materials":[
 				{ "name":"gun", "map":"accessoires/gun_c.jpg", "specular":"accessoires/gun_s.jpg", "normalMap":"accessoires/gun_n.jpg", "normalScale":0.5 },
 				{ "name":"umbrella", "map":"accessoires/umbrella_c.jpg", "specular":"accessoires/umbrella_s.jpg" },
+				{ "name":"umbrella_inside", "map":"accessoires/umbrella_c.jpg", "specular":"accessoires/umbrella_s.jpg" },
+				{ "name":"umbrella_top", "map":"accessoires/umbrella_top_c.jpg", "side":"front", "metalness":0.4, "roughness":0.7 },
+				{ "name":"umbrella_top_2", "map":"accessoires/umbrella_shield.jpg", "emissiveMap":"accessoires/umbrella_shield.jpg", "emissive":"0x00ff00","side":"back", "metalness":0.1, "roughness":0.9 },
 				{ "name":"glasses_1", "map":"accessoires/glasses_1.png", "specular":"accessoires/glasses_1_s.jpg", "transparent":true },
 				{ "name":"glasses_2", "map":"accessoires/glasses_2.png", "specular":"accessoires/glasses_1_s.jpg", "transparent":true },
 				{ "name":"glasses_3", "map":"accessoires/glasses_3.png", "specular":"accessoires/glasses_3_s.jpg", "transparent":true },
-				{ "name":"pen", "map":"accessoires/pen_c.jpg", "specular":"accessoires/pen_s.jpg" }
+				{ "name":"pen", "map":"accessoires/pen_c.jpg", "specular":"accessoires/pen_s.jpg" },
+				{ "name":"parfum", "map":"accessoires/parfum_c.jpg", "specular":"accessoires/parfum_s.jpg", "normalMap":"accessoires/parfum_n.jpg", "normalScale":0.2 },
+                { "name":"parfum_bottom", "map":"accessoires/parfum_c.jpg", "specular":"accessoires/parfum_s.jpg",  "alphaMap": "accessoires/parfum_a.jpg", "transparent":true, "alpha":true, "side":"double", "premultipliedAlpha":true, "depthWrite":false }
 		    ],
 			"elements":[
 				{ "name":"gun", "material":"gun", "visible":false, "link":"rHand", "pos":[-11,2,0.5], "rot":[-90,-90,0] },
 				{ "name":"umbrella", "material":"umbrella", "visible":false, "link":"lHand", "pos":[-20,-2,-4], "rot":[0,0,90] },
+				{ "name":"umbrella_top", "material":"umbrella_top", "visible":false },
+				{ "name":"umbrella_top_2", "material":"umbrella_top_2", "visible":false },
+				{ "name":"umbrella_inside", "material":"umbrella_inside", "visible":false },
 				{ "name":"glasses_1", "material":"glasses_1", "visible":true, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
 				{ "name":"glasses_2", "material":"glasses_2", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
 				{ "name":"glasses_3", "material":"glasses_3", "visible":false, "link":"head", "pos":[-10.5,0,-10.5], "rot":[-90,90,0] },
-				{ "name":"pen", "material":"pen", "visible":false, "link":"chest", "pos":[-16,-18,-8.5], "rot":[0,180,-90] }
+				{ "name":"pen", "material":"pen", "visible":false, "link":"chest", "pos":[-16,-18,-8.5], "rot":[0,180,-90] },
+				{ "name":"parfum", "material":"parfum", "visible":false },
+                { "name":"parfum_bottom", "material":"parfum_bottom", "visible":false },
+                { "name":"parfum_inside", "material":"parfum_bottom", "visible":false }
 			]
 		}
 

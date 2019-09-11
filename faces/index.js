@@ -1,15 +1,15 @@
+var isWithGui = isWithGui !== undefined ? isWithGui : true;
 var resourceFile =  resourceFile || 'resources';
 
 var container = document.getElementById('container');
 
 // webgl 1 or 2 
-var forceGL1 = false
+var forceGL1 = false;
 
 view.init( container, forceGL1 );
 
 // optional interface
-gui.init( container );
-
+if( isWithGui ) gui.init( container );
 
 
 //pool.load( 'resources.json', onResourceLoaded );
