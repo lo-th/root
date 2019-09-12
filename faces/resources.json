@@ -61,6 +61,7 @@
 		{ "file":"idles/b_idle_1.bvh" },
 		{ "file":"idles/b_idle_2.bvh" },
 		{ "file":"idles/b_idle_3.bvh" },
+		{ "file":"idles/b_idle_4.bvh" },
 		{ "file":"idles/idle_a_b.bvh" },
 		{ "file":"idles/idle_b_a.bvh" },
 		{ "file":"perfume/pistol_aim.bvh" },
@@ -75,7 +76,10 @@
 		{ "file":"umbrella/idle_aiming.bvh" },
 		{ "file":"gun/drawing_gun.bvh" },
 		{ "file":"gun/drawing_gun_revers.bvh" },
-		{ "file":"gun/gunplay.bvh" }
+		{ "file":"gun/gunplay.bvh" },
+		{ "file":"glasses/glasses_take.bvh" },
+		{ "file":"glasses/glasses_take_revers.bvh" },
+		{ "file":"glasses/glasses_idle.bvh" }
 	],
 
 	"accessoires":["shoes_1", "shoes_2", "shoes_3", "gun", "umbrella", "glasses_1", "glasses_2", "glasses_3", "pen", "parfum" ],
