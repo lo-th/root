@@ -67,7 +67,12 @@
 		{ "file":"perfume/pistol_aim_revers.bvh" },
 		{ "file":"perfume/pistol_idle.bvh" },
 		{ "file":"perfume/pistol_shooting.bvh" },
-		{ "file":"perfume/shooting.bvh" }
+		{ "file":"perfume/shooting.bvh" },
+		{ "file":"umbrella/grab_rifle.bvh" },
+		{ "file":"umbrella/grab_rifle_revers.bvh" },
+		{ "file":"umbrella/idle_rifle.bvh" },
+		{ "file":"umbrella/idle_crouching.bvh" },
+		{ "file":"umbrella/idle_aiming.bvh" }
 	],
 
 	"accessoires":["shoes_1", "shoes_2", "shoes_3", "gun", "umbrella", "glasses_1", "glasses_2", "glasses_3", "pen", "parfum" ],
@@ -132,7 +137,7 @@
 				{ "name":"glasses_2", "material":"glasses_2", "visible":false, "link":"head", "pos":[-10.5,0,-11], "rot":[-90,90,0] },
 				{ "name":"glasses_3", "material":"glasses_3", "visible":false, "link":"head", "pos":[-10.5,0,-11], "rot":[-90,90,0] },
 				{ "name":"pen", "material":"pen", "visible":false, "link":"chest", "pos":[-16,-18,-8.5], "rot":[0,180,-90] },
-				{ "name":"parfum", "material":"parfum", "visible":false, "link":"rHand", "pos":[-3,2,0], "rot":[0,0,90] },
+				{ "name":"parfum", "material":"parfum", "visible":false, "link":"rHand", "pos":[-2,2,0], "rot":[0,0,90] },
                 { "name":"parfum_bottom", "material":"parfum_bottom", "visible":false },
                 { "name":"parfum_inside", "material":"parfum_bottom", "visible":false }
 			]
