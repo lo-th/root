@@ -72,7 +72,10 @@
 		{ "file":"umbrella/grab_rifle_revers.bvh" },
 		{ "file":"umbrella/idle_rifle.bvh" },
 		{ "file":"umbrella/idle_crouching.bvh" },
-		{ "file":"umbrella/idle_aiming.bvh" }
+		{ "file":"umbrella/idle_aiming.bvh" },
+		{ "file":"gun/drawing_gun.bvh" },
+		{ "file":"gun/drawing_gun_revers.bvh" },
+		{ "file":"gun/gunplay.bvh" }
 	],
 
 	"accessoires":["shoes_1", "shoes_2", "shoes_3", "gun", "umbrella", "glasses_1", "glasses_2", "glasses_3", "pen", "parfum" ],
