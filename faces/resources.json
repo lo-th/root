@@ -137,6 +137,11 @@
             "elements":[
                 { "name":"cave_ground", "visible":true }
             ]
+        },
+        { "type":"sea", "file":"hairs.sea", "visible":true,
+        	"elements":[
+                { "name":"H_1", "visible":true }
+            ]
         }
 
 	]
