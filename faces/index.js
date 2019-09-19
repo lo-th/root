@@ -17,6 +17,10 @@ pool.load( resourceFile + '.json', onResourceLoaded );
 
 function onResourceLoaded () {
 
+    // force wait until full map loaded
+    // value can be check in SIMULATION / get resource info
+    avatar.waitUntilTextures = 72;
+
     avatar.load( pool.get( resourceFile ), onComplete );
 
 }
@@ -85,7 +89,7 @@ function dropAnimation( e ){
         if( type === 'jpg' ) avatar.setFaceDirectPLYMap( e.target.result );
         if( type === 'BVH' || type === 'bvh' ){
             avatar.loadAnimation( e.target.result, name, type );
-            avatar.play(name);
+            avatar.play(name, 0.75);
         }
 
         if( type === 'hdr' ) view.setDirectHDR( e.target.result )

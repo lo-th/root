@@ -17,6 +17,13 @@
 		"smaa":true
 	},
 
+	"cameras":[
+		{ "x":0,"y":90,"z":0,"distance":257,"phi":21,"theta":5 },
+		{ "x":0,"y":126,"z":0,"distance":138,"phi":23,"theta":15 },
+		{ "x":0,"y":126,"z":0,"distance":138,"phi":23,"theta":107 },
+		{ "x":0,"y":126,"z":0,"distance":138,"phi":23,"theta":30 }
+	],
+
 	"animations":[
 		{ "file":"boxing.bvh" },
 		{ "file":"code.bvh" },
