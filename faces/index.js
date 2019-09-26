@@ -8,6 +8,7 @@ var forceGL1 = false;
 
 view.init( container, forceGL1 );
 
+
 // optional interface
 if( isWithGui ) gui.init( container );
 
@@ -28,7 +29,6 @@ function onResourceLoaded () {
 function onComplete () {
 
     console.log('ok')
-
     view.setCamera( { distance:300, phi:0, theta:0, time:2000 } );
 
     // select environement
