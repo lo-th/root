@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - glTF loader</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+
+	<body>
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - GLB 60Ko<br />
+			RTX 3090 preview
+		</div>
+
+		<script type="module">
+
+			import * as THREE from './js/three.module.js';
+
+			import { OrbitControls } from './js/OrbitControls.js';
+			import { GLTFLoader } from './js/loaders/GLTFLoader.js';
+			import { RGBELoader } from './js/loaders/RGBELoader.js';
+			import { DRACOLoader } from './js/loaders/DRACOLoader.js';
+			import { RoughnessMipmapper } from './js/RoughnessMipmapper.js';
+
+			var container, controls;
+			var camera, scene, renderer;
+			var fan_1, fan_2, loaded = false;
+
+			init();
+			render();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 20 );
+				camera.position.set( - 1.8, 2.6, 2.7 );
+
+				scene = new THREE.Scene();
+
+				new RGBELoader()
+					.setDataType( THREE.UnsignedByteType )
+					.setPath( 'textures/' )
+					.load( 'env.hdr', function ( texture ) {
+
+						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+
+						//scene.background = envMap;
+						scene.background = new THREE.Color( 0x101010 );
+						scene.environment = envMap;
+
+						texture.dispose();
+						pmremGenerator.dispose();
+
+						render();
+
+						// model
+
+						// use of RoughnessMipmapper is optional
+						var roughnessMipmapper = new RoughnessMipmapper( renderer );
+
+						var loader = new GLTFLoader().setPath( '' );
+
+						var dracoLoader = new DRACOLoader();
+						dracoLoader.setDecoderPath( 'js/draco/' );
+						loader.setDRACOLoader( dracoLoader );
+
+						loader.load( 'rtx3090.glb', function ( gltf ) {
+
+							gltf.scene.scale.set(10,10,10)
+
+							gltf.scene.traverse( function ( child ) {
+
+								if ( child.isMesh ) {
+
+									if( child.name === 'fan_top' ) fan_1 = child;
+									if( child.name === 'fan_bottom' ) fan_2 = child;
+
+									//console.log(child.name)
+
+									// TOFIX RoughnessMipmapper seems to be broken with WebGL 2.0
+									// roughnessMipmapper.generateMipmaps( child.material );
+
+								}
+
+							} );
+
+							scene.add( gltf.scene );
+
+							roughnessMipmapper.dispose();
+
+							loaded = true;
+
+							render();
+
+						} );
+
+					} );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.toneMapping = THREE.ACESFilmicToneMapping;
+				renderer.toneMappingExposure = 1;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				container.appendChild( renderer.domElement );
+
+				var pmremGenerator = new THREE.PMREMGenerator( renderer );
+				pmremGenerator.compileEquirectangularShader();
+
+				controls = new OrbitControls( camera, renderer.domElement );
+				//controls.addEventListener( 'change', render ); // use if there is no animation loop
+				controls.minDistance = 2;
+				controls.maxDistance = 10;
+				controls.target.set( 0, 0, 0 );
+				controls.update();
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				render();
+
+			}
+
+			//
+
+			function render() {
+
+				requestAnimationFrame( render );
+
+				if(loaded){
+
+					fan_1.rotation.y += 0.05;
+				    fan_2.rotation.y += 0.05;
+
+				}
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
