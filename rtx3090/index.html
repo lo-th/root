@@ -12,6 +12,17 @@
 			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - GLB 69Ko<br />
 			RTX 3090 preview
 		</div>
+		<div id="option">
+		<div><input type="checkbox" id="BASE" value="BASE" name="SELECT" checked> BASE</div>
+		<div><input type="checkbox" id="RAD" value="RAD" name="SELECT" checked> RAD</div>
+		<div><input type="checkbox" id="FAN" value="FAN" name="SELECT" checked> FAN</div>
+		<div><input type="checkbox" id="PCB" value="PCB" name="SELECT" checked> PCB</div>
+		</div>
+
+		<script>
+
+		    
+		</script>
 
 		<script type="module">
 
@@ -25,9 +36,33 @@
 			var container, controls;
 			var camera, scene, renderer;
 			var fan_1, fan_2, loaded = false;
+			var groups = [];
 
 			init();
 			render();
+
+			/*document.getElementById("BASE").addEventListener('change', selector );
+			document.getElementById("BASE").addEventListener('change', selector );
+			document.getElementById("BASE").addEventListener('change', selector );
+			document.getElementById("BASE").addEventListener('change', selector );*/
+
+			document.getElementById("option").addEventListener('click', selector );
+
+
+			function selector() {
+
+				var checkboxes = document.getElementsByName("SELECT");
+				for(var i = 0; i < checkboxes.length; i++){
+
+					//console.log( checkboxes[i].checked )
+
+					groups[i].visible = checkboxes[i].checked;
+
+				}
+
+			}
+
+			
 
 			function init() {
 
@@ -53,8 +88,6 @@
 						texture.dispose();
 						pmremGenerator.dispose();
 
-						//render();
-
 						// model
 
 						var loader = new GLTFLoader().setPath( '' );
@@ -69,7 +102,22 @@
 
 							gltf.scene.traverse( function ( child ) {
 
+								//console.log( child.name )
+
+								//if ( child.isGroup ) {
+
+									
+
+									if( child.name === 'BASE' ) groups[0] = child;
+									if( child.name === 'RAD' ) groups[1] = child;
+									if( child.name === 'FAN' ) groups[2] = child;
+									if( child.name === 'PCB' ) groups[3] = child;
+
+								//}
+
 								if ( child.isMesh ) {
+
+
 
 									if( child.name === 'fan_top' ) fan_1 = child;
 									if( child.name === 'fan_bottom' ) fan_2 = child;
@@ -81,8 +129,6 @@
 							scene.add( gltf.scene );
 
 							loaded = true;
-
-							//render();
 
 						} );
 
@@ -117,8 +163,6 @@
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
-				//render();
-
 			}
 
 			//
@@ -131,6 +175,8 @@
 
 					fan_1.rotation.y += 0.025;
 				    fan_2.rotation.y += 0.025;
+
+				    //selector()
 
 				}
 
