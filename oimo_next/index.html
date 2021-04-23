@@ -20,6 +20,7 @@
 
 
 			const Vec3 = oimo.common.Vec3;
+			const Quat = oimo.common.Quat;
 			const World = oimo.dynamics.World;
 			const RigidBodyType = oimo.dynamics.rigidbody.RigidBodyType;
 			const RigidBodyConfig = oimo.dynamics.rigidbody.RigidBodyConfig;
@@ -31,11 +32,31 @@
 			const OCylinderGeometry = oimo.collision.geometry.CylinderGeometry;
 			const OCapsuleGeometry = oimo.collision.geometry.CapsuleGeometry;
 
+			//console.log( RigidBody.getOrientation )
+
+			Vec3.prototype.set = function ( x,y,z ){
+
+				this.x = x;
+				this.y = y;
+				this.z = z;
+
+				return this;
+
+			}
+			
+			console.log(oimo)
+
+			
+
 
 			let numS = 100;
 			let numB = 100;
 			let numCyl = 100;
 			let numCap = 100;
+
+			let tmpV = new Vec3();
+			let tmpQ = new Quat();
+			let tmpVZ = new Vec3(0,0,0);
 
 
 
@@ -79,7 +100,7 @@
 				floor.geometry.rotateX( -Math.PI*0.5)
 				//floor.position.y = - 2.5;
 				floor.receiveShadow = true;
-				floor.userData.physics = addRigidBody(world, new Vec3(0,- 2.5,0), new OBoxGeometry(new Vec3(5.25 * 0.5, 5 * 0.5, 5.25 * 0.5)), true);
+				floor.userData.physics = addRigidBody(world, [0,- 2.5,0], new OBoxGeometry(tmpV.set(5.25 * 0.5, 5 * 0.5, 5.25 * 0.5)), true);
 				scene.add( floor );
 
 				//
@@ -139,17 +160,22 @@
 				boxes.receiveShadow = true;
 				scene.add( boxes );
 
+				let g = new OBoxGeometry( tmpV.set( size*0.5, size*0.5, size*0.5 ))
+
 				for ( let i = 0; i < boxes.count; i ++ ) {
 					position.set(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.5);
 					matrix.setPosition( position.x, position.y, position.z );
 					boxes.setMatrixAt( i, matrix );
 					boxes.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
 					// size of the side of the cube should be 2 times smaller
-					boxesPhys.push( addRigidBody(world, vec3FromVector3(position), new OBoxGeometry(new Vec3( size*0.5, size*0.5, size*0.5 )), false));
+					boxesPhys.push( addRigidBody(world, position.toArray(), g, false));
 				}
 
 
 				// Spheres
+
+				g = new OSphereGeometry(0.15)
+
 				const geometrySphere = new SphereBox( 0.15 );
 				spheres = new THREE.InstancedMesh( geometrySphere, material, numS );
 				spheres.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
@@ -162,10 +188,13 @@
 					matrix.setPosition( position.x, position.y, position.z );
 					spheres.setMatrixAt( i, matrix );
 					spheres.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
-					spheresPhys.push( addRigidBody( world, vec3FromVector3(position), new OSphereGeometry(0.15), false));
+					spheresPhys.push( addRigidBody( world, position.toArray(), g, false));
 				}
 
 				// cylinder
+
+				g = new OCylinderGeometry(0.15, 0.25)
+
 				const geometryCylinder = new ChamferCyl( 0.15, 0.15, 0.5 );
 				cylinders = new THREE.InstancedMesh( geometryCylinder, material, numCyl );
 				cylinders.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
@@ -178,10 +207,13 @@
 					matrix.setPosition( position.x, position.y, position.z );
 					cylinders.setMatrixAt( i, matrix );
 					cylinders.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
-					cylinderPhys.push( addRigidBody( world, vec3FromVector3(position), new OCylinderGeometry(0.15, 0.25), false) );
+					cylinderPhys.push( addRigidBody( world, position.toArray(), g, false) );
 				}
 
 				// capssule
+
+				g = new OCapsuleGeometry(0.15, 0.25 * 0.5)
+
 				const geometryCapsule = new CapsuleGeometry( 0.15, 0.25 );
 				capsules = new THREE.InstancedMesh( geometryCapsule, material, numCap );
 				capsules.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
@@ -194,7 +226,7 @@
 					matrix.setPosition( position.x, position.y, position.z );
 					capsules.setMatrixAt( i, matrix );
 					capsules.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
-					capsulesPhys.push( addRigidBody( world, vec3FromVector3(position), new OCapsuleGeometry(0.15, 0.25 * 0.5), false) );
+					capsulesPhys.push( addRigidBody( world, position.toArray(), g, false) );
 				}
 
 				animate();
@@ -219,12 +251,17 @@
 				// BOXES
 				boxesPhys.forEach((elPhys, index) => {
 
-					dummy.position.copy( elPhys.getPosition() )
+					elPhys.getPositionTo(tmpV);
+					elPhys.getOrientationTo(tmpQ);
+
+					dummy.position.copy( tmpV )
+
+					//dummy.position.copy( elPhys.getPosition() )
 					if( dummy.position.y < maxY ){
-					 elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) ) 
+					 elPhys.setPosition( tmpV.set(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) ) 
 					 clearForce(elPhys) 
 					}
-					dummy.quaternion.copy( elPhys.getOrientation() )
+					dummy.quaternion.copy( tmpQ )
 					dummy.updateMatrix();
 					boxes.setMatrixAt( index, dummy.matrix );
 				});
@@ -236,12 +273,17 @@
 				// SPHERES
 				spheresPhys.forEach((elPhys, index) => {
 
-					dummy.position.copy( elPhys.getPosition() )
+					elPhys.getPositionTo(tmpV)
+					elPhys.getOrientationTo(tmpQ);
+
+					dummy.position.copy( tmpV )
+
+					//dummy.position.copy( elPhys.getPosition() )
 					if( dummy.position.y < maxY ){ 
-						elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
+						elPhys.setPosition( tmpV.set(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
 						clearForce(elPhys) 
 					}
-					dummy.quaternion.copy( elPhys.getOrientation() )
+					dummy.quaternion.copy( tmpQ )
 					dummy.updateMatrix();
 					spheres.setMatrixAt( index, dummy.matrix );
 				});
@@ -251,12 +293,18 @@
 				// CYLINDER
 				cylinderPhys.forEach((elPhys, index) => {
 
-					dummy.position.copy( elPhys.getPosition() )
+					
+					elPhys.getPositionTo(tmpV)
+					elPhys.getOrientationTo(tmpQ);
+
+					dummy.position.copy( tmpV )
+
+					//dummy.position.copy( elPhys.getPosition() )
 					if( dummy.position.y < maxY ){ 
-						elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
+						elPhys.setPosition( tmpV.set(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
 						clearForce(elPhys) 
 					}
-					dummy.quaternion.copy( elPhys.getOrientation() )
+					dummy.quaternion.copy( tmpQ )
 					dummy.updateMatrix();
 					cylinders.setMatrixAt( index, dummy.matrix );
 				});
@@ -266,12 +314,17 @@
 				// CAPSULE
 				capsulesPhys.forEach((elPhys, index) => {
 
-					dummy.position.copy( elPhys.getPosition() )
+					elPhys.getPositionTo(tmpV)
+					elPhys.getOrientationTo(tmpQ);
+
+					dummy.position.copy( tmpV )
+
+					//dummy.position.copy( elPhys.getPosition() )
 					if( dummy.position.y < maxY ){ 
-						elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
+						elPhys.setPosition( tmpV.set(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
 						clearForce(elPhys) 
 					}
-					dummy.quaternion.copy( elPhys.getOrientation() )
+					dummy.quaternion.copy( tmpQ )
 					dummy.updateMatrix();
 					capsules.setMatrixAt( index, dummy.matrix );
 				});
@@ -282,6 +335,8 @@
 				renderer.render( scene, camera );
 
 				stats.update();
+
+				//console.log( Vec3.numCreations )
 			}
 
 			// adding a physical object to the world of physics
@@ -290,7 +345,9 @@
 				shapeConfig.geometry = geom;
 				const bodyConfig = new RigidBodyConfig();
 				bodyConfig.type = wall ? RigidBodyType.STATIC : RigidBodyType.DYNAMIC;
-				bodyConfig.position = center;
+				//odyConfig.position = center;
+
+				bodyConfig.position.set( center[0], center[1], center[2] )
 				let body = new RigidBody(bodyConfig);
 				body.addShape(new Shape(shapeConfig));
 				w.addRigidBody(body);
@@ -299,22 +356,11 @@
 			}
 
 			function clearForce(oo){
-				let v = new Vec3(0,0,0)
-				oo.setAngularVelocity(v)
-				oo.setLinearVelocity(v)
-				oo.setAngularDamping(0)
-				oo.setLinearDamping(0)
+
+				oo.setAngularVelocity(tmpVZ);
+				oo.setLinearVelocity(tmpVZ);
 			}
 
-			// convert threejs Vector3 to oimo Vec3
-			function vec3FromVector3(position) {
-				return new Vec3(...position.toArray());
-			}
-
-			// convert oimo Quat to threejs quaternion
-			function quaternionFromQuat(quat) {
-				return new THREE.Quaternion(quat.x, quat.y, quat.z, quat.w);
-			}
 
 		</script>
 	</body>
