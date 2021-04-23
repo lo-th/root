@@ -14,6 +14,9 @@
 			import Stats from './src/jsm/libs/stats.module.js';
 			// Or use latest version from NPM `oimophysics`
 			import {oimo} from './src/jsm/libs/OimoPhysics.js';
+			import { RGBELoader } from './src/jsm/loaders/RGBELoader.js';
+			// custom geometry
+			import { SphereBox, CapsuleGeometry, ChamferCyl, ChamferBox } from './src/jsm/lth/GeometryExtent.js';
 
 
 			const Vec3 = oimo.common.Vec3;
@@ -25,10 +28,14 @@
 			const Shape = oimo.dynamics.rigidbody.Shape;
 			const OBoxGeometry = oimo.collision.geometry.BoxGeometry;
 			const OSphereGeometry = oimo.collision.geometry.SphereGeometry;
+			const OCylinderGeometry = oimo.collision.geometry.CylinderGeometry;
+			const OCapsuleGeometry = oimo.collision.geometry.CapsuleGeometry;
 
 
-			let numS = 500;
+			let numS = 100;
 			let numB = 100;
+			let numCyl = 100;
+			let numCap = 100;
 
 
 
@@ -36,24 +43,25 @@
 			let physics, position;
 			let world;
 
-			let boxes, spheres;
-			let boxesPhys, spheresPhys;
+			let boxes, spheres, cylinders, capsules;
+			const boxesPhys = [];
+			const spheresPhys = [];
+			const capsulesPhys = [];
+			const cylinderPhys = [];
 
 			const dummy = new THREE.Object3D();
 
 			init();
 
 			async function init() {
-				world = new World(2, new Vec3(0, -9.8, 0));
 
-				boxesPhys = [];
-				spheresPhys = [];
+				world = new World(2, new Vec3(0, -9.8 * 0.5, 0));
 
 				position = new THREE.Vector3();
 
 				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
-				camera.position.set( - 1, 3.6, 10 );
-				camera.lookAt( 0, 0.5, 0 );
+				camera.position.set( - 1, 4, 10 );
+				camera.lookAt( 0, 2, 0 );
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x666666 );
@@ -65,26 +73,66 @@
 				const dirLight = new THREE.DirectionalLight();
 				dirLight.position.set( 5, 5, 5 );
 				dirLight.castShadow = true;
-				dirLight.shadow.camera.zoom = 2;
 				scene.add( dirLight );
 
-				const floor = new THREE.Mesh(
-					new THREE.BoxGeometry( 10, 5, 10 ),
-					new THREE.ShadowMaterial( { color: 0x111111 } )
-				);
-				floor.position.y = - 2.5;
+				const floor = new THREE.Mesh( new THREE.PlaneGeometry( 5.25, 5.25 ), new THREE.ShadowMaterial( { color: 0x111111 } ) );
+				floor.geometry.rotateX( -Math.PI*0.5)
+				//floor.position.y = - 2.5;
 				floor.receiveShadow = true;
-				floor.userData.physics = addRigidBody(world, vec3FromVector3(floor.position), new OBoxGeometry(new Vec3(10 / 2, 5 / 2, 10 / 2)), true);
+				floor.userData.physics = addRigidBody(world, new Vec3(0,- 2.5,0), new OBoxGeometry(new Vec3(5.25 * 0.5, 5 * 0.5, 5.25 * 0.5)), true);
 				scene.add( floor );
 
-				const material = new THREE.MeshLambertMaterial();
+				//
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				document.body.appendChild( renderer.domElement );
+
+				new RGBELoader()
+					.setDataType( THREE.UnsignedByteType )
+					.setPath( 'assets/textures/equirectangular/' )
+					.load( 'basic.hdr', function ( texture ) {
+
+						let envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+						pmremGenerator.dispose();
+
+						scene.background = envMap;
+						scene.environment = envMap;
+
+						//
+						populate();
+
+					});
+
+				const pmremGenerator = new THREE.PMREMGenerator( renderer );
+				pmremGenerator.compileEquirectangularShader();
+
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				//
+
+				const controls = new OrbitControls( camera, renderer.domElement );
+				controls.target.y = 2;
+				controls.update();
+
+				window.addEventListener('resize', onWindowResize);
+
+			}
+
+			function populate (){
+
+				const material = new THREE.MeshStandardMaterial({ roughness:0.1, metalness:0.9 } );
 
 				const matrix = new THREE.Matrix4();
 				const color = new THREE.Color();
 
 				// Boxes
-				const boxSideSize = 0.2;
-				const geometryBox = new THREE.BoxGeometry( boxSideSize, boxSideSize, boxSideSize );
+				const size = 0.2;
+				const geometryBox = new ChamferBox( size, size, size );
 				boxes = new THREE.InstancedMesh( geometryBox, material, numB );
 				boxes.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
 				boxes.castShadow = true;
@@ -97,12 +145,12 @@
 					boxes.setMatrixAt( i, matrix );
 					boxes.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
 					// size of the side of the cube should be 2 times smaller
-					boxesPhys.push(addRigidBody(world, vec3FromVector3(position), new OBoxGeometry(new Vec3(boxSideSize / 2, boxSideSize / 2, boxSideSize / 2)), false));
+					boxesPhys.push( addRigidBody(world, vec3FromVector3(position), new OBoxGeometry(new Vec3( size*0.5, size*0.5, size*0.5 )), false));
 				}
 
 
 				// Spheres
-				const geometrySphere = new THREE.IcosahedronGeometry( 0.075*2, 3 );
+				const geometrySphere = new SphereBox( 0.15 );
 				spheres = new THREE.InstancedMesh( geometrySphere, material, numS );
 				spheres.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
 				spheres.castShadow = true;
@@ -114,29 +162,40 @@
 					matrix.setPosition( position.x, position.y, position.z );
 					spheres.setMatrixAt( i, matrix );
 					spheres.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
-					spheresPhys.push(addRigidBody(world, vec3FromVector3(position), new OSphereGeometry(0.075*2), false));
+					spheresPhys.push( addRigidBody( world, vec3FromVector3(position), new OSphereGeometry(0.15), false));
 				}
 
+				// cylinder
+				const geometryCylinder = new ChamferCyl( 0.15, 0.15, 0.5 );
+				cylinders = new THREE.InstancedMesh( geometryCylinder, material, numCyl );
+				cylinders.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
+				cylinders.castShadow = true;
+				cylinders.receiveShadow = true;
+				scene.add( cylinders );
 
-				//
+				for ( let i = 0; i < cylinders.count; i ++ ) {
+					position.set(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.5);
+					matrix.setPosition( position.x, position.y, position.z );
+					cylinders.setMatrixAt( i, matrix );
+					cylinders.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
+					cylinderPhys.push( addRigidBody( world, vec3FromVector3(position), new OCylinderGeometry(0.15, 0.25), false) );
+				}
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.shadowMap.enabled = true;
-				renderer.outputEncoding = THREE.sRGBEncoding;
-				document.body.appendChild( renderer.domElement );
+				// capssule
+				const geometryCapsule = new CapsuleGeometry( 0.15, 0.25 );
+				capsules = new THREE.InstancedMesh( geometryCapsule, material, numCap );
+				capsules.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
+				capsules.castShadow = true;
+				capsules.receiveShadow = true;
+				scene.add( capsules );
 
-				stats = new Stats();
-				document.body.appendChild( stats.dom );
-
-				//
-
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.target.y = 0.5;
-				controls.update();
-
-				window.addEventListener('resize', onWindowResize);
+				for ( let i = 0; i < capsules.count; i ++ ) {
+					position.set( Math.random() - 0.5, Math.random() * 10, Math.random() - 0.5 );
+					matrix.setPosition( position.x, position.y, position.z );
+					capsules.setMatrixAt( i, matrix );
+					capsules.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
+					capsulesPhys.push( addRigidBody( world, vec3FromVector3(position), new OCapsuleGeometry(0.15, 0.25 * 0.5), false) );
+				}
 
 				animate();
 
@@ -154,12 +213,14 @@
 
 				world.step(1 / 60);
 
+				let maxY = -3
+
 				// updating data of visual objects from physical objects
 				// BOXES
 				boxesPhys.forEach((elPhys, index) => {
 
 					dummy.position.copy( elPhys.getPosition() )
-					if( dummy.position.y < 0 ){
+					if( dummy.position.y < maxY ){
 					 elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) ) 
 					 clearForce(elPhys) 
 					}
@@ -168,8 +229,6 @@
 					boxes.setMatrixAt( index, dummy.matrix );
 				});
 
-				//let index = Math.floor( Math.random() * boxes.count );
-				//boxesPhys[index].setPosition( new Vec3(0, Math.random() + 1, 0) );
 				boxes.instanceMatrix.needsUpdate = true;
 
 
@@ -178,7 +237,7 @@
 				spheresPhys.forEach((elPhys, index) => {
 
 					dummy.position.copy( elPhys.getPosition() )
-					if( dummy.position.y < 0 ){ 
+					if( dummy.position.y < maxY ){ 
 						elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
 						clearForce(elPhys) 
 					}
@@ -187,9 +246,37 @@
 					spheres.setMatrixAt( index, dummy.matrix );
 				});
 
-				//index = Math.floor( Math.random() * spheres.count );
-				//spheresPhys[index].setPosition( new Vec3(0, Math.random() + 1, 0) );
 				spheres.instanceMatrix.needsUpdate = true;
+
+				// CYLINDER
+				cylinderPhys.forEach((elPhys, index) => {
+
+					dummy.position.copy( elPhys.getPosition() )
+					if( dummy.position.y < maxY ){ 
+						elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
+						clearForce(elPhys) 
+					}
+					dummy.quaternion.copy( elPhys.getOrientation() )
+					dummy.updateMatrix();
+					cylinders.setMatrixAt( index, dummy.matrix );
+				});
+
+				cylinders.instanceMatrix.needsUpdate = true;
+
+				// CAPSULE
+				capsulesPhys.forEach((elPhys, index) => {
+
+					dummy.position.copy( elPhys.getPosition() )
+					if( dummy.position.y < maxY ){ 
+						elPhys.setPosition( new Vec3(Math.random() - 0.5, Math.random() * 10, Math.random() - 0.50) );
+						clearForce(elPhys) 
+					}
+					dummy.quaternion.copy( elPhys.getOrientation() )
+					dummy.updateMatrix();
+					capsules.setMatrixAt( index, dummy.matrix );
+				});
+
+				capsules.instanceMatrix.needsUpdate = true;
 
 
 				renderer.render( scene, camera );
