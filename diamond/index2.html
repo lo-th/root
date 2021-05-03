@@ -104,6 +104,8 @@
 
 	      var g = new THREE.ConeBufferGeometry(1, 2, 30, 10);
 	      var g = new THREE.BoxBufferGeometry(1,1,1)//new THREE.SphereBufferGeometry( 1, 6, 8 );
+
+	      //console.log(envCubeMap)
 	      var diam = new Diamond( g, envCubeMap, renderer );
 	      diam.position.set( 0,-2,0 )
 	      scene.add( diam );

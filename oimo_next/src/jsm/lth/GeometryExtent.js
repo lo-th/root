@@ -12,9 +12,58 @@ import {
 } from '../../../build/three.module.js';
 import { BufferGeometryUtils } from '../utils/BufferGeometryUtils.js';
 
-/*export function geometryInfo( g, type, Size ) {
+export function geometryInfo( g, type, Size ) {
 
-}*/
+   /* var i, j, n, p, n2;
+
+    var size = Size || [1,1,1];
+
+
+    var tmpGeo = g.isBufferGeometry ? new THREE.Geometry().fromBufferGeometry( g ) : g;
+    tmpGeo.mergeVertices();
+
+
+    var numVertices = tmpGeo.vertices.length;
+    var numFaces = tmpGeo.faces.length;
+
+    g.realVertices = new Float32Array( numVertices * 3 );
+    g.realIndices = new ( numFaces * 3 > 65535 ? Uint32Array : Uint16Array )( numFaces * 3 );
+
+
+    i = numVertices;
+    while ( i -- ) {
+
+        p = tmpGeo.vertices[ i ];
+        n = i * 3;
+        g.realVertices[ n ] = p.x * size[0];
+        g.realVertices[ n + 1 ] = p.y * size[1];
+        g.realVertices[ n + 2 ] = p.z * size[2];
+
+    }
+
+    if ( type === 'convex' ) {
+
+        tmpGeo.dispose();
+        return g.realVertices;
+
+    }
+
+    i = numFaces;
+    while ( i -- ) {
+
+        p = tmpGeo.faces[ i ];
+        n = i * 3;
+        g.realIndices[ n ] = p.a;
+        g.realIndices[ n + 1 ] = p.b;
+        g.realIndices[ n + 2 ] = p.c;
+
+    }
+
+    // with faces for trimesh
+    tmpGeo.dispose();
+    return {v:g.realVertices, f:g.realIndices };*/
+
+}
 
 /**
 * SPHERE BOX GEOMETRY
@@ -876,3 +925,5 @@ export function createUV( geometry, type, transformMatrix, boxSize ) {
     geometry.attributes.uv.array = new Float32Array( coords );
 
 }
+
+

@@ -124,15 +124,17 @@ Diamond.prototype = Object.assign( Object.create( THREE.Mesh.prototype ), {
 var DiamondMaterial = function ( geometry ) {
 
     //this.envMap = envMap;
-    this.cubeCamera = new THREE.CubeCamera( 0.1, 100, 1024, { format: THREE.RGBAFormat, magFilter: THREE.NearestFilter, minFilter: THREE.NearestFilter } );
+    //this.cubeCamera = new THREE.CubeCamera( 0.1, 100, 1024, { format: THREE.RGBAFormat, magFilter: THREE.NearestFilter, minFilter: THREE.NearestFilter } );
+    this.cubeCamera = new THREE.CubeCamera( 0.1, 100, 1024, { format: THREE.RGBAFormat } );
     //this.cubeCamera.renderTarget.texture.generateMipmaps = false
     this.localScene = new THREE.Scene();
     this.localScene.add( this.cubeCamera );
 
     this.normalBakeHelperMesh = new THREE.Mesh( geometry.clone(), new THREE.ShaderMaterial( NormalMapCaptureShader ) )
+    //this.normalBakeHelperMesh = new THREE.Mesh( geometry.clone(), new THREE.MeshNormalMaterial({ side:THREE.BackSide, flatShading:true }) )
     this.normalBakeHelperMesh.geometry.center();
 
-    this.geometry = this.normalBakeHelperMesh.geometry;
+    /*this.geometry = this.normalBakeHelperMesh.geometry;
     this.geometry.computeVertexNormals()
     this.geometry.computeBoundingBox();
     this.offset = new THREE.Vector3();
@@ -141,7 +143,7 @@ var DiamondMaterial = function ( geometry ) {
     this.normalBakeHelperMesh.position.set(0, 0, 0);
     this.normalBakeHelperMesh.rotation.set(0, 0, 0);
     this.normalBakeHelperMesh.quaternion.set(0, 0, 0, 1);
-    this.normalBakeHelperMesh.scale.set(1, 1, 1);
+    this.normalBakeHelperMesh.scale.set(1, 1, 1);*/
 
     this.localScene.add( this.normalBakeHelperMesh );
 
@@ -551,6 +553,7 @@ var DiamondShader = {
     
     side: THREE.DoubleSide,
     transparent:true,
+    premultipliedAlpha: true,
     //depthTest: true, 
     //depthWrite: false,
     //flatShading:true,
