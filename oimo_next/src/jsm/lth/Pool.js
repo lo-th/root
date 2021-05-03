@@ -285,7 +285,7 @@ export class Pool {
 
 			loaderGLTF = new GLTFLoader();//.setPath( './' );
 
-			let dracoLoader = new DRACOLoader().setDecoderPath( '../build/draco/' );
+			let dracoLoader = new DRACOLoader().setDecoderPath( 'build/draco/' );
 			let ua = navigator.userAgent.toLowerCase();
 			dracoLoader.setDecoderConfig( { type: (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) ? 'js' : 'wasm' } );
 
