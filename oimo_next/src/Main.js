@@ -62,7 +62,7 @@ window.Diamond = Diamond
 
 const options = {
 
-	demo:'Basic',
+	demo:'basic',
 	substep:1,
 	fps:60,
 	gravity:[0,-9.80665,0],
