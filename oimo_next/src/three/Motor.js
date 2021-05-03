@@ -87,7 +87,7 @@ export class Motor {
 
 			o.callback = null;
 
-			worker = new Worker( './build/oimo.min.js' );
+			worker = new Worker( './build/Oimo.min.js' );
 			//worker = new SharedWorker( engine, { type: 'module' });
 			//worker = navigator.serviceWorker.register('./oimo/engine.js', { type: 'module' });
 
