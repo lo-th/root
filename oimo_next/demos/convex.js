@@ -21,7 +21,6 @@ function onComplete(){
 
         mat[m] = new Diamond({
             color: n===0 ? 0xffffff : rand( 0x000000, 0xffffff ),
-            envMap: Main.getEnvmap()
         },{
             geometry:list[m].geometry,
             renderer: Main.getRenderer()
