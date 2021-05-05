@@ -125,7 +125,7 @@ var DiamondMaterial = function ( geometry ) {
 
     //this.envMap = envMap;
     //this.cubeCamera = new THREE.CubeCamera( 0.1, 100, 1024, { format: THREE.RGBAFormat, magFilter: THREE.NearestFilter, minFilter: THREE.NearestFilter } );
-    this.cubeCamera = new THREE.CubeCamera( 0.1, 100, 1024, { format: THREE.RGBAFormat } );
+    this.cubeCamera = new THREE.CubeCamera( 0.1, 100, 1024, { format: THREE.RGBAFormat, magFilter: THREE.NearestFilter, minFilter: THREE.NearestFilter } );
     //this.cubeCamera.renderTarget.texture.generateMipmaps = false
     this.localScene = new THREE.Scene();
     this.localScene.add( this.cubeCamera );
@@ -256,7 +256,7 @@ var NormalMapCaptureShader = {
 
 var DiamondShader = {
     defines: {
-        RAY_BOUNCES: 5
+        RAY_BOUNCES: 8
     },
     uniforms: {
         tCubeMapNormals: { value: null },
