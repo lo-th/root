@@ -8,13 +8,7 @@ function demo() {
 	// add static ground
 	phy.add({ type:'plane', size:[300,1,300], visible:false });
 
-	// add dynamic box
-
-	let j = 20;
-	while(j--){
-		phy.add({  size:[0.2,0.2,0.2], pos:[math.rand(-4,4),6,math.rand(-4,4)], density:1 });
-		phy.add({ type:'sphere', size:[0.1], pos:[math.rand(-4,4),6,math.rand(-4,4)], density:1 });
-	}
+	
 	
 
     // add terrain
@@ -89,5 +83,14 @@ function addLand (){
         shapes: shapes,
         mesh:terrain,
     })
+
+
+    // add dynamic box
+
+	let j = 20;
+	while(j--){
+		phy.add({  size:[0.2,0.2,0.2], pos:[math.rand(-4,4),6,math.rand(-4,4)], density:1 });
+		phy.add({ type:'sphere', size:[0.1], pos:[math.rand(-4,4),6,math.rand(-4,4)], density:1 });
+	}
 	 
 }
