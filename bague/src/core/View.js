@@ -37,7 +37,7 @@ export class View {
 		renderer.setPixelRatio( 1 )
 		renderer.setSize( 1,1 )
 		renderer.toneMapping = THREE.ACESFilmicToneMapping
-		renderer.toneMappingExposure = 1
+		renderer.toneMappingExposure = 1.5
 		renderer.outputEncoding = THREE.sRGBEncoding
 		//renderer.shadowMap.enabled = true;
 
@@ -68,7 +68,7 @@ export class View {
 		
 		scene.add( light )
 
-		scene.add( new THREE.AmbientLight( 0x808080 ) );
+		//scene.add( new THREE.AmbientLight( 0x808080 ) );
 
 		this.renderer = renderer
 		this.scene =  scene
@@ -89,9 +89,13 @@ export class View {
 
 		if(!this.useHDR ){
 
+			let env = ['river', 'room', 'japan', 'colors', 'photo', 'snow' ]
+
+			let n = this.randInt(0,5)
 
 
-			let envmap = new THREE.TextureLoader().load('./assets/textures/river.jpg', this.upmap2 )
+
+			let envmap = new THREE.TextureLoader().load('./assets/textures/'+env[n]+'.jpg', this.upmap2 )
 			scene.environment = envmap;
 			//scene.background = this.matcap;
 
@@ -361,6 +365,10 @@ export class View {
 
     rand( low, high ) { 
     	return low + Math.random() * ( high - low ) 
+    }
+
+    randInt( low, high ) { 
+    	return low + Math.floor( Math.random() * ( high - low + 1 ) ) 
     }
 
     tween(){
