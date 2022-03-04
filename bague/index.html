@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>CrocoKids</title>
+		<meta charset="utf-8">
+		<link rel="shortcut icon" href="favicon.ico">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+
+	<body style="background-color:#bbbbbb; margin:0; padding:0; ">
+		
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./src/libs/three.module.js",
+					"tween": "./src//libs/tween.esm.js",
+					"uil": "./src/libs/uil.module.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+
+			import { View } from './src/core/View.js'
+			//import { Gui } from './src/core/Gui.js'
+
+			// three view
+			window.view = new View()
+
+			// add interface 'optionnal' 
+			//window.gui = new Gui()
+
+		</script>
+
+	</body>
+</html>
