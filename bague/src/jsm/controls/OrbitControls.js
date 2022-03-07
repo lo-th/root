@@ -114,6 +114,18 @@ class OrbitControls extends EventDispatcher {
 
 		};
 
+		this.getSpherical = function () {
+
+			return spherical;
+
+		};
+		
+		this.getState = function () {
+
+			return state;
+
+		};
+
 		this.getDistance = function () {
 
 			return this.object.position.distanceTo( this.target );

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
 import { Timer } from './Timer.js';
+import { Track } from './Track.js';
 
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
@@ -9,6 +10,8 @@ import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from '../jsm/loaders/RGBELoader.js';
 import { EXRLoader } from '../jsm/loaders/EXRLoader.js';
 import * as BufferGeometryUtils from '../jsm/utils/BufferGeometryUtils.js';
+
+
 
 export class View {
 
@@ -37,13 +40,13 @@ export class View {
 		renderer.setPixelRatio( 1 )
 		renderer.setSize( 1,1 )
 		renderer.toneMapping = THREE.ACESFilmicToneMapping
-		renderer.toneMappingExposure = 1.5
+		renderer.toneMappingExposure = 1
 		renderer.outputEncoding = THREE.sRGBEncoding
 		//renderer.shadowMap.enabled = true;
 
 		document.body.appendChild( renderer.domElement )
 
-		let camera = new THREE.PerspectiveCamera( 60, 1, 1, 2000 )
+		let camera = new THREE.PerspectiveCamera( 60, 1, 1, 20000 )
 		camera.position.set( 0, 40, 0 )
 
 		const controls = new OrbitControls( camera, renderer.domElement )
@@ -68,13 +71,16 @@ export class View {
 		
 		scene.add( light )
 
-		//scene.add( new THREE.AmbientLight( 0x808080 ) );
+		scene.add( new THREE.AmbientLight( 0x808080 ) );
 
 		this.renderer = renderer
 		this.scene =  scene
 		this.camera =  camera
 		this.controls = controls
 		this.light = light
+
+
+		this.track = new Track({ scene:scene })
 
 
 		this.fps = document.createElement( 'div' );
@@ -89,13 +95,9 @@ export class View {
 
 		if(!this.useHDR ){
 
-			let env = ['river', 'room', 'japan', 'colors', 'photo', 'snow' ]
-
-			let n = this.randInt(0,5)
 
 
-
-			let envmap = new THREE.TextureLoader().load('./assets/textures/'+env[n]+'.jpg', this.upmap2 )
+			let envmap = new THREE.TextureLoader().load('./assets/textures/river.jpg', this.upmap2 )
 			scene.environment = envmap;
 			//scene.background = this.matcap;
 
@@ -116,6 +118,10 @@ export class View {
 					self.loadBague()
 			})
 		}
+
+
+
+		
 
     }
 
@@ -367,10 +373,6 @@ export class View {
     	return low + Math.random() * ( high - low ) 
     }
 
-    randInt( low, high ) { 
-    	return low + Math.floor( Math.random() * ( high - low + 1 ) ) 
-    }
-
     tween(){
     	const self = this;
     	let t = new TWEEN.Tween( self.ring.rotation )
@@ -399,6 +401,10 @@ export class View {
     	}
 
     	TWEEN.update()
+
+
+    	this.track.move( 1 );
+    	this.track.draw()
 
 
 
