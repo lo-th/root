@@ -3,11 +3,12 @@ import * as TWEEN from 'tween';
 
 import { math } from './math.js'
 import { root } from '../root.js';
-
+import { User } from './User.js'
 import { Timer } from './Timer.js';
 import { Track } from './Track.js';
 import { Ring } from './Ring.js';
-import { Controller } from './Controller.js';
+import { Diamond } from './Diamond.js';
+import { CameraFollow } from './CameraFollow.js';
 
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
@@ -25,6 +26,7 @@ export class View {
     constructor() {
 
     	this.timer = new Timer( 60 )
+    	this.user = new User()
 
     	this.bg = 0x5b9ab7
 
@@ -46,7 +48,7 @@ export class View {
 
     	const scene = new THREE.Scene();
 		scene.background = new THREE.Color( this.bg )
-		scene.fog = new THREE.Fog( this.bg, 30, 150 )
+		
 
     	const renderer = new THREE.WebGLRenderer( { antialias: true } )
 		renderer.setPixelRatio( 1 )
@@ -58,11 +60,14 @@ export class View {
 
 		document.body.appendChild( renderer.domElement )
 
-		let camera = new THREE.PerspectiveCamera( 60, 1, 0.1, 300 )
-		camera.position.set( 0, 4, -5 )
+		
 
-		const controls = new Controller( camera, renderer.domElement )
-		controls.target.set( 0, 2, 0 )
+		let camera = new THREE.PerspectiveCamera( 60, 1, 0.1, 10000 )
+		camera.position.set( 0, 180, 80 )
+
+		//const controls = new Controller( camera, renderer.domElement )
+		const controls = new OrbitControls( camera, renderer.domElement )
+		controls.target.set( 0, 0, 90 )
 		controls.update()
 
 		/*const hemiLight = new THREE.HemisphereLight( 0x808080, 0xFFFFFF, 4 );
@@ -87,33 +92,33 @@ export class View {
 
 		this.renderer = renderer
 		this.scene =  scene
-		this.camera =  camera
+		this.freecamera =  camera
 		this.controls = controls
 		this.light = light
+
+		
 
 
 		
 
 
 		this.fps = document.createElement( 'div' );
-		this.fps.style.cssText =  "font-size:24px; font-family:Tahoma; position:absolute; top:3px; left:10px; width:100px; color:#000;  pointer-events:none;"
+		this.fps.style.cssText =  "font-size:24px; font-family:Tahoma; position:absolute; top:3px; left:10px; width:100px; color:#fff;  pointer-events:none;"
         document.body.appendChild( this.fps )
 
 
 
 		window.addEventListener( 'resize', this.resize.bind(this) )
 
-		let env = ['colors', 'river', 'room', 'japan', 'snow']
+		let env = ['colors', 'river', 'veranda', 'japan', 'snow', 'theatre', 'photo']
 		let mm = env[ math.randInt(0, env.length-1)]
 
 
 		if(!this.useHDR ){
 
-			let envmap = new THREE.TextureLoader().load('./assets/textures/'+mm+'.jpg', this.upmap2 )
-			scene.environment = envmap;
-			//scene.background = envmap;
-
-
+			this.envmap = new THREE.TextureLoader().load('./assets/textures/'+mm+'.jpg', this.upmap2 )
+			scene.environment = this.envmap;
+			//
 			this.start()
 
 		} else {
@@ -132,17 +137,27 @@ export class View {
 
     }
 
+    showBackground(b){
+
+    	this.scene.background = b ? this.envmap : new THREE.Color( this.bg );
+
+    }
+
     start(){
 
     	this.track = new Track({ scene:this.scene })
     	this.scene.add( this.track )
-
     	root.track = this.track
+
+    	this.camera = new CameraFollow( 60, 1, 0.1, 300 )
+		this.scene.add( this.camera );
 
     	this.ring = new Ring()
     	this.scene.add( this.ring )
 
-    	
+    	this.diam = new Diamond()
+    	this.scene.add( this.diam )
+    
     	this.setFollow( true )
 
     	this.render(0)
@@ -151,9 +166,11 @@ export class View {
     setFollow( b ){
 
     	if(b){
-    		this.controls.startFollow(this.ring, {distance:8,  height:2})
+    		this.scene.fog = new THREE.Fog( this.bg, 30, 150 )
+    		//this.controls.startFollow(this.ring, {distance:8,  height:2})
     	} else {
-    		this.controls.resetFollow()
+    		this.scene.fog = null 
+    		//this.controls.resetFollow()
     	}
 
     	this.follow = b
@@ -201,6 +218,8 @@ export class View {
 
     	requestAnimationFrame( this.render.bind(this) )
 
+    	this.user.update()
+
     	if( !this.timer.up( time ) ) return
 
     	//this.timer.up(time)
@@ -212,21 +231,24 @@ export class View {
     	if(s.up){
     		s.up = false
     		this.renderer.setSize( s.w, s.h )
+			this.freecamera.aspect = s.r
+			this.freecamera.updateProjectionMatrix()
 			this.camera.aspect = s.r
 			this.camera.updateProjectionMatrix()
+
     	}
 
     	let delta = this.timer.delta
 
-    	TWEEN.update( delta )
+    	TWEEN.update( time )
 
     	this.track.move( delta )
     	this.ring.move( delta )
+    	this.diam.move( delta )
+    	this.camera.move( delta )
 
-    	if( this.follow ) this.controls.follow( delta )
 
-
-    	this.renderer.render( this.scene, this.camera )
+    	this.renderer.render( this.scene, this.follow ? this.camera : this.freecamera )
 
     }
 

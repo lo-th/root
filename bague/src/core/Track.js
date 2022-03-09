@@ -30,12 +30,16 @@ export class Track extends THREE.Group {
         this.right = new THREE.Vector3()
         this.up = new THREE.Vector3()
 
+        this.tang = new THREE.Vector3();
+
         this.p1 = new THREE.Vector3()
         this.p2 = new THREE.Vector3()
 
         this.quat = new THREE.Quaternion()
 
         this.init()
+
+        this.renderOrder = 1
 
     }
 
@@ -77,6 +81,8 @@ export class Track extends THREE.Group {
             sheenColor:0x5141a2,
             sheenColorMap:this.map,
             sheenRoughnessMap:this.normal,
+            //depthTest:false,
+            //depthWrite:false,
         })
 
         this.mat.color.convertSRGBToLinear()
@@ -123,9 +129,9 @@ export class Track extends THREE.Group {
     getTangentAt( t ) {
 
         const delta = 0.0001;
-        const t1 = Math.max( 0, t - delta );
-        const t2 = Math.min( 1, t + delta );
-        return vector2.copy( this.getPointAt( t2 ) ).sub( this.getPointAt( t1 ) ).normalize()
+        const t2 = Math.max( 0, t - delta );
+        const t1 = Math.min( 1, t + delta );
+        return this.tang.copy( this.getPointAt( t2 ) ).sub( this.getPointAt( t1 ) ).normalize()
 
     }
 

@@ -3,6 +3,8 @@ import * as TWEEN from 'tween';
 
 import { root } from '../root.js';
 
+import { math } from './math.js';
+
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
 
@@ -13,15 +15,46 @@ export class Ring extends THREE.Group {
 
         super()
 
+        this.isComplete = false;
+        this.mapN = 0
+
+        this.px = 0
+        this.oldpx = 0
+
+        this.jumping = false
+        this.turning = false
+
+
+        this.oldKey = [0,0]
+
+        this.matrixAutoUpdate = false;
 
         this.radius = 1
         this.perimetre = 2 * Math.PI * this.radius
 
-
-        //this.debug()
+        this.v = new THREE.Vector3();
 
         this.meshs = {}
         this.load()
+
+    }
+
+    shadow() {
+
+        let map = new THREE.TextureLoader().load('./assets/textures/shadow.jpg' )
+
+        let m = new THREE.MeshBasicMaterial({ /*map:map, transparent:true,blending:THREE.MultiplyBlending, toneMapped:false,  /*, color:0x000000, wireframe:true*/ })
+
+        let g = new THREE.PlaneGeometry( 3.5, 3.5, 2, 2 )
+        g.rotateX(-Math.PI/2) 
+
+        this.shadow = new THREE.Mesh( g, m )
+        this.add( this.shadow )
+
+        this.shadow.position.y =0.1
+        //this.shadow.position.z =-0.5
+
+        //this.shadow.renderOrder = 100
 
     }
 
@@ -69,16 +102,18 @@ export class Ring extends THREE.Group {
 
     ready(){
 
-        let map = new THREE.TextureLoader().load('./assets/textures/bague.jpg', this.upmap )
-        let mapr = new THREE.TextureLoader().load('./assets/textures/bague_r.jpg' )
-        let mapm = new THREE.TextureLoader().load('./assets/textures/bague_m.jpg' )
+        let map = new THREE.TextureLoader().load('./assets/textures/bague.jpg', this.upmap.bind(this) )
+        let mapr = new THREE.TextureLoader().load('./assets/textures/bague_r.jpg', this.upmap0.bind(this) )
+        let mapm = new THREE.TextureLoader().load('./assets/textures/bague_m.jpg', this.upmap0.bind(this) )
+        let mapS = new THREE.TextureLoader().load('./assets/textures/shadow.jpg', this.upmap0.bind(this) )
 
         this.mat = new THREE.MeshStandardMaterial({ 
             map:map,
             roughnessMap:mapr,
             metalnessMap:mapm,
             metalness:1, roughness:1, //transparent:true,
-
+            //depthTest: false,
+            //depthWrite:false,
             //alphaToCoverage:true,
             //envMap : this.matcap
             //side:THREE.DoubleSide,
@@ -88,18 +123,27 @@ export class Ring extends THREE.Group {
         this.mat2 = new THREE.MeshStandardMaterial({ 
             map:map, 
             metalness:1, roughness:0.05, 
-            transparent:true,opacity:0.7
+            transparent:true,opacity:0.7,
+            //depthTest: false,
+            //depthWrite:false,
         })
 
+        
+
+        this.matS = new THREE.MeshBasicMaterial({ map:mapS, transparent:true,blending:THREE.MultiplyBlending, toneMapped:false,  /*, color:0x000000, wireframe:true*/ })
 
         this.makeInstance() 
-        //this.makeMerge()  
 
     }
 
     upmap (t){
+        this.mapN ++ 
         t.encoding = THREE.sRGBEncoding;
         t.flipY = false;
+    }
+
+    upmap0 (t){
+        this.mapN ++
     }
 
     makeInstance() {
@@ -129,17 +173,24 @@ export class Ring extends THREE.Group {
 
         }
 
+        this.group = new THREE.Group()
+
         /*mesh28.castShadow = true
         mesh28.receiveShadow = true
         mesh42.castShadow = true
         mesh42.receiveShadow = true*/
 
         this.ring = this.meshs.ring
+        this.shadow = this.meshs.shadow
+        this.shadow.material = this.matS
+
 
         let s = 0.088
         this.ring.scale.set(s,s,s)
+        this.shadow.scale.set(s,s,s)
 
         this.ring.position.y = this.radius
+        this.shadow.position.y = 0.05
 
         this.ring.material = this.mat
         this.ring.castShadow = true
@@ -149,92 +200,114 @@ export class Ring extends THREE.Group {
         this.ring.add( diam28 )
         this.ring.add( mesh42 )
         this.ring.add( diam42 )
-        this.add( this.ring )
+        //this.ring.add( shadow )
+        this.group.add( this.ring )
+        this.group.add( this.shadow )
+
+        this.add( this.group )
+        this.group.visible = false
+
+        //this.ring.renderOrder = 150
 
     }
 
-    /*makeMerge() {
+    changeLine( dir ){
 
-        let k, angle
-        const geometries = []
-        const geometries2 = []
-        const matrix = new THREE.Matrix4()
+        let time = 800 - (200*root.speed)
 
-        angle = (Math.PI*2) / 28
+        this.turning = true
 
-        for ( let i = 0; i < 28; i ++ ) {
-
-            matrix.makeRotationX( angle * i )
-            k = this.b28.geometry.clone()
-            k.applyMatrix4( matrix )
-
-            geometries.push( k );
-
-        }
-
-        angle = (Math.PI*2) / 42
-
-        for ( let i = 0; i < 42; i ++ ) {
-
-            matrix.makeRotationX( angle * i )
-            k = this.b42.geometry.clone();
-            k.applyMatrix4( matrix )
-            geometries2.push( k );
-
-        }
-
-        let mergedGeometry = BufferGeometryUtils.mergeBufferGeometries( geometries )
-        let geom = BufferGeometryUtils.mergeVertices( mergedGeometry, 0.01 )
-        //geom.computeBoundingBox()
-        //geom.computeVertexNormals();
-        //geom.normalizeNormals()
-
-        //console.log( mergedGeometry, geom )
-
-        
-
-        let mergedGeometry2 = BufferGeometryUtils.mergeBufferGeometries( geometries2 )
-        let geom2 = BufferGeometryUtils.mergeVertices( mergedGeometry2, 0.01 )
-        //geom2.computeBoundingBox()
-        //geom2.computeVertexNormals();
-        //geom2.normalizeNormals()
+        this.group.rotation.y = 0
 
 
+        let t = new TWEEN.Tween( this.group.position )
+            .to( { x:this.px }, time )
+            .easing( TWEEN.Easing.Sinusoidal.InOut )
+            .onComplete( function(){ this.turning = false }.bind(this) )
+            .start()
 
-        this.mesh28 = new THREE.Mesh( geom, this.mat )
-        this.mesh42 = new THREE.Mesh( geom2, this.mat )
 
-        this.mesh28.castShadow = true
-        this.mesh28.receiveShadow = true
-        this.mesh42.castShadow = true
-        this.mesh42.receiveShadow = true
+        let t2 = new TWEEN.Tween( this.group.rotation )
+            .to( { y:(30*dir)* math.torad }, time*0.5 )
+            .repeat(1)
+            .yoyo(true)
+            .easing( TWEEN.Easing.Sinusoidal.InOut )
+            .start()
 
-        this.ring.material = this.mat
-        this.ring.castShadow = true
-        this.ring.receiveShadow = true
+    }
 
-        this.scene.add( this.mesh28 )
-        this.scene.add( this.mesh42 )
-        this.scene.add( this.ring )
+    jump(){
 
-    }*/
+        this.jumping = true
+
+        let time = 1000 - (200*root.speed)
+
+        let t2 = new TWEEN.Tween( this.ring.position )
+            .to( { y:3 }, time*0.5 )
+            .repeat(1)
+            .yoyo(true)
+            .easing( TWEEN.Easing.Quadratic.InOut )
+            .onUpdate( function(o){ let s = 0.088 - (o.y*0.01);  this.shadow.scale.set(s,s,s); }.bind(this) )
+            .onComplete( function(){ this.jumping = false }.bind(this) )
+            .start()
+
+    }
 
     move( delta ){
 
-        if(!this.ring) return
+        if( !this.ring ) return
 
-        let p = root.track.getPointAt( 0.1 )
-        let q = root.track.getQuat(0.1)
+        if( this.mapN===4 && !this.group.visible ) this.group.visible = true
 
-        this.position.copy( p )
-        this.quaternion.copy( q )
 
-       // this.position.copy(root.track.getPointAt(0.1))
-       // this.position.copy(root.track.getPointAt(0.1))
+        let key = root.key
+
+        // left / right
+
+        if( key[0]!==0 && !this.turning ){
+
+            if( this.oldKey[0] !== key[0] ){
+
+                switch(this.px){
+                    case 0: this.px = -key[0]*1.8; break;
+                    case -1.8: if(key[0]<0) this.px = 0; break;
+                    case 1.8: if(key[0]>0) this.px = 0; break;
+
+                }
+
+                if( this.oldpx !== this.px ) this.changeLine( -key[0] )
+                this.oldpx = this.px
+
+            }
+
+        }
+
+        // jump
+
+        if( key[1]===-1 && this.oldKey[1] !== key[1] && !this.jumping ) this.jump()
+
+
+
+        this.oldKey = [ key[0], key[1] ]
+
+
 
         this.ring.rotation.x += root.speed * delta///(this.perimetre/(Math.PI*2))
 
+        let p = root.track.getPointAt( 0.1 )
+        let t = root.track.getTangentAt(0.1)
+        let q = root.track.getQuat(0.1)
 
+        //this.group.position.x = this.px
+
+        this.position.set( 0, 0, 0 ).applyQuaternion( q ).add( p )
+
+        //this.position.copy( p )
+        //this.quaternion.copy( q )
+
+        this.lookAt( this.v.copy( p ).sub( t ) );
+
+        this.updateMatrix()
 
     }
 

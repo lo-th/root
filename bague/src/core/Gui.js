@@ -8,7 +8,11 @@ export class Gui {
         const ui = new UIL.Gui( { w:240, h:20, close:false, bg:'none' } )
 
         ui.add( 'empty', {h:6})
+
+        ui.add( 'bool', { name:'show envmap', value:false, h:20 }).onChange( function(b){ view.showBackground(b) } )
+
         ui.add( view, 'follow', { type:'bool', h:20 }).onChange( function(b){ view.setFollow(b) } )
+        ui.add( root, 'tracking', { min:0.25, max:1, precision:2, h:25 })
 
         ui.add( 'empty', {h:6})
 
@@ -18,6 +22,9 @@ export class Gui {
 
         ui.add( root.track.upscale, 'x', { min:0, max:20, precision:1, h:25 })
         ui.add( root.track.upscale, 'y', { min:0, max:20, precision:1, h:25 })
+
+
+
         //ui.add( root.track.upscale, 'n', { min:0, max:0.2, precision:2, h:25 })
 
         /*
