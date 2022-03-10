@@ -15,24 +15,17 @@ export class Ring extends THREE.Group {
 
         super()
 
+        this.matrixAutoUpdate = false;
         this.isComplete = false;
         this.mapN = 0
-
-        this.px = 0
-        this.oldpx = 0
 
         this.jumping = false
         this.turning = false
 
-
-        this.oldKey = [0,0]
-
-        this.matrixAutoUpdate = false;
+        this.jumpr = 1 
 
         this.radius = 1
         this.perimetre = 2 * Math.PI * this.radius
-
-        this.v = new THREE.Vector3();
 
         this.meshs = {}
         this.load()
@@ -132,6 +125,11 @@ export class Ring extends THREE.Group {
 
         this.matS = new THREE.MeshBasicMaterial({ map:mapS, transparent:true,blending:THREE.MultiplyBlending, toneMapped:false,  /*, color:0x000000, wireframe:true*/ })
 
+
+        root.materials.push(this.mat)
+        root.materials.push(this.mat2)
+        //root.materials.push(this.matS)
+
         this.makeInstance() 
 
     }
@@ -211,7 +209,10 @@ export class Ring extends THREE.Group {
 
     }
 
-    changeLine( dir ){
+    switchLine( n ){
+
+        if( this.turning ) return
+        if( n === root.line ) return
 
         let time = 800 - (200*root.speed)
 
@@ -219,11 +220,18 @@ export class Ring extends THREE.Group {
 
         this.group.rotation.y = 0
 
+        let dir = n>root.line ? -1:1
+
+        let x = root.getX(n)
+
 
         let t = new TWEEN.Tween( this.group.position )
-            .to( { x:this.px }, time )
+            .to( { x:x }, time )
             .easing( TWEEN.Easing.Sinusoidal.InOut )
-            .onComplete( function(){ this.turning = false }.bind(this) )
+            .onComplete( function(){ 
+                this.turning = false 
+                root.line = n
+            }.bind(this) )
             .start()
 
 
@@ -238,6 +246,8 @@ export class Ring extends THREE.Group {
 
     jump(){
 
+        if(this.jumping) return
+
         this.jumping = true
 
         let time = 1000 - (200*root.speed)
@@ -247,7 +257,7 @@ export class Ring extends THREE.Group {
             .repeat(1)
             .yoyo(true)
             .easing( TWEEN.Easing.Quadratic.InOut )
-            .onUpdate( function(o){ let s = 0.088 - (o.y*0.01);  this.shadow.scale.set(s,s,s); }.bind(this) )
+            .onUpdate( function(o){ let s = 0.088 - (o.y*0.01);  this.shadow.scale.set(s,s,s); this.jumpr = this.radius - (o.y*0.01);}.bind(this) )
             .onComplete( function(){ this.jumping = false }.bind(this) )
             .start()
 
@@ -259,55 +269,19 @@ export class Ring extends THREE.Group {
 
         if( this.mapN===4 && !this.group.visible ) this.group.visible = true
 
+        this.ring.rotation.x += root.speed * delta * this.jumpr///(this.perimetre/(Math.PI*2))
 
-        let key = root.key
-
-        // left / right
-
-        if( key[0]!==0 && !this.turning ){
-
-            if( this.oldKey[0] !== key[0] ){
-
-                switch(this.px){
-                    case 0: this.px = -key[0]*1.8; break;
-                    case -1.8: if(key[0]<0) this.px = 0; break;
-                    case 1.8: if(key[0]>0) this.px = 0; break;
-
-                }
-
-                if( this.oldpx !== this.px ) this.changeLine( -key[0] )
-                this.oldpx = this.px
-
-            }
-
-        }
-
-        // jump
-
-        if( key[1]===-1 && this.oldKey[1] !== key[1] && !this.jumping ) this.jump()
-
-
-
-        this.oldKey = [ key[0], key[1] ]
-
-
-
-        this.ring.rotation.x += root.speed * delta///(this.perimetre/(Math.PI*2))
-
+        /*
         let p = root.track.getPointAt( 0.1 )
         let t = root.track.getTangentAt(0.1)
         let q = root.track.getQuat(0.1)
 
-        //this.group.position.x = this.px
-
         this.position.set( 0, 0, 0 ).applyQuaternion( q ).add( p )
-
-        //this.position.copy( p )
-        //this.quaternion.copy( q )
-
         this.lookAt( this.v.copy( p ).sub( t ) );
-
         this.updateMatrix()
+        */
+
+        this.matrix.copy( root.track.getMatrix( 0.1, { look:true }))
 
     }
 

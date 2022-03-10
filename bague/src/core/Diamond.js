@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
 import { root } from '../root.js';
-
 import { math } from './math.js';
 
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
@@ -20,22 +19,13 @@ export class Diamond extends THREE.Group {
         this.isComplete = false;
         this.mapN = 0
 
-        this.px = 0
-        this.oldpx = 0
-
         this.ti = 1
-
-
-        this.oldKey = [0,0]
 
         this.matrixAutoUpdate = false;
 
-        this.radius = 1
-        this.perimetre = 2 * Math.PI * this.radius
+        this.t = []
+        this.l = []
 
-        this.v = new THREE.Vector3();
-
-        this.dummy = new THREE.Object3D()
 
         this.meshs = {}
         this.load()
@@ -68,20 +58,25 @@ export class Diamond extends THREE.Group {
         let map = new THREE.TextureLoader().load('./assets/textures/diam.png', this.upmap.bind(this) )
 
         this.mat = new THREE.MeshStandardMaterial({ 
+
             map:map, 
             metalness:1, roughness:0.05, 
-            transparent:true,opacity:0.7,
+            transparent:true, opacity:0.7,
             side:THREE.DoubleSide
         })
+
+        root.materials.push(this.mat)
 
         this.makeInstance() 
 
     }
 
     upmap (t){
+
         this.mapN ++ 
         t.encoding = THREE.sRGBEncoding;
         t.flipY = false;
+
     }
 
     makeInstance() {
@@ -89,16 +84,17 @@ export class Diamond extends THREE.Group {
         this.meshs.diam.geometry.scale(14,14,14)
 
         const matrix = new THREE.Matrix4();
-        const matrix2 = new THREE.Matrix4();
         this.mesh = new THREE.InstancedMesh( this.meshs.diam.geometry, this.mat, 50 )
         this.mesh.instanceMatrix.setUsage( THREE.DynamicDrawUsage )
         let angle = (Math.PI*2) / 28
 
-        for ( let i = 0; i < this.max; i ++ ) {
+        let i = this.max
 
-            //matrix2.makeTranslation( i*2,0,0 )
-            //matrix.makeRotationY( angle * i ).premultiply(matrix2)
+        while(i--){
+
             this.mesh.setMatrixAt( i, matrix )
+            this.t[i] = 0
+            this.l[i] = 0
 
         }
 
@@ -106,101 +102,67 @@ export class Diamond extends THREE.Group {
 
     }
 
-    move( delta ){
-
-        if( !this.mesh ) return
+    addDiam(){
 
 
-        this.ti -= (root.speed * delta) * 0.05
-        if(this.ti<0) this.ti = 1
+        let line = math.randInt(0, 2), j, t
+        let n = math.randInt(2, 5)
 
-        let i = this.max, p, t, q, s = 1/100, tt, x = 0
+        while( n-- ){ 
 
-        while(i--){
-            
+            j = this.findFree()
 
-            tt = this.ti - (i*s)
-
-            if(tt < 0) tt = 0
-
-            //console.log(tt)
-
-            p = root.track.getPointAt(tt)
-            t = root.track.getTangentAt(tt)
-            q = root.track.getQuat(tt)
-
-            x = 0
-            if (i<10) x = -1.8
-            else if (i>this.max-10) x = 1.8
-
-            this.dummy.position.set( x, 0, 0 ).applyQuaternion( q ).add( p )
-            //this.dummy.lookAt( this.v.copy( p ).sub( t ) );
-
-            this.dummy.rotation.y += 0.0005
-            this.dummy.updateMatrix()
-
-            this.mesh.setMatrixAt( i, this.dummy.matrix );
-
-        }
-
-
-       this.mesh.instanceMatrix.needsUpdate = true;
-
-
-
-       /* if( !this.ring ) return
-
-        if( this.mapN===4 && !this.group.visible ) this.group.visible = true
-
-
-        let key = root.key
-
-        // left / right
-
-        if( key[0]!==0 && !this.turning ){
-
-            if( this.oldKey[0] !== key[0] ){
-
-                switch(this.px){
-                    case 0: this.px = -key[0]*1.8; break;
-                    case -1.8: if(key[0]<0) this.px = 0; break;
-                    case 1.8: if(key[0]>0) this.px = 0; break;
-
-                }
-
-                if( this.oldpx !== this.px ) this.changeLine( -key[0] )
-                this.oldpx = this.px
-
+            if( j !== -1 ){
+                this.t[j] = 1 - (n*0.006)
+                this.l[j] = line
             }
 
         }
 
-        // jump
+    }
 
-        if( key[1]===-1 && this.oldKey[1] !== key[1] && !this.jumping ) this.jump()
+    findFree(){
+
+        let j = this.max, n = -1
+        while( j-- ){
+            if(this.t[j] === 0){ 
+                n = j
+                break
+            }
+        }
+        return n
+
+    }
+
+    move( delta ){
+
+        if( !this.mesh ) return
+
+        let speed = (root.speed * delta) * root.speedInc
+
+        let i = this.max, p, q, s = 1/100, t, m, x = 0
+
+        while(i--){
+
+            t = this.t[i]
+
+            t -= speed
+            if(t <= 0) t = 0
+
+            if(t!==0){
+
+                x = root.getX( this.l[i] )
+                m = root.track.getMatrix( t, { x:x, y:0.05, incRy:0.0005 })
+                this.mesh.setMatrixAt( i, m );
 
 
 
-        this.oldKey = [ key[0], key[1] ]
+            }
+            this.t[i] = t
 
+        }
 
-
-        this.ring.rotation.x += root.speed * delta///(this.perimetre/(Math.PI*2))
-
-        let p = root.track.getPointAt( 0.1 )
-        let t = root.track.getTangentAt(0.1)
-        let q = root.track.getQuat(0.1)
-
-        //this.group.position.x = this.px
-
-        this.position.set( 0, 0, 0 ).applyQuaternion( q ).add( p )
-
-        //this.position.copy( p )
-        //this.quaternion.copy( q )
-
-        this.lookAt( this.v.copy( p ).sub( t ) );
-
-        this.updateMatrix()*/
+        this.mesh.instanceMatrix.needsUpdate = true
 
     }
 

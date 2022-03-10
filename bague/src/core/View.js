@@ -1,13 +1,15 @@
 import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
+import { Env } from './Env.js'
 import { math } from './math.js'
 import { root } from '../root.js';
-import { User } from './User.js'
+//import { User } from './User.js'
 import { Timer } from './Timer.js';
 import { Track } from './Track.js';
 import { Ring } from './Ring.js';
 import { Diamond } from './Diamond.js';
+import { Decor } from './Decor.js';
 import { CameraFollow } from './CameraFollow.js';
 
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
@@ -26,7 +28,9 @@ export class View {
     constructor() {
 
     	this.timer = new Timer( 60 )
-    	this.user = new User()
+    	//this.user = new User()
+
+    	this.mouse = { x:0, y:0, down:false, line:1, up:0 }
 
     	this.bg = 0x5b9ab7
 
@@ -46,6 +50,8 @@ export class View {
 
     	this.meshs = {}
 
+
+
     	const scene = new THREE.Scene();
 		scene.background = new THREE.Color( this.bg )
 		
@@ -59,6 +65,7 @@ export class View {
 		//renderer.shadowMap.enabled = true;
 
 		document.body.appendChild( renderer.domElement )
+		renderer.domElement.style.position = 'absolute'
 
 		
 
@@ -75,20 +82,22 @@ export class View {
 		scene.add( hemiLight )*/
 
 		const light = new THREE.DirectionalLight( 0xFFFFFF, 1 );
-		light.position.set( -50, 100, 50 )
-		//light.castShadow = true
-		/*let ss = 100
-		light.shadow.mapSize.x = light.shadow.mapSize.y = 4096;
+		light.position.set( -5, 20, -5 )
+		/*light.castShadow = true
+		let ss = 30
+		//light.shadow.mapSize.x = light.shadow.mapSize.y = 1024;
 		light.shadow.camera.top = light.shadow.camera.right = ss
 		light.shadow.camera.bottom = light.shadow.camera.left = - ss
 		light.shadow.camera.near = 1
-		light.shadow.camera.far = 200
+		light.shadow.camera.far = 30
 		light.shadow.bias = -0.0005
-		light.shadow.autoUpdate = true*/
-		
+		light.shadow.autoUpdate = true*
+		let shadowHelper = new THREE.CameraHelper( light.shadow.camera );
+		scene.add( shadowHelper );*/
+
 		scene.add( light )
 
-		scene.add( new THREE.AmbientLight( 0x333333 ) );
+		//scene.add( new THREE.AmbientLight( 0x333333 ) );
 
 		this.renderer = renderer
 		this.scene =  scene
@@ -96,50 +105,21 @@ export class View {
 		this.controls = controls
 		this.light = light
 
-		
+		root.scene = scene
+		root.renderer = renderer
 
-
-		
-
-
-		this.fps = document.createElement( 'div' );
-		this.fps.style.cssText =  "font-size:24px; font-family:Tahoma; position:absolute; top:3px; left:10px; width:100px; color:#fff;  pointer-events:none;"
-        document.body.appendChild( this.fps )
-
-
+		// dynamic envmap
+		this.env = new Env()
 
 		window.addEventListener( 'resize', this.resize.bind(this) )
 
-		let env = ['colors', 'river', 'veranda', 'japan', 'snow', 'theatre', 'photo']
-		let mm = env[ math.randInt(0, env.length-1)]
-
-
-		if(!this.useHDR ){
-
-			this.envmap = new THREE.TextureLoader().load('./assets/textures/'+mm+'.jpg', this.upmap2 )
-			scene.environment = this.envmap;
-			//
-			this.start()
-
-		} else {
-			const self = this;
-
-			new RGBELoader().setPath( './assets/textures/' )
-				.load( 'river.hdr', function ( texture ) {
-					texture.mapping = THREE.EquirectangularReflectionMapping;
-					//scene.background = texture;
-					scene.environment = texture;
-
-					
-					self.start()
-			})
-		}
+		this.start()
 
     }
 
     showBackground(b){
 
-    	this.scene.background = b ? this.envmap : new THREE.Color( this.bg );
+    	this.env.addPreview(b)
 
     }
 
@@ -157,6 +137,9 @@ export class View {
 
     	this.diam = new Diamond()
     	this.scene.add( this.diam )
+
+    	this.decor = new Decor()
+    	this.scene.add( this.decor )
     
     	this.setFollow( true )
 
@@ -166,15 +149,81 @@ export class View {
     setFollow( b ){
 
     	if(b){
-    		this.scene.fog = new THREE.Fog( this.bg, 30, 150 )
-    		//this.controls.startFollow(this.ring, {distance:8,  height:2})
+    		this.scene.fog = new THREE.Fog( this.bg, 60, 150 )
+    		this.addInteraction()
     	} else {
     		this.scene.fog = null 
-    		//this.controls.resetFollow()
+    		this.removeInteraction()
     	}
 
     	this.follow = b
 
+    }
+
+    removeInteraction(){
+
+    	const dom = this.renderer.domElement
+
+    	dom.removeEventListener( 'pointermove', this, false )
+	    dom.removeEventListener( 'pointerdown', this, false )
+	    document.removeEventListener( 'pointerup', this, false )
+
+    }
+
+    addInteraction(){
+
+    	const dom = this.renderer.domElement
+
+    	dom.addEventListener( 'pointermove', this, false )
+	    dom.addEventListener( 'pointerdown', this, false )
+	    document.addEventListener( 'pointerup', this, false )
+
+    }
+
+    handleEvent ( e ) {
+
+    	if(!this.ring) return
+
+    	const s = this.size
+    	const m = this.mouse
+
+    	switch(e.type){
+    		case 'pointerdown': 
+    		m.down = true;
+    		break;
+    		case 'pointerup': 
+    		m.down = false;
+    		break;
+    		case 'pointermove': 
+
+    		m.y = e.clientY / s.h
+    		m.x = e.clientX / s.w
+
+    		if(m.y>0.6){
+    			m.up = 0 
+    			if(m.x < 0.33 ) m.line = 0
+	    		else if( m.x < 0.66 ) m.line = 1
+	    		else m.line = 2
+    		}else{
+    			//m.line = root.line
+    			m.up = 1
+    		}
+
+    		
+
+    		break;
+    	}
+
+    	if( m.down ){
+
+    			if( m.up ) this.ring.jump()
+    			else this.ring.switchLine( m.line )
+
+    	}
+
+    	//console.log(m)
+
+    	
     }
 
 	upmap2 (t){
@@ -214,17 +263,32 @@ export class View {
             .start();
     }
 
+    gameLogique(){
+
+    	let p = math.randInt(0, 666)
+    	if( p === 3 ) this.decor.addDeco()
+
+    	let d = math.randInt(0, 100)
+        if( d === 20 ){
+
+        	this.diam.addDiam()
+
+        }
+
+    }
+
     render( time = 0 ) {
 
     	requestAnimationFrame( this.render.bind(this) )
 
-    	this.user.update()
+    	//this.user.update()
 
     	if( !this.timer.up( time ) ) return
 
     	//this.timer.up(time)
 
-    	this.fps.innerHTML = this.timer.fps
+        if( window.gui ) gui.fps.innerHTML = this.timer.fps
+
 
     	let s = this.size
 
@@ -240,15 +304,37 @@ export class View {
 
     	let delta = this.timer.delta
 
+
+    	this.env.move()
+
+    	//this.sph.material.map.needsUpdate = true
+
+    	/*let i = root.materials.length
+    	while(i--){ 
+    		root.materials[i].envMap = this.env.texture
+    		root.materials[i].envMap.needsUpdate = true// = this.env.texture
+    		//root.materials[i].needsUpdate = true
+    	}*/
+
     	TWEEN.update( time )
+
+    	this.gameLogique()
 
     	this.track.move( delta )
     	this.ring.move( delta )
     	this.diam.move( delta )
+    	this.decor.move( delta )
     	this.camera.move( delta )
 
 
+
+    	
+
+
     	this.renderer.render( this.scene, this.follow ? this.camera : this.freecamera )
+
+
+    	
 
     }
 

@@ -5,6 +5,10 @@ export class Gui {
 
     constructor() {
 
+        this.fps = document.createElement( 'div' );
+        this.fps.style.cssText =  "font-size:24px; font-family:Tahoma; position:absolute; bottom:3px; left:10px; width:100px; color:#fff;  pointer-events:none;"
+        document.body.appendChild( this.fps )
+
         const ui = new UIL.Gui( { w:240, h:20, close:false, bg:'none' } )
 
         ui.add( 'empty', {h:6})

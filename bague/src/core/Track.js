@@ -37,6 +37,9 @@ export class Track extends THREE.Group {
 
         this.quat = new THREE.Quaternion()
 
+        this.dummy = new THREE.Object3D()
+        this.v = new THREE.Vector3();
+
         this.init()
 
         this.renderOrder = 1
@@ -88,8 +91,9 @@ export class Track extends THREE.Group {
         this.mat.color.convertSRGBToLinear()
         this.mat.sheenColor.convertSRGBToLinear()
         this.mat.normalScale.set(0.1,0.1)
-
         this.mat.sheen = 2
+
+        root.materials.push(this.mat)
         
         this.matDebug = new THREE.MeshBasicMaterial({ color:0x880000, wireframe:true })
 
@@ -105,11 +109,30 @@ export class Track extends THREE.Group {
         this.mesh = new THREE.Mesh( this.geo, this.mat )
         this.add( this.mesh )
 
-        //this.position.z = -this.decal
+        this.mesh.receiveShadow = true
 
-        //console.log( this.getQuat(0) ) 
 
         this.draw()
+
+    }
+
+    getMatrix( t, o = {} ){
+
+        // t range 0 _ 1 
+
+        let p = this.getPointAt(t)
+        let q = this.getQuat(t)
+
+        this.dummy.position.set( o.x || 0, o.y || 0, o.z || 0 ).applyQuaternion( q ).add( p )
+        if( o.look ) this.dummy.lookAt( this.v.copy( p ).sub( this.getTangentAt(t) ) );
+        if( o.incRy ) this.dummy.rotation.y += o.incRy
+        if( o.incRx ) this.dummy.rotation.x += o.incRx
+        if( o.incRz ) this.dummy.rotation.z += o.incRz
+
+        if( o.rx ) this.dummy.rotation.x = o.rx
+        if( o.rz ) this.dummy.rotation.z = o.rz
+        this.dummy.updateMatrix()
+        return this.dummy.matrix
 
     }
 

@@ -16,6 +16,7 @@ export const math = {
 	inv255: 0.003921569,
 	golden: 1.618033,
 	epsilon: Math.pow( 2, - 52 ),
+	cc:1/255,
 
 	tmpQ: new THREE.Quaternion(),
 	tmpE: new THREE.Euler(),
