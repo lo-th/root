@@ -10,8 +10,12 @@ export class Track extends THREE.Group {
 
         super()
 
+        this.repeat = 36
+        this.incY = this.repeat/20
+
         this.pos = new THREE.Vector3()
-        this.upscale = { x:5, y:5, n:0.1 }
+        //this.upscale = { x:5, y:5, n:0.1 }
+        this.upscale = { x:0, y:0, n:0.1 }
 
         this.perlin = new SimplexNoise()
 
@@ -70,15 +74,15 @@ export class Track extends THREE.Group {
         
 
         //this.add( this.curve.mesh );
-
-        this.map = new THREE.TextureLoader().load('./assets/textures/sheen.jpg', this.upmap )
-        this.normal = new THREE.TextureLoader().load('./assets/textures/sheen_n.jpg', this.upmap2 )
+        this.map0 = new THREE.TextureLoader().load('./assets/textures/track.jpg', this.upmap.bind(this) )
+        this.map = new THREE.TextureLoader().load('./assets/textures/sheen.jpg', this.upmap.bind(this) )
+        this.normal = new THREE.TextureLoader().load('./assets/textures/sheen_n.jpg', this.upmap2.bind(this) )
 
         this.mat = new THREE.MeshPhysicalMaterial({ 
             side: THREE.DoubleSide,
             metalness:0.8, roughness:0.2,
             color:0x7e6fcf,
-            //map:this.map,
+            map:this.map0,
             normalMap:this.normal,
 
             sheenColor:0x5141a2,
@@ -180,8 +184,9 @@ export class Track extends THREE.Group {
 
         this.pos.z += root.speed * delta 
 
-        this.map.offset.y -= root.speed * delta
-        this.normal.offset.y -= root.speed * delta
+        this.map0.offset.y -= root.speed * delta * this.incY
+        this.map.offset.y -= root.speed * delta * this.incY
+        this.normal.offset.y -= root.speed * delta * this.incY
         this.draw()
 
     }
@@ -258,7 +263,7 @@ export class Track extends THREE.Group {
         t.encoding = THREE.sRGBEncoding;
         t.flipY = false;
         t.wrapS = t.wrapT = THREE.RepeatWrapping
-        t.repeat.set(1,20)
+        t.repeat.set(1,this.repeat)
 
     }
 
@@ -267,7 +272,7 @@ export class Track extends THREE.Group {
         //t.encoding = THREE.sRGBEncoding;
         t.flipY = false;
         t.wrapS = t.wrapT = THREE.RepeatWrapping
-        t.repeat.set(1,20)
+        t.repeat.set(1,this.repeat)
 
     }
 

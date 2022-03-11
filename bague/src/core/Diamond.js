@@ -26,6 +26,8 @@ export class Diamond extends THREE.Group {
         this.t = []
         this.l = []
 
+        this.hideMatrix = new THREE.Matrix4()
+
 
         this.meshs = {}
         this.load()
@@ -149,14 +151,19 @@ export class Diamond extends THREE.Group {
             t -= speed
             if(t <= 0) t = 0
 
+            if( t<(0.1+0.006) && t>(0.1-0.006) && this.l[i] === root.line){
+                t = 0
+                root.view.catchDiam()
+            }
+
             if(t!==0){
 
                 x = root.getX( this.l[i] )
                 m = root.track.getMatrix( t, { x:x, y:0.05, incRy:0.0005 })
                 this.mesh.setMatrixAt( i, m );
 
-
-
+            } else {
+                this.mesh.setMatrixAt( i, this.hideMatrix )
             }
             this.t[i] = t
 

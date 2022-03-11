@@ -3,13 +3,16 @@ export const root = {
 
 	materials:[],
 
+	scrore:0,
+
+	view:null,
 	scene:null,
 	renderer:null,
+	camera:null,
+	track:null,
 
 	speed:1,
 	speedInc:0.05,
-	track: null,
-	key:[0,0,0,0,0,0],
 
 	tracking:0.9,
 

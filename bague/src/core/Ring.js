@@ -211,6 +211,7 @@ export class Ring extends THREE.Group {
 
     switchLine( n ){
 
+        if( !this.ring ) return
         if( this.turning ) return
         if( n === root.line ) return
 
@@ -221,6 +222,8 @@ export class Ring extends THREE.Group {
         this.group.rotation.y = 0
 
         let dir = n>root.line ? -1:1
+
+        root.line = -1
 
         let x = root.getX(n)
 
@@ -246,7 +249,8 @@ export class Ring extends THREE.Group {
 
     jump(){
 
-        if(this.jumping) return
+        if( !this.ring ) return
+        if( this.jumping ) return
 
         this.jumping = true
 

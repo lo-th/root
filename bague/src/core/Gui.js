@@ -13,19 +13,24 @@ export class Gui {
 
         ui.add( 'empty', {h:6})
 
-        ui.add( 'bool', { name:'show envmap', value:false, h:20 }).onChange( function(b){ view.showBackground(b) } )
+        ui.add( 'bool', { name:'show envmap', value:false }).onChange( function(b){ view.showBackground(b) } )
 
-        ui.add( view, 'follow', { type:'bool', h:20 }).onChange( function(b){ view.setFollow(b) } )
-        ui.add( root, 'tracking', { min:0.25, max:1, precision:2, h:25 })
+        ui.add( view, 'follow', { type:'bool' }).onChange( function(b){ view.setFollow(b) } )
+        
 
-        ui.add( 'empty', {h:6})
 
-        ui.add( root, 'speed', { min:0, max:3, precision:2, h:25 })
+        ui.add( root, 'speed', { min:0, max:3, precision:2 })
 
-        ui.add( 'empty', {h:6})
+        //const g1 = ui.add('group', { name:'TRACK' })
+        ui.add( root.track.upscale, 'x', { min:0, max:20, precision:2 })
+        ui.add( root.track.upscale, 'y', { min:0, max:20, precision:2 })
 
-        ui.add( root.track.upscale, 'x', { min:0, max:20, precision:1, h:25 })
-        ui.add( root.track.upscale, 'y', { min:0, max:20, precision:1, h:25 })
+        const g2 = ui.add('group', { name:'CAMERA', h:20 })
+        g2.add( root.camera, 'pos', { type:'number', min:-20, max:20, precision:2 })
+        g2.add( root.camera, 'target', { type:'number', min:-20, max:20, precision:2 })
+        g2.add( root.camera, 'zoom', { min:0.1, max:2, precision:2 }).onChange( function(b){ root.camera.updateProjectionMatrix() } )
+        g2.add( root.camera, 'fov', { min:30, max:120, precision:0 }).onChange( function(b){ root.camera.updateProjectionMatrix() } )
+        g2.add( root, 'tracking', { min:0.25, max:1, precision:2 })
 
 
 

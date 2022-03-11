@@ -2,15 +2,15 @@ import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
 import { Env } from './Env.js'
+import { Hub } from './Hub.js'
 import { math } from './math.js'
 import { root } from '../root.js';
-//import { User } from './User.js'
 import { Timer } from './Timer.js';
 import { Track } from './Track.js';
 import { Ring } from './Ring.js';
 import { Diamond } from './Diamond.js';
 import { Decor } from './Decor.js';
-import { CameraFollow } from './CameraFollow.js';
+import { Camera } from './Camera.js';
 
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
@@ -30,7 +30,7 @@ export class View {
     	this.timer = new Timer( 60 )
     	//this.user = new User()
 
-    	this.mouse = { x:0, y:0, down:false, line:1, up:0 }
+    	this.mouse = { x:0, y:0, down:false, line:1, up:0, oldy:0, isD:false }
 
     	this.bg = 0x5b9ab7
 
@@ -72,7 +72,6 @@ export class View {
 		let camera = new THREE.PerspectiveCamera( 60, 1, 0.1, 10000 )
 		camera.position.set( 0, 180, 80 )
 
-		//const controls = new Controller( camera, renderer.domElement )
 		const controls = new OrbitControls( camera, renderer.domElement )
 		controls.target.set( 0, 0, 90 )
 		controls.update()
@@ -111,6 +110,11 @@ export class View {
 		// dynamic envmap
 		this.env = new Env()
 
+		// hub 
+		this.hub = new Hub()
+
+		root.view = this 
+
 		window.addEventListener( 'resize', this.resize.bind(this) )
 
 		this.start()
@@ -129,8 +133,11 @@ export class View {
     	this.scene.add( this.track )
     	root.track = this.track
 
-    	this.camera = new CameraFollow( 60, 1, 0.1, 300 )
+    	this.camera = new Camera( 80, this.size.r, 0.1, 300 )
 		this.scene.add( this.camera );
+		//this.scene.add( this.camera.helper );
+
+		root.camera = this.camera
 
     	this.ring = new Ring()
     	this.scene.add( this.ring )
@@ -149,7 +156,8 @@ export class View {
     setFollow( b ){
 
     	if(b){
-    		this.scene.fog = new THREE.Fog( this.bg, 60, 150 )
+    		this.scene.fog = new THREE.Fog( this.bg, 20, 150 )
+    		//this.scene.fog = new THREE.FogExp2( this.bg, 0.04  )
     		this.addInteraction()
     	} else {
     		this.scene.fog = null 
@@ -188,15 +196,17 @@ export class View {
     	const m = this.mouse
 
     	switch(e.type){
-    		case 'pointerdown': 
+    		case 'pointerdown':
+    		if(!m.isD) m.oldy = e.clientY / s.h
     		m.down = true;
+    		m.isD = true
     		break;
     		case 'pointerup': 
     		m.down = false;
     		break;
     		case 'pointermove': 
 
-    		m.y = e.clientY / s.h
+    		/*m.y = e.clientY / s.h
     		m.x = e.clientX / s.w
 
     		if(m.y>0.6){
@@ -207,36 +217,37 @@ export class View {
     		}else{
     			//m.line = root.line
     			m.up = 1
-    		}
+    		}*/
 
     		
 
     		break;
     	}
 
+
+    	m.y = e.clientY / s.h
+    	m.x = e.clientX / s.w
+
+    	if(m.x < 0.33 ) m.line = 0
+	    else if( m.x < 0.66 ) m.line = 1
+	    else m.line = 2
+
     	if( m.down ){
-
-    			if( m.up ) this.ring.jump()
-    			else this.ring.switchLine( m.line )
-
+    		this.ring.switchLine( m.line )
     	}
 
-    	//console.log(m)
-
+    	if( !m.down && m.isD ){ 
+    		if( m.oldy-m.y > 0.1 ) this.ring.jump()
+    		m.isD = false
+    	}
     	
     }
 
-	upmap2 (t){
-		t.encoding = THREE.sRGBEncoding;
-		t.mapping =THREE.EquirectangularReflectionMapping
-		//t.mapping =THREE.SphericalReflectionMapping
-		t.needsUpdate = true;
-		//t.flipY = false;
-	}
-
 	upmap (t){
-		t.encoding = THREE.sRGBEncoding;
-		t.flipY = false;
+
+		t.encoding = THREE.sRGBEncoding
+		t.flipY = false
+
 	}
 
     resize( e ) {
@@ -247,20 +258,6 @@ export class View {
 		s.r = s.w / s.h
 		s.up = true
 
-    }
-
-    rand( low, high ) { 
-    	return low + Math.random() * ( high - low ) 
-    }
-
-    tween(){
-    	const self = this;
-    	let t = new TWEEN.Tween( self.ring.rotation )
-            .to( {x:self.rand(-Math.PI*2, Math.PI*2), z:self.rand(-Math.PI*0.5, Math.PI*0.5)}, 1000 )
-            .easing( TWEEN.Easing.Quadratic.Out )
-            //.onUpdate( function( o ) { self.circle1.geometry.change(o.r,o.c); } )
-            .onComplete( function() { self.tween(); } )
-            .start();
     }
 
     gameLogique(){
@@ -274,6 +271,13 @@ export class View {
         	this.diam.addDiam()
 
         }
+
+    }
+
+    catchDiam(){
+
+    	root.scrore++
+    	this.hub.scrore.innerHTML = root.scrore
 
     }
 
@@ -326,15 +330,9 @@ export class View {
     	this.decor.move( delta )
     	this.camera.move( delta )
 
-
-
     	
-
 
     	this.renderer.render( this.scene, this.follow ? this.camera : this.freecamera )
-
-
-    	
 
     }
 
