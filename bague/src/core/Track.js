@@ -14,8 +14,8 @@ export class Track extends THREE.Group {
         this.incY = this.repeat/20
 
         this.pos = new THREE.Vector3()
-        //this.upscale = { x:5, y:5, n:0.1 }
-        this.upscale = { x:0, y:0, n:0.1 }
+        this.upscale = { x:5, y:5, n:0.1 }
+        //this.upscale = { x:0, y:0, n:0.1 }
 
         this.perlin = new SimplexNoise()
 
