@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
 import { root } from '../root.js';
-
 import { math } from './math.js';
 
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
@@ -18,14 +17,18 @@ export class Ring extends THREE.Group {
         this.matrixAutoUpdate = false;
         this.isComplete = false;
         this.mapN = 0
+        this.mapMax = 6
 
         this.jumping = false
+        this.downing = false
         this.turning = false
 
-        this.jumpr = 1 
+        this.slowing = 1 
 
         this.radius = 1
         this.perimetre = 2 * Math.PI * this.radius
+
+        this.ringtype = math.randInt( 1, 2 )
 
         this.meshs = {}
         this.load()
@@ -95,13 +98,15 @@ export class Ring extends THREE.Group {
 
     ready(){
 
-        let map = new THREE.TextureLoader().load('./assets/textures/bague.jpg', this.upmap.bind(this) )
+        let map_1 = new THREE.TextureLoader().load('./assets/textures/bague_1.jpg', this.upmap.bind(this) )
+        let map_2 = new THREE.TextureLoader().load('./assets/textures/bague_2.jpg', this.upmap.bind(this) )
         let mapr = new THREE.TextureLoader().load('./assets/textures/bague_r.jpg', this.upmap0.bind(this) )
         let mapm = new THREE.TextureLoader().load('./assets/textures/bague_m.jpg', this.upmap0.bind(this) )
-        let mapS = new THREE.TextureLoader().load('./assets/textures/shadow.jpg', this.upmap0.bind(this) )
+        this.mapS1 = new THREE.TextureLoader().load('./assets/textures/shadow_1.jpg', this.upmap0.bind(this) )
+        this.mapS2 = new THREE.TextureLoader().load('./assets/textures/shadow_2.jpg', this.upmap0.bind(this) )
 
         this.mat = new THREE.MeshStandardMaterial({ 
-            map:map,
+            map:this.ringtype === 1 ? map_1 : map_2,
             roughnessMap:mapr,
             metalnessMap:mapm,
             metalness:1, roughness:1, //transparent:true,
@@ -114,8 +119,8 @@ export class Ring extends THREE.Group {
         })
 
         this.mat2 = new THREE.MeshStandardMaterial({ 
-            map:map, 
-            metalness:1, roughness:0.05, 
+            map:this.ringtype === 1 ? map_1 : map_2, 
+            metalness:1, roughness:0.01, 
             transparent:true,opacity:0.7,
             //depthTest: false,
             //depthWrite:false,
@@ -123,7 +128,7 @@ export class Ring extends THREE.Group {
 
         
 
-        this.matS = new THREE.MeshBasicMaterial({ map:mapS, transparent:true,blending:THREE.MultiplyBlending, toneMapped:false,  /*, color:0x000000, wireframe:true*/ })
+        this.matS = new THREE.MeshBasicMaterial({ map:this.mapS1, transparent:true, blending:THREE.MultiplyBlending, toneMapped:false,  /*, color:0x000000, wireframe:true*/ })
 
 
         root.materials.push(this.mat)
@@ -158,36 +163,36 @@ export class Ring extends THREE.Group {
             diam28.setMatrixAt( i, matrix )
 
         }
-        
-        let mesh42 = new THREE.InstancedMesh( this.meshs.b_42.geometry, this.mat, 42 )
-        let diam42 = new THREE.InstancedMesh( this.meshs.d_42.geometry, this.mat2, 42 )
-        angle = (Math.PI*2) / 42
 
-        for ( let i = 0; i < 42; i ++ ) {
+        let mesh42, diam42
 
-            matrix.makeRotationX( angle * i )
-            mesh42.setMatrixAt( i, matrix )
-            diam42.setMatrixAt( i, matrix )
+        if( this.ringtype === 1 ){
 
+            mesh42 = new THREE.InstancedMesh( this.meshs.b_42.geometry, this.mat, 42 )
+            diam42 = new THREE.InstancedMesh( this.meshs.d_42.geometry, this.mat2, 42 )
+            angle = (Math.PI*2) / 42
+
+            for ( let i = 0; i < 42; i ++ ) {
+
+                matrix.makeRotationX( angle * i )
+                mesh42.setMatrixAt( i, matrix )
+                diam42.setMatrixAt( i, matrix )
+
+            }
         }
 
+        this.gring = new THREE.Group()
         this.group = new THREE.Group()
 
-        /*mesh28.castShadow = true
-        mesh28.receiveShadow = true
-        mesh42.castShadow = true
-        mesh42.receiveShadow = true*/
-
-        this.ring = this.meshs.ring
+        this.ring = this.ringtype === 1 ? this.meshs.ring_v1 : this.meshs.ring_v2
         this.shadow = this.meshs.shadow
         this.shadow.material = this.matS
-
 
         let s = 0.088
         this.ring.scale.set(s,s,s)
         this.shadow.scale.set(s,s,s)
 
-        this.ring.position.y = this.radius
+        
         this.shadow.position.y = 0.05
 
         this.ring.material = this.mat
@@ -196,10 +201,17 @@ export class Ring extends THREE.Group {
 
         this.ring.add( mesh28 )
         this.ring.add( diam28 )
-        this.ring.add( mesh42 )
-        this.ring.add( diam42 )
-        //this.ring.add( shadow )
-        this.group.add( this.ring )
+
+        if( this.ringtype === 1 ){
+            this.ring.add( mesh42 )
+            this.ring.add( diam42 )
+        }
+
+        this.gring.add( this.ring )
+        this.gring.position.y = this.radius
+        
+
+        this.group.add( this.gring )
         this.group.add( this.shadow )
 
         this.add( this.group )
@@ -228,7 +240,7 @@ export class Ring extends THREE.Group {
         let x = root.getX(n)
 
 
-        let t = new TWEEN.Tween( this.group.position )
+        const t1 = new TWEEN.Tween( this.group.position )
             .to( { x:x }, time )
             .easing( TWEEN.Easing.Sinusoidal.InOut )
             .onComplete( function(){ 
@@ -238,7 +250,7 @@ export class Ring extends THREE.Group {
             .start()
 
 
-        let t2 = new TWEEN.Tween( this.group.rotation )
+        const t2 = new TWEEN.Tween( this.group.rotation )
             .to( { y:(30*dir)* math.torad }, time*0.5 )
             .repeat(1)
             .yoyo(true)
@@ -254,15 +266,51 @@ export class Ring extends THREE.Group {
 
         this.jumping = true
 
-        let time = 1000 - (200*root.speed)
+        let time = 1500 - (200*root.speed)
 
-        let t2 = new TWEEN.Tween( this.ring.position )
+        const t1 = new TWEEN.Tween( this.ring.position )
             .to( { y:3 }, time*0.5 )
             .repeat(1)
             .yoyo(true)
             .easing( TWEEN.Easing.Quadratic.InOut )
-            .onUpdate( function(o){ let s = 0.088 - (o.y*0.01);  this.shadow.scale.set(s,s,s); this.jumpr = this.radius - (o.y*0.01);}.bind(this) )
+            .onUpdate( function(o){ let s = 0.088 - (o.y*0.01);  this.shadow.scale.set(s,s,s); this.slowing = this.radius - (o.y*0.01);}.bind(this) )
             .onComplete( function(){ this.jumping = false }.bind(this) )
+            .start()
+
+    }
+
+    down(){
+
+        if( !this.ring ) return
+        if( this.downing ) return
+
+        this.downing = true
+        this.matS.map = this.mapS2
+
+        let time = 2000 - (200*root.speed)
+
+        const t1 = new TWEEN.Tween( this.gring.rotation )
+            .to( { z:90*math.torad }, time*0.5 )
+            .repeat(1)
+            .yoyo(true)
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .start()
+
+        const t2 = new TWEEN.Tween( this.gring.position )
+            .to( { y:0.4 }, time*0.5 )
+            .repeat(1)
+            .yoyo(true)
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .onUpdate( function(o){ 
+                //let s1 = 0.088+((1-o.y)*0.088*2.3);
+                let s = 0.088+((1-o.y)*0.088*1.6);
+                this.shadow.scale.set(s,s,s); 
+                this.slowing = this.radius - (o.y*0.01); 
+            }.bind(this) )
+            .onComplete( function(){ 
+                this.matS.map = this.mapS1
+                this.downing = false 
+            }.bind(this) )
             .start()
 
     }
@@ -271,9 +319,9 @@ export class Ring extends THREE.Group {
 
         if( !this.ring ) return
 
-        if( this.mapN===4 && !this.group.visible ) this.group.visible = true
+        if( this.mapN===this.mapMax && !this.group.visible ) this.group.visible = true
 
-        this.ring.rotation.x += root.speed * delta * this.jumpr///(this.perimetre/(Math.PI*2))
+        this.ring.rotation.x += root.speed * delta * this.slowing///(this.perimetre/(Math.PI*2))
 
         /*
         let p = root.track.getPointAt( 0.1 )

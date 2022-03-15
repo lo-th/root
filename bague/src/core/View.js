@@ -60,7 +60,7 @@ export class View {
 		renderer.setPixelRatio( 1 )
 		renderer.setSize( 1,1 )
 		renderer.toneMapping = THREE.ACESFilmicToneMapping
-		renderer.toneMappingExposure = 1
+		renderer.toneMappingExposure = 1.0
 		renderer.outputEncoding = THREE.sRGBEncoding
 		//renderer.shadowMap.enabled = true;
 
@@ -80,7 +80,7 @@ export class View {
 		hemiLight.position.set( 0, 1, 0 );
 		scene.add( hemiLight )*/
 
-		const light = new THREE.DirectionalLight( 0xFFFFFF, 1 );
+		const light = new THREE.DirectionalLight( 0xFFFFFF, 1 );//0xfbea1f
 		light.position.set( -5, 20, -5 )
 		/*light.castShadow = true
 		let ss = 30
@@ -110,8 +110,7 @@ export class View {
 		// dynamic envmap
 		this.env = new Env()
 
-		// hub 
-		this.hub = new Hub()
+		
 
 		root.view = this 
 
@@ -138,6 +137,9 @@ export class View {
 		//this.scene.add( this.camera.helper );
 
 		root.camera = this.camera
+
+		// hub 
+		this.hub = new Hub()
 
     	this.ring = new Ring()
     	this.scene.add( this.ring )
@@ -238,6 +240,7 @@ export class View {
 
     	if( !m.down && m.isD ){ 
     		if( m.oldy-m.y > 0.1 ) this.ring.jump()
+    		if( m.oldy-m.y < -0.1 ) this.ring.down()
     		m.isD = false
     	}
     	
@@ -303,6 +306,8 @@ export class View {
 			this.freecamera.updateProjectionMatrix()
 			this.camera.aspect = s.r
 			this.camera.updateProjectionMatrix()
+
+			this.hub.resize()
 
     	}
 

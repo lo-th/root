@@ -32,6 +32,16 @@ export class Gui {
         g2.add( root.camera, 'fov', { min:30, max:120, precision:0 }).onChange( function(b){ root.camera.updateProjectionMatrix() } )
         g2.add( root, 'tracking', { min:0.25, max:1, precision:2 })
 
+        const g3 = ui.add('group', { name:'TRACK', h:20 })
+
+        g3.add( root.track, 'color', { type:'color' } ).onChange( function( c ){ root.track.setColor( c ); } )
+
+        g3.add( root.track.mat, 'metalness', { min:0, max:1, precision:2 })
+        g3.add( root.track.mat, 'roughness', { min:0, max:1, precision:2 })
+        g3.add( root.track.mat, 'sheen', { min:0, max:1, precision:2 })
+
+
+
 
 
         //ui.add( root.track.upscale, 'n', { min:0, max:0.2, precision:2, h:25 })

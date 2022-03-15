@@ -10,6 +10,8 @@ export class Track extends THREE.Group {
 
         super()
 
+        this.color = 0xc1501b
+
         this.repeat = 36
         this.incY = this.repeat/20
 
@@ -50,6 +52,13 @@ export class Track extends THREE.Group {
 
     }
 
+    setColor(c){
+
+        this.mat.color.setHex( c ).convertSRGBToLinear();
+        this.mat.sheenColor.setHex( c ).convertSRGBToLinear();
+    
+    }
+
     init() {
 
         
@@ -71,8 +80,6 @@ export class Track extends THREE.Group {
         this.curve.curveType = 'chordal';
         this.curve.mesh = new THREE.Line( g, new THREE.LineBasicMaterial( { color: 0x0000ff, opacity: 1 } ) );
 
-        
-
         //this.add( this.curve.mesh );
         this.map0 = new THREE.TextureLoader().load('./assets/textures/track.jpg', this.upmap.bind(this) )
         this.map = new THREE.TextureLoader().load('./assets/textures/sheen.jpg', this.upmap.bind(this) )
@@ -80,22 +87,25 @@ export class Track extends THREE.Group {
 
         this.mat = new THREE.MeshPhysicalMaterial({ 
             side: THREE.DoubleSide,
-            metalness:0.8, roughness:0.2,
-            color:0x7e6fcf,
+            metalness:0.8, 
+            roughness:0.5,
+            color:this.color,
             map:this.map0,
             normalMap:this.normal,
 
-            sheenColor:0x5141a2,
+            sheenColor:this.color,
+            sheenRoughness:1,
             sheenColorMap:this.map,
-            sheenRoughnessMap:this.normal,
+            sheenRoughnessMap:this.map,
             //depthTest:false,
             //depthWrite:false,
         })
 
         this.mat.color.convertSRGBToLinear()
         this.mat.sheenColor.convertSRGBToLinear()
-        this.mat.normalScale.set(0.1,0.1)
-        this.mat.sheen = 2
+       //
+        this.mat.normalScale.set(0.05,0.05)
+        this.mat.sheen = 1
 
         root.materials.push(this.mat)
         

@@ -62,7 +62,7 @@ export class Diamond extends THREE.Group {
         this.mat = new THREE.MeshStandardMaterial({ 
 
             map:map, 
-            metalness:1, roughness:0.05, 
+            metalness:1, roughness:0.0, 
             transparent:true, opacity:0.7,
             side:THREE.DoubleSide
         })
