@@ -10,9 +10,9 @@ export class Track extends THREE.Group {
 
         super()
 
-        this.color = 0xc1501b
+        this.color = 0x435b62
 
-        this.repeat = 36
+        this.repeat = 50//36
         this.incY = this.repeat/20
 
         this.pos = new THREE.Vector3()
@@ -59,8 +59,44 @@ export class Track extends THREE.Group {
     
     }
 
+    initAlphaMap(){
+
+        const canvas = document.createElement( 'canvas' )
+        canvas.width = 3
+        canvas.height = 100//100
+        //canvas.style.cssText = 'position:absolute; margin:0; padding:0; top:10px; left:10px;'
+        const ctx = canvas.getContext( '2d' )
+
+        ctx.clearRect(0,0,3,100);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0,0,3,100);
+
+        // hole
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(1,50,1,1);
+        ctx.fillRect(1,60,1,1);
+        ctx.fillRect(0,90,1,1);
+        ctx.fillRect(0,10,1,1);
+        ctx.fillRect(2,14,1,1);
+        //ctx.fillRect(0,0,3,50)
+
+        const t = new THREE.CanvasTexture( canvas )
+        
+
+        t.minFilter = t.magFilter = THREE.NearestFilter
+
+        t.wrapS = t.wrapT = THREE.RepeatWrapping
+        t.repeat.set(1,1)
+        t.needsUpdate = true;
+
+        this.alphaMap = t
+
+    }
+
     init() {
 
+        this.initAlphaMap()
         
         const g = new THREE.BufferGeometry();
         g.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( this.divid * 3 ), 3 ) );
@@ -75,37 +111,88 @@ export class Track extends THREE.Group {
 
         }
 
-
         this.curve = new THREE.CatmullRomCurve3( this.points );
         this.curve.curveType = 'chordal';
         this.curve.mesh = new THREE.Line( g, new THREE.LineBasicMaterial( { color: 0x0000ff, opacity: 1 } ) );
 
         //this.add( this.curve.mesh );
-        this.map0 = new THREE.TextureLoader().load('./assets/textures/track.jpg', this.upmap.bind(this) )
-        this.map = new THREE.TextureLoader().load('./assets/textures/sheen.jpg', this.upmap.bind(this) )
-        this.normal = new THREE.TextureLoader().load('./assets/textures/sheen_n.jpg', this.upmap2.bind(this) )
+        this.map = new THREE.TextureLoader().load('./assets/textures/track.png', this.upmap.bind(this) )
+        this.normal = new THREE.TextureLoader().load('./assets/textures/track_n.png', this.upmap2.bind(this) )
+        this.sheen = new THREE.TextureLoader().load('./assets/textures/sheen.jpg', this.upmap.bind(this) )
 
         this.mat = new THREE.MeshPhysicalMaterial({ 
             side: THREE.DoubleSide,
-            metalness:0.8, 
+            metalness:0.6, 
             roughness:0.5,
             color:this.color,
-            map:this.map0,
+            map:this.map,
+
             normalMap:this.normal,
+
+            alphaMap:this.alphaMap,
+            aoMap:this.alphaMap,
+            //transparent:true,
+            //alphaToCoverage:true,
+            //premultipliedAlpha:true,
 
             sheenColor:this.color,
             sheenRoughness:1,
-            sheenColorMap:this.map,
-            sheenRoughnessMap:this.map,
+            sheenColorMap:this.sheen,
+            sheenRoughnessMap:this.sheen,
             //depthTest:false,
             //depthWrite:false,
         })
 
+        this.mat.normalScale.set(0.2,0.2)
+
+        this.mat.alphaTest = 0.5
+
         this.mat.color.convertSRGBToLinear()
         this.mat.sheenColor.convertSRGBToLinear()
-       //
-        this.mat.normalScale.set(0.05,0.05)
-        this.mat.sheen = 1
+
+        this.mat.sheen = 0.6
+
+
+        this.mat.onBeforeCompile = function ( shader ) {
+
+            //shader.uniforms.decalY = { value: 0 };
+            //shader.vertexShader = 'uniform float decalY;\n' + shader.vertexShader;
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <uv2_pars_vertex>', `
+                attribute vec2 uv2;
+                varying vec2 vUv2;
+                uniform mat3 uv2Transform;
+                `
+            )
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <uv2_vertex>', `
+                vUv2 = ( uv2Transform * vec3( uv2, 1 ) ).xy;
+                `
+            )
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <uv2_pars_fragment>', `
+                varying vec2 vUv2;
+                `
+            )
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <alphamap_fragment>', `
+                #ifdef USE_ALPHAMAP
+                    diffuseColor.a *= texture2D( alphaMap, vUv2 ).g;
+                #endif
+                `
+            )
+
+            shader.fragmentShader = shader.fragmentShader.replace('#include <aomap_pars_fragment>', `` )
+            shader.fragmentShader = shader.fragmentShader.replace('#include <aomap_fragment>', `` )
+
+            //self.mat.userData.shader = shader;
+            //this.userData.shader = shader;
+
+        }
 
         root.materials.push(this.mat)
         
@@ -114,6 +201,8 @@ export class Track extends THREE.Group {
         this.geo = new THREE.PlaneBufferGeometry( this.w*2, this.size, 1, this.divid-1 )
         this.geo.rotateX( -Math.PI*0.5 ) 
         this.geo.translate( 0,0, this.size*0.5)
+
+        this.geo.setAttribute( 'uv2', new THREE.Float32BufferAttribute( this.geo.attributes.uv.array, 2 ) );
 
         //console.log(this.geo.attributes.position)
 
@@ -127,6 +216,23 @@ export class Track extends THREE.Group {
 
 
         this.draw()
+
+    }
+
+    upmap (t){
+
+        t.encoding = THREE.sRGBEncoding;
+        //t.flipY = false;
+        t.wrapS = t.wrapT = THREE.RepeatWrapping
+        t.repeat.set(1,this.repeat)
+
+    }
+
+    upmap2 (t){
+
+        //t.flipY = false;
+        t.wrapS = t.wrapT = THREE.RepeatWrapping
+        t.repeat.set(1,this.repeat)
 
     }
 
@@ -194,9 +300,16 @@ export class Track extends THREE.Group {
 
         this.pos.z += root.speed * delta 
 
-        this.map0.offset.y -= root.speed * delta * this.incY
         this.map.offset.y -= root.speed * delta * this.incY
         this.normal.offset.y -= root.speed * delta * this.incY
+        this.sheen.offset.y -= root.speed * delta * this.incY
+
+        this.alphaMap.offset.y -= root.speed * delta * (0.05)//0.05//this.incY
+
+        //const shader = this.mat.userData.shader;
+        //if( shader ) shader.uniforms.time.value = performance.now() / 1000;
+
+        
         this.draw()
 
     }
@@ -268,26 +381,19 @@ export class Track extends THREE.Group {
     }
 
 
-    upmap (t){
-
-        t.encoding = THREE.sRGBEncoding;
-        t.flipY = false;
-        t.wrapS = t.wrapT = THREE.RepeatWrapping
-        t.repeat.set(1,this.repeat)
-
-    }
-
-    upmap2 (t){
-
-        //t.encoding = THREE.sRGBEncoding;
-        t.flipY = false;
-        t.wrapS = t.wrapT = THREE.RepeatWrapping
-        t.repeat.set(1,this.repeat)
-
-    }
+    
 
     
 
     
 
 }
+
+/*
+Bleu Foncé : 191B2E
+Bleu Moyen : 1E6781
+Bleu Clair : 5E94A1
+Or : C9BC98
+
+FBF4D3
+*/

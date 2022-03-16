@@ -12,15 +12,9 @@ import { Diamond } from './Diamond.js';
 import { Decor } from './Decor.js';
 import { Camera } from './Camera.js';
 
+import { Timeline } from './Timeline.js';
+
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
-import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
-import { RGBELoader } from '../jsm/loaders/RGBELoader.js';
-import { EXRLoader } from '../jsm/loaders/EXRLoader.js';
-import * as BufferGeometryUtils from '../jsm/utils/BufferGeometryUtils.js';
-
-
-
 
 
 export class View {
@@ -70,7 +64,7 @@ export class View {
 		
 
 		let camera = new THREE.PerspectiveCamera( 60, 1, 0.1, 10000 )
-		camera.position.set( 0, 180, 80 )
+		camera.position.set( 0, 180, 89 )
 
 		const controls = new OrbitControls( camera, renderer.domElement )
 		controls.target.set( 0, 0, 90 )
@@ -140,6 +134,8 @@ export class View {
 
 		// hub 
 		this.hub = new Hub()
+
+		this.timeline = new Timeline()
 
     	this.ring = new Ring()
     	this.scene.add( this.ring )
@@ -255,11 +251,29 @@ export class View {
 
     resize( e ) {
 
-    	let s = this.size
+    	const s = this.size
 		s.w = window.innerWidth 
 		s.h = window.innerHeight
 		s.r = s.w / s.h
 		s.up = true
+
+    }
+
+    doResize() {
+
+    	const s = this.size
+
+    	if( s.up ){
+
+    		s.up = false
+    		this.renderer.setSize( s.w, s.h )
+			this.freecamera.aspect = s.r
+			this.freecamera.updateProjectionMatrix()
+			this.camera.aspect = s.r
+			this.camera.updateProjectionMatrix()
+			this.hub.resize()
+
+    	}
 
     }
 
@@ -288,42 +302,18 @@ export class View {
 
     	requestAnimationFrame( this.render.bind(this) )
 
-    	//this.user.update()
-
     	if( !this.timer.up( time ) ) return
 
     	//this.timer.up(time)
 
         if( window.gui ) gui.fps.innerHTML = this.timer.fps
 
-
-    	let s = this.size
-
-    	if(s.up){
-    		s.up = false
-    		this.renderer.setSize( s.w, s.h )
-			this.freecamera.aspect = s.r
-			this.freecamera.updateProjectionMatrix()
-			this.camera.aspect = s.r
-			this.camera.updateProjectionMatrix()
-
-			this.hub.resize()
-
-    	}
+        this.doResize()
 
     	let delta = this.timer.delta
 
 
     	this.env.move()
-
-    	//this.sph.material.map.needsUpdate = true
-
-    	/*let i = root.materials.length
-    	while(i--){ 
-    		root.materials[i].envMap = this.env.texture
-    		root.materials[i].envMap.needsUpdate = true// = this.env.texture
-    		//root.materials[i].needsUpdate = true
-    	}*/
 
     	TWEEN.update( time )
 
@@ -334,8 +324,6 @@ export class View {
     	this.diam.move( delta )
     	this.decor.move( delta )
     	this.camera.move( delta )
-
-    	
 
     	this.renderer.render( this.scene, this.follow ? this.camera : this.freecamera )
 

@@ -115,7 +115,7 @@ export class Diamond extends THREE.Group {
             j = this.findFree()
 
             if( j !== -1 ){
-                this.t[j] = 1 - (n*0.006)
+                this.t[j] = 1 - (n*0.01)//.006
                 this.l[j] = line
             }
 

@@ -74,9 +74,13 @@ export class Env {
         var halo = this.ctx.createLinearGradient(0,0,0,this.h);
         halo.addColorStop( 0,  'rgba(255,255,255,0.4)' );
         halo.addColorStop( 0.2,  'rgba(255,255,255,0)' );
-        halo.addColorStop( 0.49,  'rgba(170,84,53,0)' );
+        /*halo.addColorStop( 0.49,  'rgba(170,84,53,0)' );
         halo.addColorStop( 0.5,  'rgba(170,84,53,0.1)' );
-        halo.addColorStop( 1,  'rgba(150,64,33,0.75)' );
+        halo.addColorStop( 1,  'rgba(150,64,33,0.75)' );*/
+
+        halo.addColorStop( 0.49,  'rgba(67,91,98,0)' );
+        halo.addColorStop( 0.5,  'rgba(67,91,98,0.1)' );
+        halo.addColorStop( 1,  'rgba(35,53,58,0.75)' );
 //{r:170,g:84,b:53},// blue clair 1 inverse
         this.sun = sun
         this.sun2 = sun2
