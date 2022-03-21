@@ -1,11 +1,13 @@
-import * as THREE from 'three';
-import { root } from '../root.js';
-import { math } from './math.js';
-
+import * as THREE from 'three'
+import { root } from '../root.js'
+import { math } from './math.js'
+import { pool } from './pool.js'
 
 export class Env {
 
     constructor() {
+
+        this.initDiamEnv()
 
         this.useParticle = true
 
@@ -119,6 +121,20 @@ export class Env {
 
         //this.move()
 
+    }
+
+    initDiamEnv(){
+
+        let t = new THREE.Texture( pool.getImage('diam_env_h') )
+        t.mapping = THREE.EquirectangularReflectionMapping
+        t.encoding = THREE.sRGBEncoding
+        t.needsUpdate = true
+        this.dimondEnv = t
+
+    }
+
+    upmap (t){
+        
     }
 
     createParticles(){

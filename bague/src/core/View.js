@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
+import { pool } from './pool.js'
+import { Gui } from './Gui.js'
+
 import { Env } from './Env.js'
 import { Hub } from './Hub.js'
 import { math } from './math.js'
@@ -19,7 +22,9 @@ import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 
 export class View {
 
-    constructor() {
+    constructor( withUI = false ) {
+
+    	this.withUI = withUI
 
     	this.timer = new Timer( 60 )
     	//this.user = new User()
@@ -100,27 +105,33 @@ export class View {
 
 		root.scene = scene
 		root.renderer = renderer
-
-		// dynamic envmap
-		this.env = new Env()
-
-		
-
 		root.view = this 
 
 		window.addEventListener( 'resize', this.resize.bind(this) )
 
-		this.start()
+		this.loadAssets()
+
+    }
+
+    loadAssets(){
+
+    	pool.load( root.assets, this.start.bind(this) )
 
     }
 
     showBackground(b){
 
-    	this.env.addPreview(b)
+    	this.env.addPreview( b )
 
     }
 
+
+
     start(){
+
+    	// dynamic envmap
+		this.env = new Env()
+		root.env = this.env
 
     	this.track = new Track({ scene:this.scene })
     	this.scene.add( this.track )
@@ -148,6 +159,8 @@ export class View {
     
     	this.setFollow( true )
 
+    	if( this.withUI ) window.gui = new Gui()
+
     	this.render(0)
     }
 
@@ -163,6 +176,13 @@ export class View {
     	}
 
     	this.follow = b
+
+    }
+
+    setAlpha(){
+
+    	this.ring.mat2.opacity = root.alpha
+    	this.diam.mat2.opacity = root.alpha
 
     }
 

@@ -1,5 +1,19 @@
 export const root = {
 
+	path:'./assets/',
+
+
+	assets:[
+
+	'bague.glb', 'bracelet.glb', 'diam.glb', 
+
+	'diam_env_h.jpg', 
+	'track.png', 'track_n.png', 'sheen.jpg',
+	'bague_1.jpg', 'bague_2.jpg', 'bague_r.jpg', 'bague_m.jpg', 'shadow_1.jpg', 'shadow_2.jpg',
+	'diam.png',
+
+	],
+
 
 	materials:[],
 
@@ -10,6 +24,9 @@ export const root = {
 	renderer:null,
 	camera:null,
 	track:null,
+	env:null,
+
+	alpha:0.8, // diamond opacity 
 
 	speed:1,
 	speedInc:0.05,

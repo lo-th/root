@@ -1,6 +1,8 @@
-import * as THREE from 'three';
-import * as TWEEN from 'tween';
-import { root } from '../root.js';
+import * as THREE from 'three'
+import * as TWEEN from 'tween'
+
+import { root } from '../root.js'
+import { pool } from './pool.js'
 
 import { math, SimplexNoise } from './math.js'
 
@@ -116,9 +118,10 @@ export class Track extends THREE.Group {
         this.curve.mesh = new THREE.Line( g, new THREE.LineBasicMaterial( { color: 0x0000ff, opacity: 1 } ) );
 
         //this.add( this.curve.mesh );
-        this.map = new THREE.TextureLoader().load('./assets/textures/track.png', this.upmap.bind(this) )
-        this.normal = new THREE.TextureLoader().load('./assets/textures/track_n.png', this.upmap2.bind(this) )
-        this.sheen = new THREE.TextureLoader().load('./assets/textures/sheen.jpg', this.upmap.bind(this) )
+
+        this.map = new THREE.Texture( pool.getImage('track') ); this.upmap( this.map )
+        this.normal = new THREE.Texture( pool.getImage('track_n') ); this.upmap2( this.normal )
+        this.sheen = new THREE.Texture( pool.getImage('sheen') ); this.upmap( this.sheen )
 
         this.mat = new THREE.MeshPhysicalMaterial({ 
             side: THREE.DoubleSide,
@@ -225,6 +228,7 @@ export class Track extends THREE.Group {
         //t.flipY = false;
         t.wrapS = t.wrapT = THREE.RepeatWrapping
         t.repeat.set(1,this.repeat)
+        t.needsUpdate = true;
 
     }
 
@@ -233,6 +237,7 @@ export class Track extends THREE.Group {
         //t.flipY = false;
         t.wrapS = t.wrapT = THREE.RepeatWrapping
         t.repeat.set(1,this.repeat)
+        t.needsUpdate = true
 
     }
 

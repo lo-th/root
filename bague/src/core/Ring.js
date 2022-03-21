@@ -1,11 +1,9 @@
-import * as THREE from 'three';
-import * as TWEEN from 'tween';
+import * as THREE from 'three'
+import * as TWEEN from 'tween'
 
-import { root } from '../root.js';
-import { math } from './math.js';
-
-import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
+import { root } from '../root.js'
+import { pool } from './pool.js'
+import { math } from './math.js'
 
 
 export class Ring extends THREE.Group {
@@ -31,26 +29,15 @@ export class Ring extends THREE.Group {
         this.ringtype = math.randInt( 1, 2 )
 
         this.meshs = {}
-        this.load()
 
-    }
+        const self = this
+        pool.getModel('bague').traverse( function ( child ) {
 
-    shadow() {
+            if ( child.isMesh ) self.meshs[ child.name ] = child
 
-        let map = new THREE.TextureLoader().load('./assets/textures/shadow.jpg' )
+        })
 
-        let m = new THREE.MeshBasicMaterial({ /*map:map, transparent:true,blending:THREE.MultiplyBlending, toneMapped:false,  /*, color:0x000000, wireframe:true*/ })
-
-        let g = new THREE.PlaneGeometry( 3.5, 3.5, 2, 2 )
-        g.rotateX(-Math.PI/2) 
-
-        this.shadow = new THREE.Mesh( g, m )
-        this.add( this.shadow )
-
-        this.shadow.position.y =0.1
-        //this.shadow.position.z =-0.5
-
-        //this.shadow.renderOrder = 100
+        this.ready()
 
     }
 
@@ -75,35 +62,14 @@ export class Ring extends THREE.Group {
 
     }
 
-    load() {
-
-        let name = 'bague'
-        const self = this
-        const dracoLoader = new DRACOLoader().setDecoderPath( './src/libs/draco/' )
-        const loader = new GLTFLoader().setPath( './assets/models/' )
-        dracoLoader.setDecoderConfig( { type: 'wasm' } )
-        loader.setDRACOLoader( dracoLoader )
-        loader.load( name+'.glb', function ( glb ) {
-
-            glb.scene.traverse( function ( child ) {
-
-                if ( child.isMesh ) self.meshs[ child.name ] = child
-
-            })
-            self.ready()
-
-        })
-
-    }
-
     ready(){
 
-        let map_1 = new THREE.TextureLoader().load('./assets/textures/bague_1.jpg', this.upmap.bind(this) )
-        let map_2 = new THREE.TextureLoader().load('./assets/textures/bague_2.jpg', this.upmap.bind(this) )
-        let mapr = new THREE.TextureLoader().load('./assets/textures/bague_r.jpg', this.upmap0.bind(this) )
-        let mapm = new THREE.TextureLoader().load('./assets/textures/bague_m.jpg', this.upmap0.bind(this) )
-        this.mapS1 = new THREE.TextureLoader().load('./assets/textures/shadow_1.jpg', this.upmap0.bind(this) )
-        this.mapS2 = new THREE.TextureLoader().load('./assets/textures/shadow_2.jpg', this.upmap0.bind(this) )
+        let map_1 = new THREE.Texture( pool.getImage('bague_1') ); this.upmap(map_1)
+        let map_2 = new THREE.Texture( pool.getImage('bague_2') ); this.upmap(map_2)
+        let mapr = new THREE.Texture( pool.getImage('bague_r') ); this.upmap0(mapr)
+        let mapm = new THREE.Texture( pool.getImage('bague_m') ); this.upmap0(mapm)
+        this.mapS1 = new THREE.Texture( pool.getImage('shadow_1') ); this.upmap0(this.mapS1)
+        this.mapS2 = new THREE.Texture( pool.getImage('shadow_2') ); this.upmap0(this.mapS2)
 
         this.mat = new THREE.MeshStandardMaterial({ 
             map:this.ringtype === 1 ? map_1 : map_2,
@@ -121,14 +87,20 @@ export class Ring extends THREE.Group {
         this.mat2 = new THREE.MeshStandardMaterial({ 
             map:this.ringtype === 1 ? map_1 : map_2, 
             metalness:1, roughness:0.01, 
-            transparent:true,opacity:0.7,
+            transparent:true, opacity:root.alpha,
             //depthTest: false,
             //depthWrite:false,
+            envMap:root.env.dimondEnv
         })
 
         
 
-        this.matS = new THREE.MeshBasicMaterial({ map:this.mapS1, transparent:true, blending:THREE.MultiplyBlending, toneMapped:false,  /*, color:0x000000, wireframe:true*/ })
+        this.matS = new THREE.MeshBasicMaterial({ 
+            map:this.mapS1, 
+            transparent:true, 
+            blending:THREE.MultiplyBlending, 
+            toneMapped:false,  /*, color:0x000000, wireframe:true*/ 
+        })
 
 
         root.materials.push(this.mat)
@@ -140,14 +112,19 @@ export class Ring extends THREE.Group {
     }
 
     upmap (t){
-        this.mapN ++ 
+
         t.encoding = THREE.sRGBEncoding;
         t.flipY = false;
+        t.needsUpdate = true;
+
     }
 
     upmap0 (t){
-        this.mapN ++
+
+        t.needsUpdate = true
+
     }
+
 
     makeInstance() {
 
@@ -184,7 +161,7 @@ export class Ring extends THREE.Group {
         this.gring = new THREE.Group()
         this.group = new THREE.Group()
 
-        this.ring = this.ringtype === 1 ? this.meshs.ring_v1 : this.meshs.ring_v2
+        this.ring = this.ringtype === 1 ? this.meshs.ring_v1 : this.meshs.ring_v4
         this.shadow = this.meshs.shadow
         this.shadow.material = this.matS
 
@@ -215,7 +192,7 @@ export class Ring extends THREE.Group {
         this.group.add( this.shadow )
 
         this.add( this.group )
-        this.group.visible = false
+        //this.group.visible = false
 
         //this.ring.renderOrder = 150
 
@@ -319,7 +296,7 @@ export class Ring extends THREE.Group {
 
         if( !this.ring ) return
 
-        if( this.mapN===this.mapMax && !this.group.visible ) this.group.visible = true
+        //if( this.mapN===this.mapMax && !this.group.visible ) this.group.visible = true
 
         this.ring.rotation.x += root.speed * delta * this.slowing///(this.perimetre/(Math.PI*2))
 

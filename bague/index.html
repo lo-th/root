@@ -4,11 +4,11 @@
 		<title>Ring</title>
 		<meta charset="utf-8">
 		<link rel="shortcut icon" href="favicon.ico">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<meta http-equiv="Pragma" content="no-cache">
 	</head>
 
-	<body style="background-color:#bbbbbb; margin:0; padding:0; ">
+	<body style="background-color:#bbbbbb; margin:0; padding:0; overflow:hidden;">
 		
 		<!-- Import maps polyfill -->
 		<!-- Remove this when import maps will be widely supported -->
@@ -30,10 +30,10 @@
 			import { Gui } from './src/core/Gui.js'
 
 			// three view
-			window.view = new View()
+			window.view = new View( true )
 
 			// add interface 'optionnal' 
-			window.gui = new Gui()
+			//window.gui = new Gui()
 
 		</script>
 

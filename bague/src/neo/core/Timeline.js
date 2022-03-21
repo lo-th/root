@@ -296,7 +296,7 @@ export class Timeline {
         let callbackMemo = function(v){ Utils.saveJson( this ); }.bind(this);
         let callbackBack = function(v){ Utils.fromJson( this, this.tmpJSON ); }.bind(this);
         let callbackSave = function(v){ Utils.saveJson( this, true ); }.bind(this);
-        let callbackLoad = function( result ){ Utils.fromJson( this, result ); }.bind(this);
+        let callbackLoad = function(){ Utils.loadJson( this ); }.bind(this)
 
         let callbackFps = function(v){ this.setFps(v); }.bind(this);
         let callbackMax  = function(v){ this.frameMax = v; this.setRange(); }.bind(this);
@@ -323,7 +323,7 @@ export class Timeline {
         Utils.add('button',{ target:dom, name:'memo', w:40, pos:{ left:x+'px', top:'3px' }, simple:true, h:h }).onChange( callbackMemo ); x+=40+s1;
         Utils.add('button',{ target:dom, name:'back', w:40, pos:{ left:x+'px', top:'3px' }, simple:true, h:h }).onChange( callbackBack ); x+=40+s1;
         Utils.add('button',{ target:dom, name:'save', w:40, pos:{ left:x+'px', top:'3px' }, simple:true, h:h }).onChange( callbackSave ); x+=40+s1;
-        Utils.add('button',{ target:dom, name:'load', w:40, pos:{ left:x+'px', top:'3px' }, simple:true, h:h, loader:true }).onChange( callbackLoad ); x+=40+s2
+        Utils.add('button',{ target:dom, name:'load', w:40, pos:{ left:x+'px', top:'3px' }, simple:true, h:h }).onChange( callbackLoad ); x+=40+s2;
 
         this.recordButton = Utils.add('button',{ target:dom, w:40, pos:{ left:x+'px', top:'3px' }, simple:true, h:h }).onChange( callbackRecord ); x+=40+s1;
 
@@ -331,7 +331,6 @@ export class Timeline {
 
         Utils.add('number',{ target:dom, name:'max', min:1, value:this.frameMax, precision:0, step:1, drag:false, w:100, sa:40, center:true, h:h, pos:{left:'auto', right:'80px', top:'3px' }}).onChange( callbackMax );
         this.topFps = Utils.add('number',{ target:dom, name:'fps', min:1, max:240, value:this.fps, /*step:1,*/ precision:2, drag:false, w:80, sa:40, sb:30, center:true, h:h, pos:{left:'auto', right:'0px', top:'3px' }}).onChange( callbackFps );
-        
         
 
         // SVG

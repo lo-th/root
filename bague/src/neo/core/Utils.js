@@ -6,7 +6,7 @@
 */
 
 import * as UIL from 'uil';
-import { saveAs } from '../saveAs.js';
+//import { saveAs } from '../saveAs.js';
 
 export const Utils = {
 
@@ -35,6 +35,7 @@ export const Utils = {
     hexToHtml: UIL.Tools.hexToHtml,
 
     add: UIL.add,
+    files:UIL.Files,
 
     // bitmap
 
@@ -139,6 +140,40 @@ export const Utils = {
         return p;
 
     },
+    
+
+    loadJson: function( o, toFile ){
+
+        UIL.Files.load({ type:'json', callback: function(data){ 
+
+            o.clear();
+
+            // add track
+            let t;
+            for ( let name in data.track ) {
+                t = data.track[name];
+                o.add(t.type, { name:name, frame:t.frame });
+            }
+
+        }})
+
+    },
+
+    fromJson: function( o, result ){
+
+        if( result === undefined ) return;
+
+        o.clear()
+        let data = JSON.parse( result );
+
+        // add track
+        let t;
+        for ( let name in data.track ) {
+            t = data.track[name];
+            o.add(t.type, { name:name, frame:t.frame });
+        }
+
+    },
 
     saveJson: function( o, toFile ){
 
@@ -161,8 +196,10 @@ export const Utils = {
         output = output.replace('}}}}', '}}\n    }\n}');
 
         if( toFile ){
-            let blob = new Blob( [ output ], { type: 'text/plain;charset=utf-8' } );
-            saveAs(blob, "neo.json");
+
+            UIL.Files.save( { name:'neo', data:output, type:'json' } )
+            //let blob = new Blob( [ output ], { type: 'text/plain;charset=utf-8' } );
+            //saveAs(blob, "neo.json");
         } else {
             o.tmpJSON = output;
             console.log( 'timeline in memory' );
@@ -179,23 +216,7 @@ export const Utils = {
 
     },
 
-    fromJson: function( o, result ){
-
-        if( result === undefined ) return;
-
-        o.clear();
-
-        let data = JSON.parse( result );
-
-        // add track
-        let t;
-        for ( let name in data.track ) {
-            t = data.track[name];
-            o.add(t.type, { name:name, frame:t.frame });
-        }
-
-
-    },
+    
 
 
     // VIDEO

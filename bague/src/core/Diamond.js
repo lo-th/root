@@ -1,12 +1,10 @@
-import * as THREE from 'three';
-import * as TWEEN from 'tween';
+import * as THREE from 'three'
+import * as TWEEN from 'tween'
 
-import { root } from '../root.js';
-import { math } from './math.js';
-
-import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
-
+import { root } from '../root.js'
+import { pool } from './pool.js'
+import { math } from './math.js'
+import { mergeBufferGeometries } from '../jsm/utils/BufferGeometryUtils.js'
 
 export class Diamond extends THREE.Group {
 
@@ -15,10 +13,6 @@ export class Diamond extends THREE.Group {
         super()
 
         this.max = 50
-
-        this.isComplete = false;
-        this.mapN = 0
-
         this.ti = 1
 
         this.matrixAutoUpdate = false;
@@ -30,42 +24,53 @@ export class Diamond extends THREE.Group {
 
 
         this.meshs = {}
-        this.load()
 
-    }
-
-    load() {
-
-        let name = 'diam'
         const self = this
-        const dracoLoader = new DRACOLoader().setDecoderPath( './src/libs/draco/' )
-        const loader = new GLTFLoader().setPath( './assets/models/' )
-        dracoLoader.setDecoderConfig( { type: 'wasm' } )
-        loader.setDRACOLoader( dracoLoader )
-        loader.load( name+'.glb', function ( glb ) {
+        pool.getModel('diam').traverse( function ( child ) {
 
-            glb.scene.traverse( function ( child ) {
-
-                if ( child.isMesh ) self.meshs[ child.name ] = child
-
-            })
-            self.ready()
+            if ( child.isMesh ) self.meshs[ child.name ] = child
 
         })
+
+        this.ready()
+        //this.load()
 
     }
 
     ready(){
 
-        let map = new THREE.TextureLoader().load('./assets/textures/diam.png', this.upmap.bind(this) )
+        let map = new THREE.Texture( pool.getImage('diam') ); 
+        this.upmap(map)
 
-        this.mat = new THREE.MeshStandardMaterial({ 
+        //let map = new THREE.TextureLoader().load('./assets/textures/diam.png', this.upmap.bind(this) )
+
+        this.mat2 = new THREE.MeshStandardMaterial({ 
 
             map:map, 
             metalness:1, roughness:0.0, 
-            transparent:true, opacity:0.7,
-            side:THREE.DoubleSide
+            transparent:true, opacity:root.alpha,
+            side:THREE.FrontSide,//DoubleSide,
+            envMap:root.env.dimondEnv
+
         })
+
+        this.mat = new THREE.MeshStandardMaterial({ 
+
+            metalness:1, roughness:0.0, 
+            side:THREE.BackSide
+
+        })
+
+        /*this.mat3 = new THREE.MeshBasicMaterial({ 
+
+            map:map,
+            transparent:true, 
+            blending:THREE.MultiplyBlending, toneMapped:false,
+            premultipliedAlpha:true,
+            alphaToCoverage:true,
+            //side:THREE.FrontSide,
+            
+        })*/
 
         root.materials.push(this.mat)
 
@@ -75,18 +80,32 @@ export class Diamond extends THREE.Group {
 
     upmap (t){
 
-        this.mapN ++ 
-        t.encoding = THREE.sRGBEncoding;
-        t.flipY = false;
+        t.encoding = THREE.sRGBEncoding
+        t.flipY = false
+        t.needsUpdate = true
 
     }
 
     makeInstance() {
 
         this.meshs.diam.geometry.scale(14,14,14)
+        this.meshs.diam2.geometry.scale(14,14,14)
+
+        const g = this.meshs.diam.geometry.clone()
+        const g2 = this.meshs.diam2.geometry.clone()
+        //const g3 = this.meshs.shadow.geometry.clone()
+
+        g.clearGroups();
+        g2.clearGroups();
+        //g3.clearGroups();
+        g.addGroup( 0, Infinity, 0 );
+        g2.addGroup( 0, Infinity, 1 );
+        //g3.addGroup( 0, Infinity, 2 );
+
+        const gg = new mergeBufferGeometries([ g, g2 ], true)
 
         const matrix = new THREE.Matrix4();
-        this.mesh = new THREE.InstancedMesh( this.meshs.diam.geometry, this.mat, 50 )
+        this.mesh = new THREE.InstancedMesh( gg, [this.mat, this.mat2], 50 )
         this.mesh.instanceMatrix.setUsage( THREE.DynamicDrawUsage )
         let angle = (Math.PI*2) / 28
 

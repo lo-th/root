@@ -16,6 +16,9 @@ export class Gui {
         ui.add( 'bool', { name:'show envmap', value:false }).onChange( function(b){ view.showBackground(b) } )
 
         ui.add( view, 'follow', { type:'bool' }).onChange( function(b){ view.setFollow(b) } )
+
+
+        ui.add( root, 'alpha', { min:0, max:1, precision:2 }).onChange( function(b){ view.setAlpha()/*root.camera.updateProjectionMatrix()*/ } )
         
 
 
