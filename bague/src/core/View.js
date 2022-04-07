@@ -123,7 +123,7 @@ export class View {
         document.body.appendChild( this.db )
 
         this.db2 = document.createElement( 'div' );
-        this.db2.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 80px 10px; position:absolute; top:10px; left:0px; width:100%; color:#ff0;  pointer-events:none;"
+        this.db2.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 80px 10px; position:absolute; top:10px; left:0px; width:100%; color:#f0f;  pointer-events:none;"
         document.body.appendChild( this.db2 )
 
 
@@ -255,7 +255,8 @@ export class View {
 	    	const dom = this.renderer.domElement
 	    	dom.addEventListener( 'pointermove', this, false )
 		    dom.addEventListener( 'pointerdown', this, false )
-		    document.addEventListener( 'pointerup', this, false )
+		    dom.addEventListener("pointercancel", this, false);
+		    dom.addEventListener( 'pointerup', this, false )
 
 		//}
 
@@ -271,46 +272,53 @@ export class View {
     	switch( e.type ){
 
     		case 'pointerdown':
-    		// avoid sound warning
-    		
     		m.ox = e.clientX / s.w
     		m.oy = e.clientY / s.h
     		m.down = true
-    		m.isD = true
     		break;
-    		case 'pointerup': 
-    		m.down = false;
+    		break;
+    		case 'pointerup': case 'pointercancel':
+    		m.down = false
     		break;
     		case 'pointermove': 
+
+    		m.y = e.clientY / s.h
+    		m.x = e.clientX / s.w
+
+    		if( m.down ){
+
+	    		m.dx = m.ox-m.x 
+	    		m.dy = m.oy-m.y
+
+	    		let distance = (Math.sqrt( m.dx*m.dx + m.dy*m.dy )).toFixed(3)*1
+	    		let angle = Math.floor( Math.atan2( m.y-m.oy, m.x-m.ox ) * math.todeg ) + 90
+	    		if(angle < 0) angle += 360
+	    		
+	    	    let h = math.quadrant( angle )
+	    		
+	    		if( distance < 0.05 ) return
+
+	    		if( h ===1 || h === 2 || h === 3 ) this.ring.right()
+	    		if( h ===5 || h === 6 || h === 7 ) this.ring.left()
+	    		if( h ===7 || h === 0 || h === 1 ) this.ring.jump()
+	    		if( h ===3 || h === 4 || h === 5 ) this.ring.down()
+	    		
+	    		m.down = false
+
+	    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ h +' r:' + angle
+
+	    	}
+	    		
     		break;
     	}
 
-    	m.y = e.clientY / s.h
-    	m.x = e.clientX / s.w
 
-    	if( m.isD ){
+    	 
 
-    		m.dx = m.ox-m.x 
-    		m.dy = m.oy-m.y
+    	
 
-    		let distance = (Math.sqrt( m.dx*m.dx + m.dy*m.dy )).toFixed(3)*1
-    		let angle = Math.floor( Math.atan2( m.y-m.oy, m.x-m.ox ) * math.todeg ) + 90
-    		if(angle < 0) angle += 360
-    		
-    	    let h = math.quadrant( angle )
-    		
-    		if( distance < 0.1 ) return
-
-    		if( h ===1 || h === 2 || h === 3 ) this.ring.right()
-    		if( h ===5 || h === 6 || h === 7 ) this.ring.left()
-    		if( h ===7 || h === 0 || h === 1 ) this.ring.jump()
-    		if( h ===3 || h === 4 || h === 5 ) this.ring.down()
-    		
-    		m.isD = false
-
-    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ h +' r:' + angle
-
-    	} 
+    	//if( m.isD ){
+    	
     	
     }
 
