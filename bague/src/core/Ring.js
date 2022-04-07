@@ -21,7 +21,10 @@ export class Ring extends THREE.Group {
         this.downing = false
         this.turning = false
 
+        this.line = 1
+
         this.slowing = 1 
+
 
         this.radius = 1
         this.perimetre = 2 * Math.PI * this.radius
@@ -45,7 +48,7 @@ export class Ring extends THREE.Group {
 
         this.debugMesh = new THREE.Group()
 
-        let ma = new THREE.MeshBasicMaterial({color:0x000000, wireframe:true })
+        let ma = new THREE.MeshStandardMaterial({color:0xFF0000 })
 
         let g = new THREE.CylinderGeometry( this.radius, this.radius, 0.24, 14)
         g.rotateZ(Math.PI/2) 
@@ -53,11 +56,13 @@ export class Ring extends THREE.Group {
         let g2 = new THREE.CylinderGeometry( this.radius*0.9, this.radius*0.9, 0.55, 14)
         g2.rotateZ(Math.PI/2) 
 
-        this.debugMesh.position.y = this.radius
+        //this.debugMesh.position.y = this.radius
         this.debugMesh.add( new THREE.Mesh( g, ma ) )
         this.debugMesh.add( new THREE.Mesh( g2, ma ) )
 
-        this.add( this.debugMesh )
+        //this.add( )
+
+        return this.debugMesh 
 
 
     }
@@ -128,7 +133,7 @@ export class Ring extends THREE.Group {
 
     makeInstance() {
 
-        const matrix = new THREE.Matrix4();
+       /* const matrix = new THREE.Matrix4();
         let mesh28 = new THREE.InstancedMesh( this.meshs.b_28.geometry, this.mat, 28 )
         let diam28 = new THREE.InstancedMesh( this.meshs.d_28.geometry, this.mat2, 28 )
         let angle = (Math.PI*2) / 28
@@ -156,23 +161,23 @@ export class Ring extends THREE.Group {
                 diam42.setMatrixAt( i, matrix )
 
             }
-        }
+        }*/
 
         this.gring = new THREE.Group()
         this.group = new THREE.Group()
 
-        this.ring = this.ringtype === 1 ? this.meshs.ring_v1 : this.meshs.ring_v4
+        /*this.ring = this.ringtype === 1 ? this.meshs.ring_v1 : this.meshs.ring_v4*/
         this.shadow = this.meshs.shadow
         this.shadow.material = this.matS
 
         let s = 0.088
-        this.ring.scale.set(s,s,s)
+        //this.ring.scale.set(s,s,s)
         this.shadow.scale.set(s,s,s)
 
         
         this.shadow.position.y = 0.05
 
-        this.ring.material = this.mat
+        /*this.ring.material = this.mat
         this.ring.castShadow = true
         this.ring.receiveShadow = true
 
@@ -182,7 +187,9 @@ export class Ring extends THREE.Group {
         if( this.ringtype === 1 ){
             this.ring.add( mesh42 )
             this.ring.add( diam42 )
-        }
+        }*/
+
+        this.ring = this.debug()
 
         this.gring.add( this.ring )
         this.gring.position.y = this.radius
@@ -196,6 +203,24 @@ export class Ring extends THREE.Group {
 
         //this.ring.renderOrder = 150
 
+        
+
+    }
+
+    right(){
+
+        this.line++
+        this.line = this.line > 2 ? 2 : this.line
+        this.switchLine( this.line )
+
+    }
+
+    left(){
+
+        this.line--
+        this.line = this.line < 0 ? 0 : this.line
+        this.switchLine( this.line )
+
     }
 
     switchLine( n ){
@@ -204,7 +229,7 @@ export class Ring extends THREE.Group {
         if( this.turning ) return
         if( n === root.line ) return
 
-        let time = 800 - (200*root.speed)
+        let time = 700 - (200*root.speed)
 
         this.turning = true
 
@@ -243,7 +268,7 @@ export class Ring extends THREE.Group {
 
         this.jumping = true
 
-        let time = 1500 - (200*root.speed)
+        let time = 1000 - (200*root.speed)
 
         const t1 = new TWEEN.Tween( this.ring.position )
             .to( { y:3 }, time*0.5 )
@@ -264,7 +289,7 @@ export class Ring extends THREE.Group {
         this.downing = true
         this.matS.map = this.mapS2
 
-        let time = 2000 - (200*root.speed)
+        let time = 1000 - (200*root.speed)
 
         const t1 = new TWEEN.Tween( this.gring.rotation )
             .to( { z:90*math.torad }, time*0.5 )

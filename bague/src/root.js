@@ -28,7 +28,7 @@ export const root = {
 
 	alpha:0.8, // diamond opacity 
 
-	speed:1,
+	speed:1.5,
 	speedInc:0.05,
 
 	tracking:0.9,

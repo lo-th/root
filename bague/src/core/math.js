@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+//import * as THREE from '../libs/three.module.js';
 
 /**
  * @author lo.th / https://github.com/lo-th
@@ -18,13 +18,13 @@ export const math = {
 	epsilon: Math.pow( 2, - 52 ),
 	cc:1/255,
 
-	tmpQ: new THREE.Quaternion(),
+	/*tmpQ: new THREE.Quaternion(),
 	tmpE: new THREE.Euler(),
 	tmpM: new THREE.Matrix4(),
 	tmpM2: new THREE.Matrix4(),
 	tmpV: new THREE.Vector3(),
 	tmpV1: new THREE.Vector3(),
-	tmpV2: new THREE.Vector3(),
+	tmpV2: new THREE.Vector3(),*/
 
 	int: function(x) { return Math.floor(x); },
 	lerp: function ( x, y, t ) { return ( 1 - t ) * x + t * y; },
@@ -38,6 +38,29 @@ export const math = {
 		ar[2] = arx[2] + ( ary[2] - arx[2] ) * t;
 		ar[1] = arx[1] + ( ary[1] - arx[1] ) * t;*/
 	},
+
+	quadrant: function (a){
+
+		//let c = Math.round((angle+11.25) / 45)
+    	//if( c === 8 ) c = 0
+
+		let c = 0
+		if( a > 22.5 && a <= 67.5 ) c = 1
+		else if ( a > 67.5 && a <= 112.5 ) c = 2
+		else if ( a > 112.5 && a <= 157.5 ) c = 3
+		else if ( a > 157.5 && a <= 202.5 ) c = 4
+		else if ( a > 202.5 && a <= 247.5 ) c = 5
+		else if ( a > 247.5 && a <= 292.5 ) c = 6
+		else if ( a > 292.5 && a <= 337.5 ) c = 7
+		else c = 0	
+		return c
+	},
+
+	seed: function( s ) { return function() { s = Math.sin(s) * 10000; return s - Math.floor(s); }; },
+	/*seed1: this.seed(32),
+	seed2: this.seed(this.seed1()),
+	ranSeed: this.seed(this.seed2()),*/
+
 	randSpread: function ( range ) { return range * ( 0.5 - Math.random() ); },// Random float from <-range/2, range/2> interval
 	rand: function ( low, high ) { return low + Math.random() * ( high - low ); },
 	randInt: function ( low, high ) { return low + Math.floor( Math.random() * ( high - low + 1 ) ); },
@@ -274,6 +297,21 @@ export const math = {
 	// NOISE
 
 	perlin: null,
+
+	sameNoise: function ( x, y, s = 0.1, n = 66 ) {
+
+		if( math.perlin === null ){ 
+			const seed1 = math.seed(n)
+	        const seed2 = math.seed( seed1() )
+	        const m = {
+	            random : math.seed( seed2() )
+	        }
+			math.perlin = new SimplexNoise( m );
+		}
+
+		return math.perlin.noise( x * s, y * s )
+
+	},
 
 	noise2d: function ( v, o ) {
 

@@ -9,6 +9,7 @@
 	</head>
 
 	<body style="background-color:#bbbbbb; margin:0; padding:0; overflow:hidden;">
+	<div id="container"></div>
 		
 		<!-- Import maps polyfill -->
 		<!-- Remove this when import maps will be widely supported -->
@@ -29,8 +30,11 @@
 			import { View } from './src/core/View.js'
 			import { Gui } from './src/core/Gui.js'
 
+			const container = document.getElementById( 'container' );
+			container.style.cssText = 'position:absolute; width:100%; height:100%; '
+
 			// three view
-			window.view = new View( true )
+			window.view = new View( container, false )
 
 			// add interface 'optionnal' 
 			//window.gui = new Gui()

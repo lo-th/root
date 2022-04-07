@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
+import ZingTouch from '../libs/zingtouch/ZingTouch.js';
+
 import { pool } from './pool.js'
 import { Gui } from './Gui.js'
 
 import { Env } from './Env.js'
-import { Hub } from './Hub.js'
 import { math } from './math.js'
 import { root } from '../root.js';
 import { Timer } from './Timer.js';
@@ -15,16 +16,19 @@ import { Diamond } from './Diamond.js';
 import { Decor } from './Decor.js';
 import { Camera } from './Camera.js';
 
-import { Timeline } from './Timeline.js';
 
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 
 
 export class View {
 
-    constructor( withUI = false ) {
+    constructor( Container, withUI = false ) {
+
+    	this.container = Container
 
     	this.withUI = withUI
+
+    	this.useZing = false
 
     	this.timer = new Timer( 60 )
     	//this.user = new User()
@@ -63,8 +67,8 @@ export class View {
 		renderer.outputEncoding = THREE.sRGBEncoding
 		//renderer.shadowMap.enabled = true;
 
-		document.body.appendChild( renderer.domElement )
-		renderer.domElement.style.position = 'absolute'
+		this.container.appendChild( renderer.domElement )
+		//renderer.domElement.style.position = 'absolute'
 
 		
 
@@ -109,6 +113,23 @@ export class View {
 
 		window.addEventListener( 'resize', this.resize.bind(this) )
 
+
+		this.fps = document.createElement( 'div' );
+        this.fps.style.cssText =  "font-size:24px; font-family:Tahoma; position:absolute; bottom:3px; left:10px; width:100px; color:#fff;  pointer-events:none;"
+        document.body.appendChild( this.fps )
+
+        this.db = document.createElement( 'div' );
+        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#fff;  pointer-events:none;"
+        document.body.appendChild( this.db )
+
+        this.db2 = document.createElement( 'div' );
+        this.db2.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 80px 10px; position:absolute; top:10px; left:0px; width:100%; color:#ff0;  pointer-events:none;"
+        document.body.appendChild( this.db2 )
+
+
+
+
+
 		this.loadAssets()
 
     }
@@ -144,9 +165,9 @@ export class View {
 		root.camera = this.camera
 
 		// hub 
-		this.hub = new Hub()
+		//this.hub = new Hub()
 
-		this.timeline = new Timeline()
+		//this.timeline = new Timeline()
 
     	this.ring = new Ring()
     	this.scene.add( this.ring )
@@ -198,15 +219,102 @@ export class View {
 
     addInteraction(){
 
-    	const dom = this.renderer.domElement
+    	//if( this.useZing ){
 
-    	dom.addEventListener( 'pointermove', this, false )
-	    dom.addEventListener( 'pointerdown', this, false )
-	    document.addEventListener( 'pointerup', this, false )
+			this.counter = 0
+
+			//this.region = new ZingTouch.Region( document.body )//this.renderer.domElement ) // )
+			this.region = new ZingTouch.Region( this.container )
+			this.swipe = new ZingTouch.Swipe({ numInputs: 1, maxRestTime: 100, escapeVelocity: 0.1 })
+
+			this.region.bind( this.renderer.domElement, this.swipe, function(e) {
+
+				let angle = Math.floor( e.detail.data[0].currentDirection * math.todeg ) + 90//e.detail.data[0].currentDirection * math.todeg;
+				let velocity = e.detail.data[0].velocity.toFixed(3)*1;
+				let h = math.quadrant( angle )
+
+				let distance = e.detail.data[0].distance.toFixed(3)*1;
+				let duration = e.detail.data[0].duration.toFixed(3)*1;
+				//const x = e.detail.events[0].x;
+				//const y = e.detail.events[0].y;
+
+				//
+				this.db2.innerHTML =JSON.stringify(e.detail.data[0])
+
+				this.db2.innerHTML = 'd:'+ distance + ' k:'+ h +' r:' + angle + ' v:'+velocity + ' d:' + duration
+
+			}.bind(this))
+
+			/*this.region.bind(this.renderer.domElement, 'pan', function(e){
+			    this.counter++;
+			    console.log( "Input currently panned: " + this.counter + " times");
+			}.bind(this))*/
+			
+		//} else {
+
+	    	const dom = this.renderer.domElement
+	    	dom.addEventListener( 'pointermove', this, false )
+		    dom.addEventListener( 'pointerdown', this, false )
+		    document.addEventListener( 'pointerup', this, false )
+
+		//}
 
     }
 
     handleEvent ( e ) {
+
+    	if(!this.ring) return
+
+    	const s = this.size
+    	const m = this.mouse
+
+    	switch( e.type ){
+
+    		case 'pointerdown':
+    		// avoid sound warning
+    		
+    		m.ox = e.clientX / s.w
+    		m.oy = e.clientY / s.h
+    		m.down = true
+    		m.isD = true
+    		break;
+    		case 'pointerup': 
+    		m.down = false;
+    		break;
+    		case 'pointermove': 
+    		break;
+    	}
+
+    	m.y = e.clientY / s.h
+    	m.x = e.clientX / s.w
+
+    	if( m.isD ){
+
+    		m.dx = m.ox-m.x 
+    		m.dy = m.oy-m.y
+
+    		let distance = (Math.sqrt( m.dx*m.dx + m.dy*m.dy )).toFixed(3)*1
+    		let angle = Math.floor( Math.atan2( m.y-m.oy, m.x-m.ox ) * math.todeg ) + 90
+    		if(angle < 0) angle += 360
+    		
+    	    let h = math.quadrant( angle )
+    		
+    		if( distance < 0.1 ) return
+
+    		if( h ===1 || h === 2 || h === 3 ) this.ring.right()
+    		if( h ===5 || h === 6 || h === 7 ) this.ring.left()
+    		if( h ===7 || h === 0 || h === 1 ) this.ring.jump()
+    		if( h ===3 || h === 4 || h === 5 ) this.ring.down()
+    		
+    		m.isD = false
+
+    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ h +' r:' + angle
+
+    	} 
+    	
+    }
+
+    /*handleEvent ( e ) {
 
     	if(!this.ring) return
 
@@ -239,7 +347,7 @@ export class View {
 
     		
 
-    		break;
+    /*		break;
     	}
 
 
@@ -260,7 +368,7 @@ export class View {
     		m.isD = false
     	}
     	
-    }
+    }*/
 
 	upmap (t){
 
@@ -291,7 +399,7 @@ export class View {
 			this.freecamera.updateProjectionMatrix()
 			this.camera.aspect = s.r
 			this.camera.updateProjectionMatrix()
-			this.hub.resize()
+			//this.hub.resize()
 
     	}
 
@@ -314,7 +422,7 @@ export class View {
     catchDiam(){
 
     	root.scrore++
-    	this.hub.scrore.innerHTML = root.scrore
+    	//this.hub.scrore.innerHTML = root.scrore
 
     }
 
@@ -326,7 +434,7 @@ export class View {
 
     	//this.timer.up(time)
 
-        if( window.gui ) gui.fps.innerHTML = this.timer.fps
+        this.fps.innerHTML = this.timer.fps
 
         this.doResize()
 
