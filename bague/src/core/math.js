@@ -41,10 +41,22 @@ export const math = {
 
 	quadrant: function (a){
 
+		let c
+
+		if( a > 45 && a <= 135 ) c = 1
+		else if( a > 125 && a <= 225 ) c = 2
+		else if( a > 225 && a <= 315 ) c = 3
+		else c = 4
+
+
+
+
+
+
 		//let c = Math.round((angle+11.25) / 45)
     	//if( c === 8 ) c = 0
 
-		let c = 0
+		/*let c = 0
 		if( a > 22.5 && a <= 67.5 ) c = 1
 		else if ( a > 67.5 && a <= 112.5 ) c = 2
 		else if ( a > 112.5 && a <= 157.5 ) c = 3
@@ -52,7 +64,7 @@ export const math = {
 		else if ( a > 202.5 && a <= 247.5 ) c = 5
 		else if ( a > 247.5 && a <= 292.5 ) c = 6
 		else if ( a > 292.5 && a <= 337.5 ) c = 7
-		else c = 0	
+		else c = 0	*/
 		return c
 	},
 

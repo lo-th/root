@@ -119,12 +119,9 @@ export class View {
         document.body.appendChild( this.fps )
 
         this.db = document.createElement( 'div' );
-        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#fff;  pointer-events:none;"
+        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#ff0;  pointer-events:none;"
         document.body.appendChild( this.db )
 
-        this.db2 = document.createElement( 'div' );
-        this.db2.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 80px 10px; position:absolute; top:10px; left:0px; width:100%; color:#f0f;  pointer-events:none;"
-        document.body.appendChild( this.db2 )
 
 
 
@@ -213,7 +210,8 @@ export class View {
 
     	dom.removeEventListener( 'pointermove', this, false )
 	    dom.removeEventListener( 'pointerdown', this, false )
-	    document.removeEventListener( 'pointerup', this, false )
+	    dom.removeEventListener( 'pointercancel', this, false);
+	    dom.removeEventListener( 'pointerup', this, false )
 
     }
 
@@ -221,10 +219,10 @@ export class View {
 
     	//if( this.useZing ){
 
-			this.counter = 0
+		/*		this.counter = 0
 
 			//this.region = new ZingTouch.Region( document.body )//this.renderer.domElement ) // )
-			this.region = new ZingTouch.Region( this.container )
+		this.region = new ZingTouch.Region( this.container )
 			this.swipe = new ZingTouch.Swipe({ numInputs: 1, maxRestTime: 100, escapeVelocity: 0.1 })
 
 			this.region.bind( this.renderer.domElement, this.swipe, function(e) {
@@ -243,7 +241,7 @@ export class View {
 
 				this.db2.innerHTML = 'd:'+ distance + ' k:'+ h +' r:' + angle + ' v:'+velocity + ' d:' + duration
 
-			}.bind(this))
+			}.bind(this))*/
 
 			/*this.region.bind(this.renderer.domElement, 'pan', function(e){
 			    this.counter++;
@@ -255,7 +253,7 @@ export class View {
 	    	const dom = this.renderer.domElement
 	    	dom.addEventListener( 'pointermove', this, false )
 		    dom.addEventListener( 'pointerdown', this, false )
-		    dom.addEventListener("pointercancel", this, false);
+		    dom.addEventListener( 'pointercancel', this, false);
 		    dom.addEventListener( 'pointerup', this, false )
 
 		//}
@@ -294,18 +292,18 @@ export class View {
 	    		let angle = Math.floor( Math.atan2( m.y-m.oy, m.x-m.ox ) * math.todeg ) + 90
 	    		if(angle < 0) angle += 360
 	    		
-	    	    let h = math.quadrant( angle )
+	    	    let c = math.quadrant( angle )
 	    		
 	    		if( distance < 0.05 ) return
 
-	    		if( h ===1 || h === 2 || h === 3 ) this.ring.right()
-	    		if( h ===5 || h === 6 || h === 7 ) this.ring.left()
-	    		if( h ===7 || h === 0 || h === 1 ) this.ring.jump()
-	    		if( h ===3 || h === 4 || h === 5 ) this.ring.down()
+	    		if( c === 1 ) this.ring.right()
+	    		if( c === 2 ) this.ring.down()
+	    		if( c === 3 ) this.ring.left()
+	    		if( c === 4 ) this.ring.jump()
 	    		
 	    		m.down = false
 
-	    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ h +' r:' + angle
+	    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ c +' r:' + angle
 
 	    	}
 	    		
