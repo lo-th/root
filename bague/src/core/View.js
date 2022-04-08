@@ -119,7 +119,7 @@ export class View {
         document.body.appendChild( this.fps )
 
         this.db = document.createElement( 'div' );
-        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#ff0;  pointer-events:none;"
+        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#f50;  pointer-events:none;"
         document.body.appendChild( this.db )
 
 
@@ -285,14 +285,14 @@ export class View {
 
     		if( m.down ){
 
-	    		m.dx = m.ox-m.x 
-	    		m.dy = m.oy-m.y
+	    		m.dx = m.x-m.ox 
+	    		m.dy = m.y-m.oy
 
-	    		let distance = (Math.sqrt( m.dx*m.dx + m.dy*m.dy )).toFixed(3)*1
-	    		let angle = Math.floor( Math.atan2( m.y-m.oy, m.x-m.ox ) * math.todeg ) + 90
-	    		if(angle < 0) angle += 360
+	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
+	    		let angle = ( Math.PI + Math.atan2( m.dy, m.dx ) ) //* math.todeg //+ 90
+	    		//if(angle < 0) angle += 360
 	    		
-	    	    let c = math.quadrant( angle )
+	    	    let c = math.quadrant( angle, true )
 	    		
 	    		if( distance < 0.05 ) return
 
@@ -303,20 +303,12 @@ export class View {
 	    		
 	    		m.down = false
 
-	    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ c +' r:' + angle
+	    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ c 
 
 	    	}
 	    		
     		break;
     	}
-
-
-    	 
-
-    	
-
-    	//if( m.isD ){
-    	
     	
     }
 

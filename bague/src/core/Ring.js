@@ -241,12 +241,12 @@ export class Ring extends THREE.Group {
 
         let x = root.getX(n)
 
-
         const t1 = new TWEEN.Tween( this.group.position )
             .to( { x:x }, time )
             .easing( TWEEN.Easing.Sinusoidal.InOut )
             .onComplete( function(){ 
                 this.turning = false 
+                this.line = n
                 root.line = n
             }.bind(this) )
             .start()
@@ -256,6 +256,9 @@ export class Ring extends THREE.Group {
             .to( { y:(30*dir)* math.torad }, time*0.5 )
             .repeat(1)
             .yoyo(true)
+            .onComplete( function(){ 
+                
+            }.bind(this) )
             .easing( TWEEN.Easing.Sinusoidal.InOut )
             .start()
 

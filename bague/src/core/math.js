@@ -12,6 +12,11 @@ export const math = {
 	TwoPI: Math.PI*2,
 	PI90: Math.PI*0.5,
 	PI45: Math.PI*0.25,
+
+	PI135: Math.PI*0.25 + (Math.PI*0.5),
+	PI225: Math.PI*0.25 + (Math.PI),
+	PI315: Math.PI*0.25 + (Math.PI) + (Math.PI*0.5),
+
 	PI270: (Math.PI*0.5)*3,
 	inv255: 0.003921569,
 	golden: 1.618033,
@@ -39,32 +44,26 @@ export const math = {
 		ar[1] = arx[1] + ( ary[1] - arx[1] ) * t;*/
 	},
 
-	quadrant: function (a){
+	quadrant: function (a, r){
 
-		let c
+		let c = 3 
 
-		if( a > 45 && a <= 135 ) c = 1
-		else if( a > 125 && a <= 225 ) c = 2
-		else if( a > 225 && a <= 315 ) c = 3
-		else c = 4
+		if(r){
+			if( a > math.PI45 && a <= math.PI135 ) c = 4
+			else if( a > math.PI135 && a <= math.PI225 ) c = 1
+			else if( a > math.PI225 && a <= math.PI315 ) c = 2
+			//else c = 3
+		} else {
+			if( a > 45 && a <= 135 ) c = 4
+			else if( a > 135 && a <= 225 ) c = 1
+			else if( a > 225 && a <= 315 ) c = 2
+			//else c = 3
+		}
+
+		
 
 
-
-
-
-
-		//let c = Math.round((angle+11.25) / 45)
-    	//if( c === 8 ) c = 0
-
-		/*let c = 0
-		if( a > 22.5 && a <= 67.5 ) c = 1
-		else if ( a > 67.5 && a <= 112.5 ) c = 2
-		else if ( a > 112.5 && a <= 157.5 ) c = 3
-		else if ( a > 157.5 && a <= 202.5 ) c = 4
-		else if ( a > 202.5 && a <= 247.5 ) c = 5
-		else if ( a > 247.5 && a <= 292.5 ) c = 6
-		else if ( a > 292.5 && a <= 337.5 ) c = 7
-		else c = 0	*/
+		/**/
 		return c
 	},
 
