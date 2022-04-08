@@ -119,7 +119,7 @@ export class View {
         document.body.appendChild( this.fps )
 
         this.db = document.createElement( 'div' );
-        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#0f0;  pointer-events:none;"
+        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#0ff;  pointer-events:none;"
         document.body.appendChild( this.db )
 
 
@@ -294,7 +294,7 @@ export class View {
 	    		
 	    	    let c = math.quadrant( angle, true )
 	    		
-	    		if( distance < 0.05 ) return
+	    		if( distance < 0.03 ) return
 
 	    		if( c === 1 ) this.ring.right()
 	    		if( c === 2 ) this.ring.down()

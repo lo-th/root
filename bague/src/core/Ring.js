@@ -233,7 +233,7 @@ export class Ring extends THREE.Group {
         if( this.turning ) return
         if( n === root.line ) return
 
-        let time = 700 - (200*root.speed)
+        let time = 500 - (100*root.speed)
 
         this.turning = true
         this.group.rotation.y = 0

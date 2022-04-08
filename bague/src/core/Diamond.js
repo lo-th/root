@@ -170,7 +170,7 @@ export class Diamond extends THREE.Group {
             t -= speed
             if(t <= 0) t = 0
 
-            if( t<(0.1+0.006) && t>(0.1-0.006) && this.l[i] === root.line){
+            if( t<(0.1+0.006) && t>(0.1-0.006) && this.l[i] === root.line && !root.view.ring.jumping ){
                 t = 0
                 root.view.catchDiam()
             }
