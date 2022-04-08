@@ -209,6 +209,8 @@ export class Ring extends THREE.Group {
 
     right(){
 
+        if( this.turning ) return
+
         this.line++
         this.line = this.line > 2 ? 2 : this.line
         this.switchLine( this.line )
@@ -216,6 +218,8 @@ export class Ring extends THREE.Group {
     }
 
     left(){
+
+        if( this.turning ) return
 
         this.line--
         this.line = this.line < 0 ? 0 : this.line
@@ -232,12 +236,13 @@ export class Ring extends THREE.Group {
         let time = 700 - (200*root.speed)
 
         this.turning = true
-
         this.group.rotation.y = 0
+        
 
         let dir = n>root.line ? -1:1
 
         root.line = -1
+        this.line = n
 
         let x = root.getX(n)
 
@@ -245,9 +250,8 @@ export class Ring extends THREE.Group {
             .to( { x:x }, time )
             .easing( TWEEN.Easing.Sinusoidal.InOut )
             .onComplete( function(){ 
-                this.turning = false 
-                this.line = n
-                root.line = n
+                this.turning = false
+                root.line = this.line
             }.bind(this) )
             .start()
 

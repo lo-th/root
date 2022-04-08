@@ -119,7 +119,7 @@ export class View {
         document.body.appendChild( this.fps )
 
         this.db = document.createElement( 'div' );
-        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#f50;  pointer-events:none;"
+        this.db.style.cssText =  "font-size:24px; font-family:Tahoma; padding: 10px 10px; position:absolute; top:10px; left:0px; width:100%; color:#0f0;  pointer-events:none;"
         document.body.appendChild( this.db )
 
 
