@@ -26,6 +26,7 @@ export class View {
 
 
     	this.notUseQuadrant = Q || false
+    	this.notUseRatio = true
 
     	this.container = Container
 
@@ -290,25 +291,25 @@ export class View {
     	switch( e.type ){
 
     		case 'pointerdown':
-    		m.ox = px // s.w
-    		m.oy = py // s.h
+    		m.ox = this.notUseRatio ? px : px / s.w
+    		m.oy = this.notUseRatio ? py : py / s.h
     		m.down = true
     		break;
 
     		case 'pointermove': 
 
-    		m.y = py // s.h
-    		m.x = px // s.w
+    		m.x = this.notUseRatio ? px : px / s.w
+            m.y = this.notUseRatio ? py : py / s.h
 
     		if( m.down ){
 
-	    		m.dx = m.x-m.ox 
-	    		m.dy = m.y-m.oy
+	    		m.dx = m.x - m.ox
+	    		m.dy = m.y - m.oy
 
 	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
 
-	    		//if( distance < 0.03 ) return
-	    		if( distance < 4 ) return
+	    		if( this.notUseRatio ){ if(distance < 3 ) return }
+	    		else { if( distance < 0.03 ) return }
 
 	    		if( !this.notUseQuadrant ){
 
