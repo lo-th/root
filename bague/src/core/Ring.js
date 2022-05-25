@@ -20,6 +20,10 @@ export class Ring extends THREE.Group {
         this.jumping = false
         this.downing = false
         this.turning = false
+        this.falling = false
+        this.bumping = false
+
+        this.moving = false
 
         this.line = 1
 
@@ -41,6 +45,8 @@ export class Ring extends THREE.Group {
         })
 
         this.ready()
+
+        
 
     }
 
@@ -327,6 +333,8 @@ export class Ring extends THREE.Group {
     move( delta ){
 
         if( !this.ring ) return
+
+        this.moving = this.jumping || this.downing || this.turning || this.falling || this.bumping ? true : false
 
         //if( this.mapN===this.mapMax && !this.group.visible ) this.group.visible = true
 

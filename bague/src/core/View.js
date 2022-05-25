@@ -27,6 +27,7 @@ export class View {
 
     	this.notUseQuadrant = Q || false
     	this.notUseRatio = true
+    	this.isLockByMove = true
 
     	this.container = Container
 
@@ -37,7 +38,7 @@ export class View {
     	this.timer = new Timer( 60 )
     	//this.user = new User()
 
-    	this.mouse = { x:0, y:0, down:false, line:1, up:0, oldy:0, isD:false }
+    	this.mouse = { x:0, y:0, down:false, line:1, up:0, oldy:0, isD:false, oy: -1, ox: -1, }
 
     	this.bg = 0x5b9ab7
 
@@ -291,12 +292,14 @@ export class View {
     	switch( e.type ){
 
     		case 'pointerdown':
-    		m.ox = this.notUseRatio ? px : px / s.w
-    		m.oy = this.notUseRatio ? py : py / s.h
-    		m.down = true
+    			m.ox = this.notUseRatio ? px : px / s.w
+	    		m.oy = this.notUseRatio ? py : py / s.h
+	    		m.down = true
     		break;
 
     		case 'pointermove': 
+
+    		if( this.isLockByMove && this.ring.moving ) return
 
     		m.x = this.notUseRatio ? px : px / s.w
             m.y = this.notUseRatio ? py : py / s.h
@@ -308,7 +311,9 @@ export class View {
 
 	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
 
-	    		if( this.notUseRatio ){ if(distance < 6 ) return }
+	    		if( this.ring.moving ) return
+
+	    		if( this.notUseRatio ){ if(distance < 20 ) return }
 	    		else { if( distance < 0.03 ) return }
 
 	    		if( !this.notUseQuadrant ){
@@ -325,7 +330,7 @@ export class View {
 
 		    	} else {
 
-		    		if(Math.abs(m.dx) > Math.abs(m.dy)){
+		    		if(Math.abs(m.dx) >= Math.abs(m.dy)){
 			            if(m.dx > 0) return this.ring.right()
 			            else this.ring.left()
 			        }
@@ -340,13 +345,10 @@ export class View {
 	    		
 	    		m.down = false
 
-	    	   
-
 	    	}
 	    		
     		break;
     		default:
-	        //console.log( e.type)
 	        m.down = false
     	}
     	
