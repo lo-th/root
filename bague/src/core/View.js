@@ -308,7 +308,7 @@ export class View {
 
 	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
 
-	    		if( this.notUseRatio ){ if(distance < 3 ) return }
+	    		if( this.notUseRatio ){ if(distance < 6 ) return }
 	    		else { if( distance < 0.03 ) return }
 
 	    		if( !this.notUseQuadrant ){
