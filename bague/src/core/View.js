@@ -22,10 +22,10 @@ import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 
 export class View {
 
-    constructor( Container, withUI = false, Q = true ) {
+    constructor( Container, withUI = false, Q ) {
 
 
-    	this.quadrant = Q
+    	this.notUseQuadrant = Q || false
 
     	this.container = Container
 
@@ -307,7 +307,7 @@ export class View {
 
 	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
 
-	    		if( this.quadrant ){
+	    		if( !this.notUseQuadrant ){
 
 		    		let angle = ( Math.PI + Math.atan2( m.dy, m.dx ) )
 		    	    let c = math.quadrant( angle, true )
