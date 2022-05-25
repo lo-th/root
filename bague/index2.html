@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Ring</title>
+		<meta charset="utf-8">
+		<link rel="shortcut icon" href="favicon.ico">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<meta http-equiv="Pragma" content="no-cache">
+	</head>
+
+	<body style="background-color:#bbbbbb; margin:0; padding:0; overflow:hidden;">
+	<div id="container"></div>
+		
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="./src/libs/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./src/libs/three.module.js",
+					"tween": "./src//libs/tween.esm.js",
+					"uil": "./src/libs/uil.module.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+
+			import { View } from './src/core/View.js'
+			import { Gui } from './src/core/Gui.js'
+
+			const container = document.getElementById( 'container' );
+			container.style.cssText = 'position:absolute; width:100%; height:100%; '
+
+			// three view
+			window.view = new View( container, false, false )
+
+			// add interface 'optionnal' 
+			//window.gui = new Gui()
+
+		</script>
+
+	</body>
+</html>

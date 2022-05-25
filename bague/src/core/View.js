@@ -22,7 +22,10 @@ import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 
 export class View {
 
-    constructor( Container, withUI = false ) {
+    constructor( Container, withUI = false, Q = true ) {
+
+
+    	this.quadrant = Q
 
     	this.container = Container
 
@@ -52,6 +55,8 @@ export class View {
     	this.x42 = null
 
     	this.meshs = {}
+
+    	
 
 
 
@@ -267,21 +272,33 @@ export class View {
     	const s = this.size
     	const m = this.mouse
 
+    	let px, py
+
+	    if ( e.pointerType === 'touch' ) {
+
+	      px = e.screenX
+	      py = e.screenY
+
+	    } else {
+
+	      px = e.clientX
+	      py = e.clientY
+
+	    }
+
+
     	switch( e.type ){
 
     		case 'pointerdown':
-    		m.ox = e.clientX / s.w
-    		m.oy = e.clientY / s.h
+    		m.ox = px / s.w
+    		m.oy = py / s.h
     		m.down = true
     		break;
-    		break;
-    		case 'pointerup': case 'pointercancel':
-    		m.down = false
-    		break;
+
     		case 'pointermove': 
 
-    		m.y = e.clientY / s.h
-    		m.x = e.clientX / s.w
+    		m.y = py / s.h
+    		m.x = px / s.w
 
     		if( m.down ){
 
@@ -289,25 +306,48 @@ export class View {
 	    		m.dy = m.y-m.oy
 
 	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
-	    		let angle = ( Math.PI + Math.atan2( m.dy, m.dx ) ) //* math.todeg //+ 90
-	    		//if(angle < 0) angle += 360
-	    		
-	    	    let c = math.quadrant( angle, true )
-	    		
-	    		if( distance < 0.03 ) return
 
-	    		if( c === 1 ) this.ring.right()
-	    		if( c === 2 ) this.ring.down()
-	    		if( c === 3 ) this.ring.left()
-	    		if( c === 4 ) this.ring.jump()
+	    		if( this.quadrant ){
+
+		    		let angle = ( Math.PI + Math.atan2( m.dy, m.dx ) )
+		    	    let c = math.quadrant( angle, true )
+		    		
+		    		if( distance < 0.03 ) return
+
+		    		if( c === 1 ) this.ring.right()
+		    		if( c === 2 ) this.ring.down()
+		    		if( c === 3 ) this.ring.left()
+		    		if( c === 4 ) this.ring.jump()
+
+		    		this.db.innerHTML = 'd:'+ distance + ' k:'+ c 
+
+		    	} else {
+
+		    		if( distance < 0.03 ) return
+
+		    		if(Math.abs(m.dx) > Math.abs(m.dy)){
+			            if(m.dx > 0) return this.ring.right()
+			            else this.ring.left()
+			        }
+			        else if(Math.abs(m.dx) < Math.abs(m.dy)){
+			            if(m.dy > 0) this.ring.down()
+			            else this.ring.jump()
+			        }
+
+			        this.db.innerHTML = 'd:'+ distance
+
+		    	}
 	    		
 	    		m.down = false
 
-	    	    this.db.innerHTML = 'd:'+ distance + ' k:'+ c 
+	    	   
 
 	    	}
 	    		
     		break;
+    		default:
+	        //console.log( e.type)
+	        m.down = false
     	}
     	
     }
