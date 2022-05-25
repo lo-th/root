@@ -276,8 +276,8 @@ export class View {
 
 	    if ( e.pointerType === 'touch' ) {
 
-	      px = e.screenX
-	      py = e.screenY
+	      px = e.pageX
+	      py = e.pageY
 
 	    } else {
 
@@ -290,15 +290,15 @@ export class View {
     	switch( e.type ){
 
     		case 'pointerdown':
-    		m.ox = px / s.w
-    		m.oy = py / s.h
+    		m.ox = px // s.w
+    		m.oy = py // s.h
     		m.down = true
     		break;
 
     		case 'pointermove': 
 
-    		m.y = py / s.h
-    		m.x = px / s.w
+    		m.y = py // s.h
+    		m.x = px // s.w
 
     		if( m.down ){
 
@@ -307,13 +307,14 @@ export class View {
 
 	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
 
+	    		//if( distance < 0.03 ) return
+	    		if( distance < 4 ) return
+
 	    		if( !this.notUseQuadrant ){
 
 		    		let angle = ( Math.PI + Math.atan2( m.dy, m.dx ) )
 		    	    let c = math.quadrant( angle, true )
 		    		
-		    		if( distance < 0.03 ) return
-
 		    		if( c === 1 ) this.ring.right()
 		    		if( c === 2 ) this.ring.down()
 		    		if( c === 3 ) this.ring.left()
@@ -322,8 +323,6 @@ export class View {
 		    		this.db.innerHTML = 'd:'+ distance + ' k:'+ c 
 
 		    	} else {
-
-		    		if( distance < 0.03 ) return
 
 		    		if(Math.abs(m.dx) > Math.abs(m.dy)){
 			            if(m.dx > 0) return this.ring.right()
