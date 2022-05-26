@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as TWEEN from 'tween';
 
-import ZingTouch from '../libs/zingtouch/ZingTouch.js';
+//import ZingTouch from '../libs/zingtouch/ZingTouch.js';
 
 import { pool } from './pool.js'
 import { Gui } from './Gui.js'
@@ -28,6 +28,7 @@ export class View {
     	this.notUseQuadrant = Q || false
     	this.notUseRatio = true
     	this.isLockByMove = true
+    	this.isTouche = false
 
     	this.container = Container
 
@@ -38,7 +39,7 @@ export class View {
     	this.timer = new Timer( 60 )
     	//this.user = new User()
 
-    	this.mouse = { x:0, y:0, down:false, line:1, up:0, oldy:0, isD:false, oy: -1, ox: -1, }
+    	this.mouse = { x:0, y:0, down:false, line:1, up:0, oldy:0, isD:false, oy: 0, ox: 0, dx:0, dy:0 }
 
     	this.bg = 0x5b9ab7
 
@@ -215,10 +216,11 @@ export class View {
 
     	const dom = this.renderer.domElement
 
-    	dom.removeEventListener( 'pointermove', this, false )
-	    dom.removeEventListener( 'pointerdown', this, false )
-	    dom.removeEventListener( 'pointercancel', this, false);
-	    dom.removeEventListener( 'pointerup', this, false )
+	    	dom.removeEventListener( 'pointermove', this, false )
+		    dom.removeEventListener( 'pointerdown', this, false )
+		    dom.removeEventListener( 'pointercancel', this, false);
+		    dom.removeEventListener( 'pointerup', this, false )
+		
 
     }
 
@@ -258,10 +260,12 @@ export class View {
 		//} else {
 
 	    	const dom = this.renderer.domElement
-	    	dom.addEventListener( 'pointermove', this, false )
-		    dom.addEventListener( 'pointerdown', this, false )
-		    dom.addEventListener( 'pointercancel', this, false);
-		    dom.addEventListener( 'pointerup', this, false )
+
+		    	dom.addEventListener( 'pointermove', this, false )
+			    dom.addEventListener( 'pointerdown', this, false )
+			    dom.addEventListener( 'pointercancel', this, false);
+			    dom.addEventListener( 'pointerup', this, false )
+			
 
 		//}
 
@@ -271,8 +275,12 @@ export class View {
 
     	if(!this.ring) return
 
+    	 
+
     	const s = this.size
     	const m = this.mouse
+
+    	
 
     	let px, py
 
@@ -292,9 +300,11 @@ export class View {
     	switch( e.type ){
 
     		case 'pointerdown':
+    		    e.preventDefault()
     			m.ox = this.notUseRatio ? px : px / s.w
 	    		m.oy = this.notUseRatio ? py : py / s.h
 	    		m.down = true
+	    		this.db.innerHTML = 'x:'+ m.dx + ' ' + 'y:'+ m.dy + ' ' + m.down
     		break;
 
     		case 'pointermove': 
@@ -311,10 +321,12 @@ export class View {
 
 	    		let distance = Math.sqrt( m.dx*m.dx + m.dy*m.dy )
 
-	    		if( this.ring.moving ) return
+	    		this.db.innerHTML = 'x:'+ m.dx + ' ' + 'y:'+ m.dy + ' ' + m.down
 
-	    		if( this.notUseRatio ){ if(distance < 20 ) return }
+	    		if( this.notUseRatio ){ if( distance < 20 ) return }
 	    		else { if( distance < 0.03 ) return }
+
+	    		m.down = false
 
 	    		if( !this.notUseQuadrant ){
 
@@ -326,7 +338,7 @@ export class View {
 		    		if( c === 3 ) this.ring.left()
 		    		if( c === 4 ) this.ring.jump()
 
-		    		this.db.innerHTML = 'd:'+ distance + ' k:'+ c 
+		    		//this.db.innerHTML = 'd:'+ distance + ' k:'+ c 
 
 		    	} else {
 
@@ -339,17 +351,20 @@ export class View {
 			            else this.ring.jump()
 			        }
 
-			        this.db.innerHTML = 'd:'+ distance
+			       
 
 		    	}
-	    		
-	    		m.down = false
 
+		    	this.db.innerHTML = 'x:'+ m.dx + ' ' + 'y:'+ m.dy + ' ' + m.down
+	    		
 	    	}
 	    		
     		break;
-    		default:
+    		case 'pointerup': case 'pointercancel':
+    		e.preventDefault()
 	        m.down = false
+	        this.db.innerHTML = 'x:'+ m.dx + ' ' + 'y:'+ m.dy + ' ' + m.down
+	        break;
     	}
     	
     }

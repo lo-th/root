@@ -1,1 +1,1 @@
-http-server ./ -c-1 -a localhost -p 8642 -o ./index.html
+http-server ./ -c-1 -a localhost -p 8080 -o ./index.html

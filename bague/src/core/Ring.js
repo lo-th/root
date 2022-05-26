@@ -278,6 +278,7 @@ export class Ring extends THREE.Group {
 
         if( !this.ring ) return
         if( this.jumping ) return
+        if( this.downing ) return
 
         this.jumping = true
 
@@ -298,6 +299,7 @@ export class Ring extends THREE.Group {
 
         if( !this.ring ) return
         if( this.downing ) return
+        if( this.jumping ) return
 
         this.downing = true
         this.matS.map = this.mapS2
@@ -334,7 +336,8 @@ export class Ring extends THREE.Group {
 
         if( !this.ring ) return
 
-        this.moving = this.jumping || this.downing || this.turning || this.falling || this.bumping ? true : false
+        //this.moving = this.jumping || this.downing || this.turning || this.falling || this.bumping ? true : false
+        this.moving = this.falling || this.bumping ? true : false
 
         //if( this.mapN===this.mapMax && !this.group.visible ) this.group.visible = true
 
