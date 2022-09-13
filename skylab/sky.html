@@ -45,29 +45,51 @@
 				initScene();
 				initMisc();
 
-				const ui = new UIL.Gui( { w:300, h:30 } ).onChange( function ( value ) {sky.update()} )
+				const ui = new UIL.Gui( { w:300, h:30 } ).onChange( updateSky )
 				//let g = ui.add('group', { name:'SKY', h:30 });;
 				ui.add( 'empty', { h:5 })
 				ui.add( sky.setting, 'hour',  { type:'slide', min:0, max:24, precision:2 })
 				ui.add( sky.setting, 'fog',  { type:'slide', min:0, max:1, precision:2 })
 				ui.add( sky.setting, 'azimuth',  { type:'slide', min:0, max:360, precision:0 })
 				ui.add( 'empty', { h:5 })
+
+				ui.add( sky.setting, 'saturation',  { type:'slide', min:0, max:3, precision:2 })
+
 				ui.add( sky.setting, 'cloud_size',  { type:'slide', min:0, max:1, precision:2 })
 				ui.add( sky.setting, 'cloud_covr',  { type:'slide', min:0, max:1, precision:2 })
 				ui.add( sky.setting, 'cloud_dens',  { type:'slide', min:0, max:1, precision:2 })
+				ui.add( sky.setting, 'cloud_dist',  { type:'slide', min:0, max:1, precision:2 })
+
+				ui.add( 'empty', { h:5 })
+
+				ui.add( sky.setting, 'night_luma',  { type:'slide', min:0, max:1, precision:2 })
+				ui.add( sky.setting, 'haze',  { type:'slide', min:0, max:0.1, precision:3 })
 				ui.add( 'empty', { h:5 })
 				ui.add( sky.setting, 'sample',  { type:'slide', min:0, max:128, precision:0 })
 				ui.add( sky.setting, 'step',  { type:'slide', min:0, max:16, precision:0 })
 
-				ui.add( 'empty', { h:10 })
-				ui.add( sky.setting, 'sun_color',  { type:'color', lock:true }).listen()
-				ui.add( sky.setting, 'sky_color',  { type:'color', lock:true }).listen()
-				ui.add( sky.setting, 'fog_color',  { type:'color', lock:true }).listen()
-				ui.add( sky.setting, 'ground_color',  { type:'color', lock:true }).listen()
+				
+				
+				
+				ui.add( sky.setting, 'skyColor',  { type:'color' })
+				ui.add( sky.setting, 'cloudColor',  { type:'color' })
+				ui.add( sky.setting, 'fogColor',  { type:'color' })
+				ui.add( sky.setting, 'groundColor',  { type:'color' })
+
+				ui.add( 'empty', { h:30 })
+				ui.add( sky.setting, 'sun_color',  { type:'color', lock:true, h:16 }).listen()
+				ui.add( sky.setting, 'sky_color',  { type:'color', lock:true, h:16 }).listen()
+				ui.add( sky.setting, 'fog_color',  { type:'color', lock:true, h:16 }).listen()
+				ui.add( sky.setting, 'ground_color',  { type:'color', lock:true, h:16 }).listen()
 
 				document.body.appendChild( renderer.domElement );
 				window.addEventListener( 'resize', onWindowResize );
 
+			}
+
+
+			function updateSky() {
+				sky.needsUpdate = true;
 			}
 
 			function initScene() {
@@ -77,10 +99,30 @@
 
 				scene = new THREE.Scene();
 				//scene.background = new THREE.Color( 0x222244 );
-				scene.fog = new THREE.Fog( 0x222244, 50, 100 );
+				scene.fog = new THREE.Fog( 0x222244, 20, 100 );
+				//scene.fog = new THREE.FogExp2(0x222244, 0.05)
 
 				debug = new THREE.Group()
 				scene.add(debug)
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.VSMShadowMap;
+				renderer.autoClear = false;
+
+				// Mouse control
+				const controls = new OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 2, 0 );
+				controls.update();
+
+				clock = new THREE.Clock();
+
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				sky = new Sky({renderer:renderer, scene:scene})
 
 				// Lights
 
@@ -129,14 +171,19 @@
 
 				const geometry = new THREE.TorusKnotGeometry( 25, 8, 75, 20 );
 				
-				let material = new THREE.MeshPhongMaterial( {
+				/*let material = new THREE.MeshPhongMaterial( {
 					color: 0x999999,
 					shininess: 0,
 					specular: 0x222222
+				} );*/
+
+				let material = new THREE.MeshLambertMaterial( {
+					color: 0x999999,
 				} );
 
-				material = new THREE.MeshLambertMaterial( {
+				let material2 = new THREE.MeshLambertMaterial( {
 					color: 0x999999,
+					envMap:sky.envmap
 				} );
 
 				torusKnot = new THREE.Mesh( geometry, material );
@@ -169,19 +216,27 @@
 				pillar8.position.set( 1, 3.5, -8 )
 				scene.add( pillar8 );
 
-				const planeGeometry = new THREE.PlaneGeometry( 1000, 1000 );
+				const planeGeometry = new THREE.PlaneGeometry( 2000, 2000 );
 				/*const planeMaterial = new THREE.MeshPhongMaterial( {
 					color: 0x999999,
 					shininess: 0,
 					specular: 0x111111
 				} );*/
 
-				const ground = new THREE.Mesh( planeGeometry, material );
+				const ground = new THREE.Mesh( planeGeometry, material2 );
 				ground.rotation.x = - Math.PI / 2;
 				ground.scale.multiplyScalar( 3 );
 				ground.castShadow = true;
 				ground.receiveShadow = true;
 				scene.add( ground );
+
+				const sphereGeometry = new THREE.SphereGeometry( 2 );
+
+				const sphere = new THREE.Mesh( sphereGeometry, material2 );
+				sphere.position.y = 8
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				scene.add( sphere );
 
 				
 
@@ -190,24 +245,7 @@
 
 			function initMisc() {
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.shadowMap.enabled = true;
-				renderer.shadowMap.type = THREE.VSMShadowMap;
-				renderer.autoClear = false;
-
-				// Mouse control
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.target.set( 0, 2, 0 );
-				controls.update();
-
-				clock = new THREE.Clock();
-
-				stats = new Stats();
-				document.body.appendChild( stats.dom );
-
-				sky = new Sky({renderer:renderer, scene:scene})
+				
 
 			}
 
@@ -232,6 +270,8 @@
 
 				dirGroup.rotation.y += 0.7 * delta;
 				dirLight.position.z = 17 + Math.sin( time * 0.001 ) * 5;*/
+
+				sky.update()
 
 				renderer.clear();
 

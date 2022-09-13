@@ -34,7 +34,7 @@ export class Sky  {
 			step:4,//8
 
 			fogColor: 0xC2ECFF,
-            groundColor:0x78e366,//0x30b843
+            groundColor:0xa9733b,//0x30b843
             cloudColor: 0xffffff,//0x30b843
             skyColor: 0xFFFFFF,//0x30b843
 
@@ -157,12 +157,11 @@ export class Sky  {
 
                 night_luma: { value: this.setting.night_luma },
                 haze: { value: this.setting.haze },
-                saturation:{ value: this.setting.saturation },
-                //hazeAlpha: { value: this.setting.hazeAlpha },
+                hazeAlpha: { value: this.setting.hazeAlpha },
                 SAMPLE:{ value: this.setting.sample },
                 STEP:{ value: this.setting.step },
 
-                
+                saturation:{ value: this.setting.saturation },
                 //cloudColor: { value: new THREE.Color(0xFFFFFF) },
                 //groundColor: { value: this.fogColor },
                 //groundColor: { value: new THREE.Color(0x4a5c5b) },
@@ -183,21 +182,10 @@ export class Sky  {
 			//transparent:true,
 		});
 
-		this.materialGround = new THREE.MeshBasicMaterial({
-			side:THREE.BackSide
-		})
-
 
 
 		var t = new THREE.IcosahedronGeometry( 1, 1 );
 		var cmesh = new THREE.Mesh( t, this.materialSky );
-
-		var p = new THREE.SphereGeometry( 0.9, 16, 8, 0, Math.PI );
-		p.rotateX( Math.PI * 0.5 )
-
-		var cmesh2 = new THREE.Mesh( p, this.materialGround );
-		//cmesh2.position.y = -0.05
-		//cmesh2.frustumCulled = false;
 
 		if(this.setting.direct){
 
@@ -207,8 +195,6 @@ export class Sky  {
 		} else {
 
 			this.renderSky.add( cmesh );
-			this.scene.add( cmesh2 );
-			cmesh2.scale.set( 100, 100, 100 )
 
 			this.cubeCameraRender = new THREE.WebGLCubeRenderTarget( this.skyResolution, {
 						//format: THREE.RGBFormat,
@@ -289,7 +275,7 @@ export class Sky  {
 
 		setting.inclination = (setting.hour*15)-90;
 
-		setting.t += 0.017//setting.hour
+		setting.t = setting.hour
 
         this.sunSph.phi = (setting.inclination-90) * this.torad;
         this.sunSph.theta = (setting.azimuth-90) * this.torad;
@@ -305,7 +291,7 @@ export class Sky  {
         let lm = this.sunTop.dot( this.sunPosition );
 	    let day = this.clamp((lm*4.0), 0.0, (1.0-setting.night_luma) )+setting.night_luma;
 
-	    //console.log(lm)
+	    console.log(lm)
 
 	    //this.fogColor.setHex(setting.fogColor).multiplyScalar(day)
 	    this.groundColor.setHex(setting.groundColor).multiplyScalar(day)
@@ -373,8 +359,6 @@ export class Sky  {
 
 		const read = this.read;
 
-		this.materialGround.color = this.fogColor;
-
 		
 		
 		//valueNode.innerHTML = 'r:' + read[ 0 ] + '<br/>g:' + read[ 1 ] + '<br/>b:' + read[ 2 ];
@@ -385,7 +369,7 @@ export class Sky  {
         let s = this.skyResolution * 0.5
 
         // fog
-		this.renderer.readRenderTargetPixels( this.cubeCameraRender, s, s-2, 1, 1, read, 0 );//activeCubeFaceIndex
+		this.renderer.readRenderTargetPixels( this.cubeCameraRender, 0, s, 1, 1, read, 0 );//activeCubeFaceIndex
 		this.fogColor.setRGB( read[ 0 ], read[ 1 ], read[ 2 ])
 		// sky
 		this.renderer.readRenderTargetPixels( this.cubeCameraRender, s, s, 1, 1, read, 2 );//activeCubeFaceIndex
@@ -393,8 +377,6 @@ export class Sky  {
 		// ground
 		//this.renderer.readRenderTargetPixels( this.cubeCameraRender, s, s, 1, 1, read, 3 );//activeCubeFaceIndex
 		//this.groundColor.setRGB( read[ 0 ], read[ 1 ], read[ 2 ])
-
-		this.materialGround.color = this.fogColor;
 
 
 		this.scene.fog.color.copy( this.fogColor )
@@ -411,6 +393,9 @@ export class Sky  {
 		this.needsUpdate = false;
 
 	}
+
+
+
 
 
 }
@@ -466,18 +451,21 @@ const vec3 vn = vec3( 2.1e-5 );
 const vec3 vo = vec3( 5.8e-6, 1.35e-5, 3.31e-5 );
 
 
-float noise( in vec3 x )
-{
+
+float noise( in vec3 x ){
+
     vec3 p = floor(x);
     vec3 f = fract(x);
     f = f*f*(3.0-2.0*f);
+    
     vec2 uv = (p.xy+vec2(37.0,17.0)*p.z) + f.xy;
     vec2 rg = texture2D( noiseMap, (uv+0.5)/256.0, -16.0 ).yx;
     return mix( rg.x, rg.y, f.z );
+
 }
 
-float NOISE( vec3 r )
-{
+float NOISE( vec3 r ){
+
 	r.xz += t;
 	r *= 0.5;
 	float s;
@@ -493,29 +481,32 @@ float NOISE( vec3 r )
 	r = r * 2.52;
 	s += 0.015625 * noise(r);
 	return s;
+
 }
 
-float MakeNoise( vec3 r )
-{
+float MakeNoise( vec3 r ){
+
 	float s,t;
 	s = NOISE( r * 2e-4 * ( 1.0 - cloud_size ) );
 	t = ( 1.0 - cloud_covr ) * 0.5 + 0.2;
 	s = smoothstep( t, t+.2 , s );
 	s *= 0.5*(cloud_dens*100.0);
 	return s;
+
 }
 
-void clouds( in vec3 r, out vec3 CL )
-{
+void clouds( in vec3 r, out vec3 CL ){
+
 	float v,w;
 	v = length( r-vm ) - c;
 	w = 0.0;
 	if( 5e3 < v && v < 1e4 ) w = MakeNoise( r ) * (sin( pi*(v-5e3)/5e3 ));
 	CL = vec3( exp(-v*icc), exp(-v*jcc), w );
+
 }
 
-float ca( in vec3 r, in vec3 s, in float t )
-{
+float ca( in vec3 r, in vec3 s, in float t ){
+
 	vec3 u = r - vm;
 	float v,w,x,y,z,A;
 	v = dot(u,s);
@@ -526,10 +517,11 @@ float ca( in vec3 r, in vec3 s, in float t )
 	z = -v-y;
 	A = -v+y;
 	return z >= 0.0 ? z : A;
+
 }
 
-vec3 makeSky( in vec3 lightpos, in vec3 r, in vec3 s, out float t, out vec3 cc)
-{
+vec3 makeSky( in vec3 lightpos, in vec3 r, in vec3 s, out float t, out vec3 cc){
+	
 	float u,v,w,x,y,z,m, M, N,S, H,F;
 	vec3 p = lightpos;
 	u = ca(r,s,d);
@@ -591,7 +583,10 @@ vec3 makeSky( in vec3 lightpos, in vec3 r, in vec3 s, out float t, out vec3 cc)
 
 			}
 
-			vec3 S = exp(-(vo*(BM.x+BB.x)+vn*(BM.y+BB.y)* cloud_dist));
+			BB.y *= cloud_dist;
+			BM.y *= cloud_dist;
+
+			vec3 S = exp(-(vo*(BM.x+BB.x)+vn*(BM.y+BB.y)));
 			vec3 SC = exp(-(vo*(DM.x+DB.x)+vn*(DM.y+DB.y)));
 
 			m += CB.z;
@@ -608,8 +603,54 @@ vec3 makeSky( in vec3 lightpos, in vec3 r, in vec3 s, out float t, out vec3 cc)
 	return ( (D * vo * x) + (E * vn * y)) * 15.0; // cloud sky
 }
 
+
+float gamma = 2.2;
+
+vec3 linearToneMapping(vec3 color)
+{
+	float exposure = 1.;
+	color = clamp(exposure * color, 0., 1.);
+	color = pow(color, vec3(1. / gamma));
+	return color;
+}
+
+vec3 simpleReinhardToneMapping(vec3 color)
+{
+	float exposure = 1.5;
+	color *= exposure/(1. + color / exposure);
+	color = pow(color, vec3(1. / gamma));
+	return color;
+}
+
+vec3 lumaBasedReinhardToneMapping(vec3 color)
+{
+	float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+	float toneMappedLuma = luma / (1. + luma);
+	color *= toneMappedLuma / luma;
+	color = pow(color, vec3(1. / gamma));
+	return color;
+}
+
+vec3 whitePreservingLumaBasedReinhardToneMapping(vec3 color)
+{
+	float white = 2.;
+	float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+	float toneMappedLuma = luma * (1. + luma / (white*white)) / (1. + luma);
+	color *= toneMappedLuma / luma;
+	color = pow(color, vec3(1. / gamma));
+	return color;
+}
+
+vec3 RomBinDaHouseToneMapping(vec3 color)
+{
+    color = exp( -1.0 / ( 2.72*color + 0.15 ) );
+	color = pow(color, vec3(1. / gamma));
+	return color;
+}
+
 vec3 czm_saturation(vec3 rgb, float adjustment)
 {
+    // Algorithm from Chapter 16 of OpenGL Shading Language
     vec3 W = vec3(0.2125, 0.7154, 0.0721);
     vec3 intensity = vec3(dot(rgb, W));
     return mix(intensity, rgb, adjustment);
@@ -626,18 +667,36 @@ vec3 filmicToneMapping(vec3 color)
 
 
 
-void main()
+vec3 Uncharted2ToneMapping(vec3 color)
 {
+	float A = 0.15;
+	float B = 0.50;
+	float C = 0.10;
+	float D = 0.20;
+	float E = 0.02;
+	float F = 0.30;
+	float W = 11.2;
+	float exposure = 2.;
+	color *= exposure;
+	color = ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
+	float white = ((W * (A * W + C * B) + D * E) / (W * (A * W + B) + D * F)) - E / F;
+	color /= white;
+	color = pow(color, vec3(1. / gamma));
+	return color;
+}
+
+void main(){
+
 	vec3 light = lightdir;
+
 	vec3 r = normalize( worldPosition );
 	float uvy = acos( r.y ) / pi;
 
 	float high = smoothstep(1.0, 0.0, (uvy-0.002)*10000.0);
 	float top =  smoothstep(1.0, 0.0, (uvy-0.50)*1000.0);
 	float mid = uvy > 0.5 ? smoothstep(0.0, 1.0, (uvy-0.5)*(haze*100.0)) : smoothstep(0.0, 1.0, (0.5-uvy)*(haze*100.0));
-
-	float midx = uvy > 0.5 ? smoothstep(0.0, 1.0, (uvy-0.75)*(haze*100.0)) : smoothstep(0.0, 1.0, (0.5-uvy)*(haze*100.0));
 	
+
 	vec3 s = sunTop;
 	float lm = dot( s, light );
 	float day = clamp((lm*4.0), 0.0, (1.0-night_luma) )+night_luma;
@@ -645,14 +704,21 @@ void main()
 	if(lm <= 0.0) light *= -1.0;
 	light.y = abs(light.y);
 
+
 	float midd = pow(  mid, abs(lm)-0.2 );
 	midd = clamp( midd, 0.0, 1.0 );
 	mid = clamp( mid, 0.0, 1.0 );
 
+
+
 	float m = 0.0;
 	vec3 cc = vec3(0.0);
 
+	//vec3 sky = clamp( makeSky( light, s, r, m, cc ), 0.0, 1.0 );
+	//vec3 sky = clamp( makeSky( light, s, r, m, cc ), vec3( 0.0 ), vec3( 10000.0 ) );
 	vec3 sky = makeSky( light, s, r, m, cc );
+
+	//sky = pow(  sky, vec3( .5 ) ) * day;
 
 	m = pow( abs( m ), .9 );
 
@@ -663,10 +729,9 @@ void main()
 	sky = mix( cc, sky*cloudColor, m);
 
 	sky = mix( groundColor * day, sky, top);
-	//sky = mix( fogColor * day, sky, midd);
+	//sky = mix( fogColor * day, sky, mid);
 
 	cc = mix( fogColor * day , cc, midd );
-	//cc = mix( fogColor * day , cc, top );
 
 	sky = mix( sky, cc, high);
 	sky = mix( cc, sky, mid);
