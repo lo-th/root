@@ -7,6 +7,7 @@ export class Tension {
 
 	constructor( origin, target ) {
 
+
 		this.target = target || origin;
 
 		this.baseGeometry = origin.geometry;
@@ -14,6 +15,9 @@ export class Tension {
 
 		this.V = [ new Vector3(), new Vector3(), new Vector3() ];
 		this.X = [ new Vector4(), new Vector4(), new Matrix4() ];
+
+		this.isMorph = this.target.morphTargetInfluences ? true : false;
+		this.isSkin = this.target.isSkinnedMesh ? true : false;
 
 		this.init();
 
@@ -30,7 +34,8 @@ export class Tension {
 		this.originEdges = new Array(this.length).fill(0);
 		this.targetEdges = new Array(this.length).fill(0);
 
-		if( this.target.isSkinnedMesh ) this.back = new Array(this.length*3).fill(0);
+		if( this.isSkin ) this.back = new Array(this.length*3).fill(0);
+		if( this.isMorph ) this.back2 = new Array(this.length*3).fill(0);
 
 		this.getEdge( this.baseGeometry, this.originEdges, false )
 		this.addColor();
@@ -59,12 +64,17 @@ export class Tension {
 		while(j--) edges[j] = 0
 	}
 
-	getEdge( g, edges, isSkin ) 
+	getEdge( g, edges, isSkin, isMorph ) 
 	{
 		let positions = g.attributes.position.array;
 		const indices = g.index.array;
 		let vA = this.V[0], vB = this.V[1], vC = this.V[2];
 		let j, i=0, a, b, c, ab, ac, bc, si, sy;
+
+		if( isMorph ){
+		    positions = this.getMorph()
+		    this.resetEdge(edges);
+		}
 
 		if( isSkin ){
 		    positions = this.getSkinned()
@@ -101,6 +111,34 @@ export class Tension {
 
 		if(v.x===0 && v.y===0 && v.z ===0 ) return true
 		return false
+
+	}
+
+	getMorph()
+	{
+		const morphTarget = this.target.morphTargetInfluences;
+		const morphRef = this.geometry.morphAttributes.position
+		const morphsMax = morphTarget.length
+		const position = this.geometry.attributes.position.array;
+		let lng = this.geometry.attributes.position.count, id, i, j;
+		let vertex = this.V[0];
+		let temp = this.V[2];
+		i = lng;
+	    while(i--)
+	    {
+			id = i*3;
+			vertex.fromArray( position, id )
+			j = morphsMax;
+			while(j--){
+
+				if ( morphTarget[ j ] != 0.0 ){
+					vertex.addScaledVector( temp.fromArray( morphRef[j].data.array, id ), morphTarget[ j ] );
+				}
+
+			}
+			vertex.toArray( this.back2, id )
+		}
+		return this.back2
 
 	}
 
@@ -160,7 +198,7 @@ export class Tension {
 
 		if(!this.ready) return
 
-		this.getEdge( this.geometry, this.targetEdges, this.target.isSkinnedMesh );
+		this.getEdge( this.geometry, this.targetEdges, this.isSkin, this.isMorph );
 		const color = this.geometry.attributes.color.array;
 		let o, t, delta, n, i = this.length;
 
