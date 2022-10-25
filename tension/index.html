@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>tension map</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+	<body style="background-color:#333; margin:0; padding:0; overflow:hidden;">
+
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"uil": "./src/libs/uil.module.js",
+					"three": "./src/libs/three.module.js",
+					"three/addons/": "./src/jsm/"
+				}
+			}
+		</script>
+
+		<script type="module">
+
+			import * as THREE from 'three';
+			import * as UIL from 'uil';
+
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+			import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+			import { Logo } from './src/logo.js';
+
+			import { Tension } from './src/tension.js'
+
+
+			let container, stats, controls, mixer, loader, material, baseMat;
+			let camera, scene, renderer, light
+			let tension
+			const mesh = {};
+
+			const clock = new THREE.Clock();
+
+			const setting = {
+
+				show_Tension:false,
+
+				roughness:0.2,
+				metalness:0.8,
+				color:0xffdbac,
+				sheenColor:0xff0000,
+				sheen:1.0,
+				multyplier:10,
+
+			}
+
+
+			const init = () => {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 1000 );
+				camera.position.set( 0, 0.3, 0.5 );
+
+				controls = new OrbitControls( camera, container );
+				controls.target.set( 0, 0, 0 );
+				controls.update();
+
+				scene = new THREE.Scene();
+
+				const geometry = new THREE.PlaneGeometry( 5, 5 );
+				geometry.rotateX(-Math.PI*0.5)
+				const pp = new THREE.Mesh( geometry, new THREE.ShadowMaterial( { opacity:0.3, depthWrite:false, transparent:true } ) );
+				pp.position.y = -0.2
+				pp.renderOrder = -1;
+				pp.receiveShadow = true;
+                pp.castShadow = false;
+				scene.add( pp );
+
+				//const grid = new THREE.GridHelper( 2, 5, 0xffffff, 0xffffff );
+				//scene.add( grid );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+				renderer.setClearColor( 0x1e1c1c, 1 );//212121
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				renderer.toneMapping = THREE.ACESFilmicToneMapping;
+				renderer.toneMappingExposure = 1.0;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+
+				const logo = new Logo()
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				const hemiLight = new THREE.AmbientLight(  0x303030, 1 );
+				scene.add( hemiLight );
+
+				const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				dirLight.position.set( - 2.5, 5, 2 );
+				dirLight.castShadow = true;
+				dirLight.shadow.camera.top = 4;
+				dirLight.shadow.camera.bottom = - 4;
+				dirLight.shadow.camera.left = - 4;
+				dirLight.shadow.camera.right = 4;
+				dirLight.shadow.camera.near = 4;
+				dirLight.shadow.camera.far = 10;
+				dirLight.shadow.radius = 2;
+				dirLight.shadow.bias = -0.0005;
+				dirLight.shadow.normalBias = 0.0075
+				dirLight.shadow.mapSize.setScalar( 2048 )
+				scene.add( dirLight );
+
+				let map = new THREE.TextureLoader().load('./assets/textures/light.jpg');
+				map.encoding = THREE.sRGBEncoding
+				//map.magFilter = THREE.LinearFilter;
+				//map.minFilter = THREE.LinearFilter;
+
+				const spotLight = new THREE.SpotLight( 0x0000ff, 3 );
+				spotLight.position.set( 2.5, 1, -5 );
+				spotLight.angle = Math.PI / 6;
+				spotLight.penumbra = 1;
+				spotLight.decay = 2;
+				spotLight.distance = 10;
+				spotLight.map = map
+				scene.add( spotLight )
+
+				const normal1 = new THREE.TextureLoader().load( './assets/textures/n1.jpg' );
+		        //normal1.flipY = false
+		        const normal2 = new THREE.TextureLoader().load( './assets/textures/n2.jpg' );
+		        //normal2.flipY = false
+		        const normal3 = new THREE.TextureLoader().load( './assets/textures/n3.jpg' );
+
+		        normal1.wrapS = normal1.wrapT = THREE.RepeatWrapping
+		        normal1.repeat.set( 3,5 );
+		        normal2.wrapS = normal2.wrapT = THREE.RepeatWrapping
+		        normal2.repeat.set( 3,5 );
+		        normal3.wrapS = normal3.wrapT = THREE.RepeatWrapping
+		        normal3.repeat.set( 3,5 );
+		        //normal3.flipY = false
+
+		        let s = setting;
+
+		        baseMat = new THREE.MeshBasicMaterial({ 
+					vertexColors:true
+				})
+
+				material = new THREE.MeshPhysicalMaterial({ 
+					vertexColors:true, 
+					metalness:0.9,
+					roughness:0.2,
+					sheen:1.0,
+					sheenColor:0x00ff00,
+					normalMap: normal1,
+					normalScale: new THREE.Vector2(2,2),
+					bumpMap:normal3,
+					map:normal2,
+				})
+
+				material.onBeforeCompile = function ( shader ) {
+					shader.uniforms.extraColor = { value: new THREE.Color(setting.color) };
+					shader.uniforms.multyp = { value: 10 };
+					shader.fragmentShader = 'uniform vec3 extraColor;\nuniform float multyp;\n' + shader.fragmentShader;
+					shader.fragmentShader = shader.fragmentShader.replace( `#include <map_fragment>`,``)
+					shader.fragmentShader = shader.fragmentShader.replace( `#include <color_fragment>`,`
+					#if defined( USE_COLOR_ALPHA )
+						diffuseColor *= vColor;
+					#elif defined( USE_COLOR )
+						diffuseColor.rgb *= extraColor;
+					#endif
+					 `)
+
+					shader.fragmentShader = shader.fragmentShader.replace( `#include <normal_fragment_maps>`,`
+
+						vec3 mapB = texture2D( bumpMap, vUv ).xyz * 2.0 - 1.0;
+						vec3 mapA = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;
+						vec3 mapC = texture2D( map, vUv ).xyz * 2.0 - 1.0;
+
+						vec3 mapN = mapC + mix( vec3(0.5,0.5,1), mapB, vColor.b*multyp) + mix( vec3(0.5,0.5,1), mapA, vColor.r*multyp);
+						mapN.xy *= normalScale;
+						#ifdef USE_TANGENT
+							normal = normalize( vTBN * mapN );
+						#else
+							normal = perturbNormal2Arb( - vViewPosition, normal, mapN, faceDirection );
+						#endif
+
+					 `)
+					this.userData.shader = shader;
+				}
+
+				setMaterial()
+
+				new RGBELoader()
+					.setPath( './assets/textures/equirectangular/' )
+					.load( 'river.hdr', function ( texture ) {
+
+						texture.mapping = THREE.EquirectangularReflectionMapping;
+
+						//scene.background = texture;
+						scene.environment = texture;
+						scene.backgroundBlurriness = 0.5;						
+
+						// model could be in any format (e.g. glTF)
+						loader = new GLTFLoader().setDRACOLoader( new DRACOLoader().setDecoderPath( './src/libs/draco/' ) );
+
+						loader.load( './assets/model/blob.glb', onLoad );
+
+				} );
+
+				gui()
+
+			};
+
+			const gui = () => {
+
+				const ui = new UIL.Gui({})
+
+				ui.add( 'title',  { name:'TENSION MAP', h:30, align:'center' })
+
+				ui.add(setting, 'show_Tension', { type:'bool' }).onChange( function (b){ 
+
+					let m = b ? baseMat : material;
+					for(let n in mesh) mesh[n].material = m;
+
+				 } )
+
+				ui.add(setting, 'multyplier', { min:0, max:20 }).onChange( function (b){ setMaterial(); } )
+				ui.add(setting, 'roughness', { min:0, max:1 }).onChange( function (b){ setMaterial(); } )
+				ui.add(setting, 'metalness', { min:0, max:1 }).onChange( function (b){ setMaterial(); } )
+				ui.add(setting, 'sheen', { min:0, max:1 }).onChange( function (b){ setMaterial(); } )
+				ui.add(setting, 'color', { type:'color' }).onChange( function (b){ setMaterial(); } )
+				ui.add(setting, 'sheenColor', { type:'color' }).onChange( function (b){ setMaterial(); } )
+
+			}
+
+			const setMaterial = () => {
+
+				let s = setting;
+				material.metalness = s.metalness;
+				material.roughness = s.roughness;
+
+				material.sheen = s.sheen;
+				material.sheenColor.setHex(s.sheenColor)
+
+				if(material.userData.shader){
+					const shader = material.userData.shader;
+					shader.uniforms.multyp.value = s.multyplier;
+					shader.uniforms.extraColor.value.setHex( s.color )  ;
+				}
+
+			}
+
+			const onLoad = ( glb ) => {
+
+				scene.add( glb.scene );
+
+				glb.scene.traverse( function ( node ) {
+	                if ( node.isMesh ){
+	                	node.material = material
+	                	node.receiveShadow = true;
+                        node.castShadow = true;
+	                	mesh[node.name] = node
+	                }
+
+	            })
+	            
+	            mixer = new THREE.AnimationMixer( glb.scene );
+	            let idle = mixer.clipAction( glb.animations[ 0 ] )
+	            idle.play()
+
+
+	            tension = new Tension( mesh.blob );
+
+	            test()
+
+			};
+
+			const test = (m) => {
+
+				loader.load( './assets/model/tension.glb', onLoad2 );
+
+			}
+
+			const onLoad2 = ( glb ) => {
+
+				scene.add( glb.scene );
+
+
+				glb.scene.traverse( function ( node ) {
+	                if ( node.isMesh ){
+
+	                	node.material = material
+	                	mesh[node.name] = node
+	                	node.receiveShadow = true;
+                        node.castShadow = true;
+	                	node.position.z = -0.2
+	                	node.position.y = -0.2
+	                }
+
+	            })
+
+	            addColor(mesh.c0)
+
+	            let t1 = new Tension( mesh.c0, mesh.c1 );
+	            let t2 = new Tension( mesh.c0, mesh.c2 );
+	            let t3 = new Tension( mesh.c0, mesh.c3 );
+	            let t4 = new Tension( mesh.c0, mesh.c4 );
+	            let t5 = new Tension( mesh.c0, mesh.c5 );
+	            let t6 = new Tension( mesh.c0, mesh.c6 );
+
+
+			};
+
+			const addColor = (m) => {
+
+				const g = m.geometry
+
+				let lng = g.attributes.position.array.length
+				let c = new Array(lng).fill(0);
+
+				g.setAttribute( 'color', new THREE.Float32BufferAttribute( c, 3 ) );
+
+			}
+
+			const onWindowResize = () => {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			};
+
+			const animate = () => {
+
+				requestAnimationFrame( animate );
+
+				const delta = clock.getDelta();
+
+
+				if(mixer){
+					mixer.update( delta );
+					tension.update()
+				}
+				
+
+				renderer.render( scene, camera );
+
+			};
+
+			init();
+			animate();
+
+		</script>
+
+	</body>
+</html>

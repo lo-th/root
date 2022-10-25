@@ -1,0 +1,1 @@
+https://stackoverflow.com/questions/57054435/how-to-encode-compress-gltf-to-draco/66979159#66979159
