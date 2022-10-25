@@ -177,16 +177,48 @@
 
 					shader.fragmentShader = shader.fragmentShader.replace( `#include <normal_fragment_maps>`,`
 
-						vec3 mapB = texture2D( bumpMap, vUv ).xyz * 2.0 - 1.0;
-						vec3 mapA = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;
-						vec3 mapC = texture2D( map, vUv ).xyz * 2.0 - 1.0;
+						vec3 mapB = texture2D( bumpMap, vUv ).xyz;;
+						vec3 mapA = texture2D( normalMap, vUv ).xyz;;
+						vec3 mapC = texture2D( map, vUv ).xyz;;
 
-						vec3 mapN = mapC + mix( vec3(0.5,0.5,1), mapB, vColor.b*multyp) + mix( vec3(0.5,0.5,1), mapA, vColor.r*multyp);
-						mapN.xy *= normalScale;
-						#ifdef USE_TANGENT
-							normal = normalize( vTBN * mapN );
-						#else
-							normal = perturbNormal2Arb( - vViewPosition, normal, mapN, faceDirection );
+						vec3 newNorm = mix( mapC, mapB, vColor.b*multyp);
+						newNorm = mix( newNorm, mapA, vColor.r*multyp);
+
+						#ifdef OBJECTSPACE_NORMALMAP
+
+						    normal = newNorm;
+
+							//normal = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0; // overrides both flatShading and attribute normals
+
+							#ifdef FLIP_SIDED
+
+								normal = - normal;
+
+							#endif
+
+							#ifdef DOUBLE_SIDED
+
+								normal = normal * faceDirection;
+
+							#endif
+
+							normal = normalize( normalMatrix * normal );
+
+						#elif defined( TANGENTSPACE_NORMALMAP )
+
+							vec3 mapN = newNorm * 2.0 - 1.0;
+							mapN.xy *= normalScale;
+
+							#ifdef USE_TANGENT
+
+								normal = normalize( vTBN * mapN );
+
+							#else
+
+								normal = perturbNormal2Arb( - vViewPosition, normal, mapN, faceDirection );
+
+							#endif
+
 						#endif
 
 					 `)
