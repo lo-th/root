@@ -1,1 +1,1 @@
-http-server ./ -c-1 -a localhost -p 8616 -o ./editor.html
+http-server ./ -c-1 -a localhost -p 8616 -o ./index.html
