@@ -189,6 +189,7 @@
 
 			}
 
+
 			function render() {
 
 				const time = Date.now() * 0.0015;
@@ -224,13 +225,23 @@
 
 				//const read = new Float32Array( 4 );
 				const read = new Uint16Array( 4 );
+				let byteArray = new Uint8Array(3);
 
 				renderer.readRenderTargetPixels( rtTexture, windowHalfX + mouseX, windowHalfY - mouseY, 1, 1, read );
 				rtTexture.texture.type = THREE.UnsignedByteType
 
-				valueNode.innerHTML = 'r:' + read[ 0 ] + '<br/>g:' + read[ 1 ] + '<br/>b:' + read[ 2 ];
+				byteArray[0] = read[ 0 ];
+				byteArray[1] = read[ 1 ];
+				byteArray[2] = read[ 2 ];
+
+				
+
+				valueNode.innerHTML = 'r:' + (byteArray[0]/255) + '<br/>g:' + (byteArray[1]/255) + '<br/>b:' + (byteArray[2]/255);
+				//valueNode.innerHTML = 'r:' + toHalf(read[ 0 ]) + '<br/>g:' + toHalf(read[ 1 ]) + '<br/>b:' + toHalf(read[ 2 ]);
 
 			}
+
+
 
 		</script>
 	</body>
