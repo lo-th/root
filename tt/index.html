@@ -9,7 +9,7 @@
 
 		<div id="container"></div>
 		<div id="info" style="position: absolute; top: 0px; width: 100%; padding: 10px; box-sizing: border-box; text-align: center;">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> read float pixels webgl example<br/>
+			read HalfFloat pixels webgl example<br/>
 			<span id="values"></span>
 		</div>
 
@@ -110,7 +110,7 @@
 				light.position.set( 0, 0, - 1 ).normalize();
 				sceneRTT.add( light );
 
-				rtTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBAFormat, type: THREE.UnsignedByteType } );
+				rtTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBAFormat, type: THREE.HalfFloatType } );
 
 				material = new THREE.ShaderMaterial( {
 
@@ -213,7 +213,7 @@
 
 				// Render first scene into texture
 				//rtTexture.texture.type = THREE.FloatType
-				rtTexture.texture.type = THREE.HalfFloatType
+				//rtTexture.texture.type = THREE.HalfFloatType
 				renderer.setRenderTarget( rtTexture );
 				renderer.clear();
 				renderer.render( sceneRTT, cameraRTT );
@@ -228,7 +228,7 @@
 				let byteArray = new Uint8Array(3);
 
 				renderer.readRenderTargetPixels( rtTexture, windowHalfX + mouseX, windowHalfY - mouseY, 1, 1, read );
-				rtTexture.texture.type = THREE.UnsignedByteType
+				//rtTexture.texture.type = THREE.UnsignedByteType
 
 				byteArray[0] = read[ 0 ];
 				byteArray[1] = read[ 1 ];
