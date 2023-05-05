@@ -6,7 +6,7 @@ import { uniform } from '../core/UniformNode.js';
 import { add } from '../math/OperatorNode.js';
 import { buffer } from './BufferNode.js';
 import { normalLocal } from './NormalNode.js';
-import { positionLocal } from './PositionNode.js';
+import { positionLocal, positionView, positionGeometry, positionWorld } from './PositionNode.js';
 import { tangentLocal } from './TangentNode.js';
 
 const Skinning = new ShaderNode( ( inputs, {}, builder ) => {
@@ -20,16 +20,20 @@ const Skinning = new ShaderNode( ( inputs, {}, builder ) => {
 
 	// POSITION
 
-	const skinVertex = bindMatrix.mul( positionLocal );
+	//const skinVertex = bindMatrix.mul( positionLocal );
+	const skinVertex = bindMatrix.mul( positionLocal )
 
 	const skinned = add(
-		boneMatX.mul( skinVertex ).mul( weight.x ),
-		boneMatY.mul( skinVertex ).mul( weight.y ),
-		boneMatZ.mul( skinVertex ).mul( weight.z ),
-		boneMatW.mul( skinVertex ).mul( weight.w )
+		boneMatX.mul( weight.x ).mul( skinVertex ),
+		boneMatY.mul( weight.y ).mul( skinVertex ),
+		boneMatZ.mul( weight.z ).mul( skinVertex ),
+		boneMatW.mul( weight.w ).mul( skinVertex )
 	);
 
+
 	const skinPosition = bindMatrixInverse.mul( skinned ).xyz;
+	//const skinPosition = bindMatrixInverse.mul( skinned ).xyz;
+	//const skinPosition = bindMatrixInverse.mul( skinned ).xyz
 
 	// NORMAL
 
