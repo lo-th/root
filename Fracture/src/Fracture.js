@@ -64,7 +64,7 @@ export function Fracture( mesh, options ) {
         //fragment.bounds.getSize(size);
         //console.log(size)
 
-        center.add(new Vector3(rand(-size.x,size.x), rand(-size.y,size.y), rand(-size.z,size.z)))
+        //center.add(new Vector3(rand(-size.x,size.x), rand(-size.y,size.y), rand(-size.z,size.z)))
 
 
         //center.add(new Vector3(Math.random()*0.0001, Math.random()*0.0001, -Math.random()*0.0001))
