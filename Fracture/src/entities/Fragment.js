@@ -212,6 +212,7 @@ export class Fragment {
     */
     calculateBounds_( full=false ) {
 
+        if ( !this.vertices.length ) return;
         if ( this.bounds === null ) this.bounds = new Box3();
 
         let vertexCount = this.vertices.length
@@ -241,6 +242,7 @@ export class Fragment {
     */
     calculateBounds() {
 
+        if ( !this.vertices.length ) return
         if ( this.bounds === null ) this.bounds = new Box3();
 
         // Initialize min and max vectors with the first vertex in the array
