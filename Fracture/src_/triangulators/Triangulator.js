@@ -42,6 +42,8 @@ export class Triangulator {
         this.normalizationScaleFactor = 1;
         this.N = inputPoints.length;
 
+
+
         if (this.N >= 3) {
             this.triangleCount = 2 * this.N + 1
             this.triangulation = Array.from({ length: this.triangleCount }, () =>
@@ -51,12 +53,16 @@ export class Triangulator {
             this.points = new Array(this.N + 3) // Extra 3 points used to store super triangle
             this.normal = normal.clone().normalize()
 
-
             // Choose two points in the plane as one basis vector
-            let e1 = inputPoints[0].position.clone().sub(inputPoints[1].position).normalize()
+            let e1 = inputPoints[0].position
+                .clone()
+                .sub(inputPoints[1].position)
+                .normalize()
             let e2 = this.normal.clone()
             let e3 = new Vector3()
             e3.crossVectors(e1, e2).normalize()
+
+            
 
             // To find the 2nd basis vector, find the largest component and swap with the smallest, negating the largest
 
@@ -108,15 +114,15 @@ export class Triangulator {
     normalizeCoordinates() {
         // 1) Normalize coordinates. Coordinates are scaled so they lie between 0 and 1
         // The scaling should be uniform so relative positions of points are unchanged
-        let xMin = Number.MAX_VALUE
+        /*let xMin = Number.MAX_VALUE
         let xMax = Number.MIN_VALUE
         let yMin = Number.MAX_VALUE
-        let yMax = Number.MIN_VALUE
+        let yMax = Number.MIN_VALUE*/
 
-        /*let xMin, xMax, yMin, yMax;
+        let xMin, xMax, yMin, yMax;
+
         xMin = yMin = + Infinity
-        xMax = yMax = - Infinity*/
-
+        xMax = yMax = - Infinity
         // Find min/max points in the set
         for (let i = 0; i < this.N; i++) {
             xMin = Math.min(xMin, this.points[i].coords.x)
@@ -137,6 +143,7 @@ export class Triangulator {
                 (point.coords.y - yMin) / normalizationScaleFactor
             )
 
+            //console.log(normalizedPos)
             this.points[i].coords = normalizedPos
         }
 
@@ -165,7 +172,6 @@ export class Triangulator {
         }
 
         return BinSort.sort(this.points, this.N, binCount)
-
     }
 
     /**
@@ -173,7 +179,6 @@ export class Triangulator {
      * @returns Returns true if the triangulation was successful.
      */
     computeTriangulation() {
-
         let tSearch = 0 // Index of the current triangle being searched
         let tLast = 0 // Index of the last triangle formed
 
@@ -188,9 +193,10 @@ export class Triangulator {
             let counter = 0
             let pointInserted = false
             while (!pointInserted) {
+                if (counter++ > tLast || tSearch === OUT_OF_BOUNDS) {
+                    break
+                }
 
-                if (counter++ > tLast || tSearch === OUT_OF_BOUNDS) break;
-                
                 // Get coordinates of triangle vertices
                 let v1 = this.points[this.triangulation[tSearch][V1]].coords
                 let v2 = this.points[this.triangulation[tSearch][V2]].coords
@@ -220,9 +226,18 @@ export class Triangulator {
      */
     addSuperTriangle() {
         // Add new points to the end of the points array
-        this.points[this.N] = new TriangulationPoint( this.N, new Vector2(-100, -100) )
-        this.points[this.N + 1] = new TriangulationPoint( this.N + 1, new Vector2(0, 100) )
-        this.points[this.N + 2] = new TriangulationPoint( this.N + 2, new Vector2(100, -100) )
+        this.points[this.N] = new TriangulationPoint(
+            this.N,
+            new Vector2(-100, -100)
+        )
+        this.points[this.N + 1] = new TriangulationPoint(
+            this.N + 1,
+            new Vector2(0, 100)
+        )
+        this.points[this.N + 2] = new TriangulationPoint(
+            this.N + 2,
+            new Vector2(100, -100)
+        )
 
         // Store supertriangle in the first column of the vertex and adjacency data
         this.triangulation[SUPERTRIANGLE][V1] = this.N
@@ -233,7 +248,6 @@ export class Triangulator {
         this.triangulation[SUPERTRIANGLE][E12] = OUT_OF_BOUNDS
         this.triangulation[SUPERTRIANGLE][E23] = OUT_OF_BOUNDS
         this.triangulation[SUPERTRIANGLE][E31] = OUT_OF_BOUNDS
-
     }
 
     /**
@@ -300,7 +314,6 @@ export class Triangulator {
 
         // After the triangles have been inserted, restore the Delauney triangulation
         this.restoreDelauneyTriangulation(p, t1, t2, t3)
-
     }
 
     /**
@@ -324,14 +337,14 @@ export class Triangulator {
             // t2 is adjacent to t1 along the opposite edge of V1
             [t1, t2] = s.pop() ?? [OUT_OF_BOUNDS, OUT_OF_BOUNDS] ;
 
-            if (t2 === OUT_OF_BOUNDS) {
+            if (t2 == OUT_OF_BOUNDS) {
                 continue
             }
             // If t2 circumscribes p, the quadrilateral formed by t1+t2 has the
             // diagonal drawn in the wrong direction and needs to be swapped
             else {
                 const swap = this.swapQuadDiagonalIfNeeded(p.index, t1, t2)
-                if (swap!==null) {
+                if (swap) {
                     // Push newly formed triangles onto the stack to see if their diagonals
                     // need to be swapped
                     s.push([t1, swap.t3])
@@ -511,7 +524,11 @@ export class Triangulator {
      * @returns {boolean} Returns true if the triangle `t` contains the vertex `v`.
      */
     triangleContainsVertex(t, v) {
-        return ( this.triangulation[t][V1] === v || this.triangulation[t][V2] === v || this.triangulation[t][V3] === v )
+        return (
+            this.triangulation[t][V1] === v ||
+            this.triangulation[t][V2] === v ||
+            this.triangulation[t][V3] === v
+        )
     }
 
     /**
@@ -524,10 +541,12 @@ export class Triangulator {
      */
     updateAdjacency(t, tOld, tNew) {
         // Boundary edge, no triangle exists
-        if (t === OUT_OF_BOUNDS) return;
-        
+        if (t === OUT_OF_BOUNDS) {
+            return
+        }
+
         const sharedEdge = this.findSharedEdge(t, tOld)
-        if (sharedEdge !== null) {
+        if (sharedEdge) {
             this.triangulation[t][sharedEdge] = tNew
         }
     }

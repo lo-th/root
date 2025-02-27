@@ -46,8 +46,8 @@ function test_MeshVertex() {
     let vertexB = new MeshVertex(new Vector3(1, 2, 3));
     log("same positions are equal", vertexA.equals(vertexB), true)
 
-    vertexA = new MeshVertex(new Vector3(0, 2, 3));
-    vertexB = new MeshVertex(new Vector3(0.001, 2, 3));
+    vertexA = new MeshVertex(new Vector3(-1, 2, 3));
+    vertexB = new MeshVertex(new Vector3(1, 2, 3));
     log("opposite x positions are not equal", vertexA.equals(vertexB), false)
 
     vertexA = new MeshVertex(new Vector3(1, 2, 3));

@@ -4,23 +4,6 @@
 /*export interface IBinSortable {
   bin=0;
 }*/
-
-/// Methods for sorting objects on an ordered grid by bin number.
-/// 
-/// The grid ordering is shown by example below. Even rows (row 0 = bottom row) are ordered
-/// right-to-left while odd rows are ordered left-to-right.
-///  _____ _____ _____
-/// |     |     |     |
-/// |  6  |  7  |  8  |
-/// |_____|_____|_____|
-/// |     |     |     |
-/// |  5  |  4  |  3  |
-/// |_____|_____|_____|
-/// |     |     |     |
-/// |  0  |  1  |  2  |
-/// |_____|_____|_____|
-/// 
-
 export const IBinSortable = {
     bin:0
 }
@@ -40,7 +23,7 @@ export class BinSort {
      * @returns The computed bin number based on row and column indices.
      */
     static getBinNumber(i, j, n) {
-        return i % 2 === 0 ? (i * n) + j : (i + 1) * n - j - 1;
+        return i % 2 === 0 ? i * n + j : (i + 1) * n - j - 1;
     }
 
     /**
@@ -56,13 +39,12 @@ export class BinSort {
      */
     static sort( input, lastIndex, binCount ) {
 
-        // Need at least two bins to sort
-        if (binCount <= 1) return input;
+        if (binCount <= 1) return input; // Need at least two bins to sort
 
-        // If lastIndex is out of range, sort the entire array
-        if (lastIndex > input.length) lastIndex = input.length;
-        
-        // Only sort the first [0, count] points, don't want to sort super-triangle vertices
+        if (lastIndex > input.length) {
+            lastIndex = input.length; // If lastIndex is out of range, sort the entire array
+        }
+
         const count = new Array(binCount).fill(0);
         const output = new Array(input.length);
 

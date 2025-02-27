@@ -59,7 +59,6 @@ export class ConstrainedTriangulator extends Triangulator {
         super(inputPoints, normal)
         this.constraints = constraints
         this.vertexTriangles = []
-        this.visited = []
     }
 
     /**
@@ -102,13 +101,9 @@ export class ConstrainedTriangulator extends Triangulator {
      * Applys the edge constraints to the triangulation
      */
     applyConstraints() {
-
-        const lng = this.triangulation.length
-
-        this.visited = new Array(lng).fill(false);
         // Map each vertex to a triangle that contains it
         this.vertexTriangles = new Array(this.N + 3).fill(0)
-        for (let i = 0; i < lng; i++) {
+        for (let i = 0; i < this.triangulation.length; i++) {
             this.vertexTriangles[this.triangulation[i][V1]] = i
             this.vertexTriangles[this.triangulation[i][V2]] = i
             this.vertexTriangles[this.triangulation[i][V3]] = i
@@ -139,7 +134,7 @@ export class ConstrainedTriangulator extends Triangulator {
         // Need to find the first edge that the constraint crosses.
         const startEdge = this.findStartingEdge(vertexTriangles, constraint)
 
-        if (startEdge!==null) {
+        if (startEdge) {
             intersectingEdges.push(startEdge)
         } else {
             return intersectingEdges
@@ -209,11 +204,9 @@ export class ConstrainedTriangulator extends Triangulator {
         let noCandidatesFound = false
         let intersectingEdgeIndex = null
         let tE12, tE23, tE31
-        this.visited.fill(false)
-        //const visited = new Array(this.triangulation.length)//.fill(false);
+        const visited = new Array(this.triangulation.length)
         while (!intersectingEdgeIndex && !noCandidatesFound) {
-
-            this.visited[tSearch] = true
+            visited[tSearch] = true
 
             // Triangulation already contains the constraint so we ignore the constraint
             if (this.triangleContainsConstraint(tSearch, constraint)) {
@@ -237,11 +230,11 @@ export class ConstrainedTriangulator extends Triangulator {
             // If constraint does not intersect this triangle, check adjacent
             // triangles by crossing edges that have v1 as a vertex
             // Avoid triangles that we have previously visited in the search
-            if ( tE12 !== OUT_OF_BOUNDS && !this.visited[tE12] && this.triangleContainsVertex(tE12, v_i) ) {
+            if ( tE12 !== OUT_OF_BOUNDS && !visited[tE12] && this.triangleContainsVertex(tE12, v_i) ) {
                 tSearch = tE12
-            } else if ( tE23 !== OUT_OF_BOUNDS && !this.visited[tE23] && this.triangleContainsVertex(tE23, v_i) ) {
+            } else if ( tE23 !== OUT_OF_BOUNDS && !visited[tE23] && this.triangleContainsVertex(tE23, v_i) ) {
                 tSearch = tE23
-            } else if ( tE31 !== OUT_OF_BOUNDS && !this.visited[tE31] && this.triangleContainsVertex(tE31, v_i) ) {
+            } else if ( tE31 !== OUT_OF_BOUNDS && !visited[tE31] && this.triangleContainsVertex(tE31, v_i) ) {
                 tSearch = tE31
             } else {
                 noCandidatesFound = true
@@ -412,19 +405,15 @@ export class ConstrainedTriangulator extends Triangulator {
             boundaries.add(hash(constraint.v1, constraint.v2))
         }
 
-        // Reset visited states
-        this.visited.fill(false);
-
         // Search frontier
         let frontier = []
 
         let v1, v2, v3
         let boundaryE12, boundaryE23, boundaryE31
-        
-        //const visited = new Array(this.triangulation.length)
+        const visited = new Array(this.triangulation.length)
         for (let i = 0; i < this.triangleCount; i++) {
 
-            if (this.visited[i]) continue
+            if (visited[i]) continue
 
             v1 = this.triangulation[i][V1]
             v2 = this.triangulation[i][V2]
@@ -454,13 +443,12 @@ export class ConstrainedTriangulator extends Triangulator {
             while (frontier.length > 0) {
                 const k = frontier.shift()
 
-                //if (!k || k === OUT_OF_BOUNDS || visited[k]) {
-                if ( k === OUT_OF_BOUNDS || this.visited[k]) {
+                if (!k || k === OUT_OF_BOUNDS || visited[k]) {
                     continue
                 }
 
                 this.skipTriangle[k] = false
-                this.visited[k] = true
+                visited[k] = true
 
                 v1 = this.triangulation[k][V1]
                 v2 = this.triangulation[k][V2]

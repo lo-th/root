@@ -44,14 +44,8 @@ function linesIntersectInternal( a1, a2, b1, b2, includeSharedEndpoints ) {
     let a12 = { x: a2.x - a1.x, y: a2.y - a1.y };
     let b12 = { x: b2.x - b1.x, y: b2.y - b1.y };
 
-
-
     // If any of the vertices are shared between the two diagonals,
     // the quad collapses into a triangle and is convex by default.
-
-    //if(a1.equals(b1) || a1.equals(b2) || a2.equals(b1) || a2.equals(b2)) return includeSharedEndpoints;
-
-
     const hashA1 = hash2(a1);
     const hashB1 = hash2(b1);
 
@@ -81,8 +75,6 @@ function linesIntersectInternal( a1, a2, b1, b2, includeSharedEndpoints ) {
        ((a1xb >= 0 && a2xb <= 0) || (a1xb <= 0 && a2xb >= 0)) &&
        ((b1xa >= 0 && b2xa <= 0) || (b1xa <= 0 && b2xa >= 0));
 
-
-
     return intersecting;
 }
 
@@ -98,7 +90,7 @@ function linesIntersectInternal( a1, a2, b1, b2, includeSharedEndpoints ) {
  * where x = a + (b - a) * s. If no intersection exist, returns null
  */
 
- export function linePlaneIntersection( a, b, n, p0 ) {
+ export function linePlaneIntersection0( a, b, n, p0 ) {
     
     let s = 0;
     let x = new Vector3();
@@ -124,7 +116,7 @@ function linesIntersectInternal( a1, a2, b1, b2, includeSharedEndpoints ) {
     return { x:x, s:s };
 }
 
-export function linePlaneIntersection__( a, b, n, o ) {
+export function linePlaneIntersection( a, b, n, o ) {
 
     let line = new Line3(a,b);
     //let plane = new Plane( n );
@@ -171,19 +163,15 @@ export function isPointOnRightSideOfLine( p, i, j ) {
 }
 
 
-export function fixed( n ) {
-    return parseInt(Math.round(n * 1e9));
-    //return Math.floor(n * 1e16);
-}
+
 /**
  * Calculates hash value of Vector2 using Cantor pairing
  */
 export function hash2( v, tolerance = Tolerance ) {
     // Multiply by the inverse of the tolerance to avoid division
-    let x = fixed(v.x);
-    let y = fixed(v.y);
-    const h =  0.5 * ((x + y) * (x + y + 1)) + y; // Pairing x and y
-    return h 
+    const x = Math.floor(v.x * tolerance);
+    const y = Math.floor(v.y * tolerance);
+    return 0.5 * ((x + y) * (x + y + 1)) + y; // Pairing x and y
 }
 
 /**
@@ -191,13 +179,11 @@ export function hash2( v, tolerance = Tolerance ) {
  */
 export function hash3(v, tolerance = Tolerance ) {
     // Multiply by the inverse of the tolerance to avoid division
-    let x = fixed(v.x);
-    let y = fixed(v.y);
-    let z = fixed(v.z);
-    let xy = 0.5 * ((x + y) * (x + y + 1)) + y;
-    let h = 0.5 * ((xy + z) * (xy + z + 1)) + z;
-
-    return h
+    const x = Math.floor(v.x * tolerance);
+    const y = Math.floor(v.y * tolerance);
+    const z = Math.floor(v.z * tolerance);
+    const xy = 0.5 * ((x + y) * (x + y + 1)) + y;
+    return 0.5 * ((xy + z) * (xy + z + 1)) + z;
 }
 
 
@@ -230,12 +216,11 @@ export function hash3( v, decal = 1000 ) {
  * @param o The plane origin
  * @returns
  */
-
 export function isPointAbovePlane( p, n, o ) {
-    return (n.x * (p.x - o.x) + n.y * (p.y - o.y) + n.z * (p.z - o.z)) < 0 ? false : true;
+    return n.x * (p.x - o.x) + n.y * (p.y - o.y) + n.z * (p.z - o.z) < 0 ? false : true;
 }
 
-export function isPointAbovePlane_( p, n, o ) {
+export function isPointAbovePlaneTest( p, n, o ) {
     let d = _plane.set( n, 0 ).translate( o ).distanceToPoint(p)
     
     return d >= 0 ? true : false;

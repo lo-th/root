@@ -1,5 +1,5 @@
 import { Vector2, Vector3 } from "three";
-import { hash3 } from "../utils/MathUtils.js";
+
 /**
  * Data structure containing position/normal/UV data for a single vertex
  */
@@ -17,21 +17,19 @@ export default class MeshVertex {
     * @returns
     */
 
-    hash() {
-
-        return hash3(this.position)
+    hash( inverseTolerance = 1e6 ) {
 
         // Szudzik's Elegant Pairing Function ?? 
 
         //return MathUtils.generateUUID()
         //return hash3(this.position);
         // Use inverse so we can multiply instead of divide to save a few ops
-        /*const x = Math.floor(this.position.x * inverseTolerance);
+        const x = Math.floor(this.position.x * inverseTolerance);
         const y = Math.floor(this.position.y * inverseTolerance);
         const z = Math.floor(this.position.z * inverseTolerance);
         const xy = 0.5 * ((x + y) * (x + y + 1)) + y; // Pairing x and y
         //return (0.5 * ((xy + z) * (xy + z + 1))) / 2 + z;
-        return 0.5 * ((xy + z) * (xy + z + 1)) + z;*/
+        return 0.5 * ((xy + z) * (xy + z + 1)) + z;
     }
 
     /**
