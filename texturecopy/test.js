@@ -154,7 +154,7 @@ async function animate() {
 
 		last = elapsedTime;
 
-		let i = 10
+		let i = 6
 		while(i--){
 			position.x = ( 32 * THREE.MathUtils.randInt( 1, 16 ) ) - 32;
 			position.y = ( 32 * THREE.MathUtils.randInt( 1, 16 ) ) - 32;

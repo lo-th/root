@@ -1,1 +1,1 @@
-http-server ./ -c-1 -a localhost -p 8666 -o ./dev.html
+http-server ./ -c-1 -a localhost -p 8866 -o ./test_gpu.html
